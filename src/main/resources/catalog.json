@@ -1,0 +1,161 @@
+{
+  "subjects": [
+    {
+      "id": "edc",
+      "name": "Electronic Devices and Circuits",
+      "description": "Core electronic devices, circuits, and exam-oriented fundamentals.",
+      "tags": ["electronics", "jntu-r22", "circuits"]
+    },
+    {
+      "id": "dbms",
+      "name": "Database Management Systems",
+      "description": "Relational database design, SQL, and query optimization basics.",
+      "tags": ["database", "sql", "jntu-r22"]
+    }
+  ],
+  "topics": [
+    {
+      "id": "edc-diode-basics",
+      "subjectId": "edc",
+      "title": "Diode Basics",
+      "summary": "Understand diode construction, biasing, and V-I characteristics.",
+      "prerequisiteIds": [],
+      "difficulty": 0.2,
+      "examImportance": 0.7,
+      "tags": ["pn-junction", "biasing", "characteristics"]
+    },
+    {
+      "id": "edc-rectifiers",
+      "subjectId": "edc",
+      "title": "Rectifiers",
+      "summary": "Study half-wave and full-wave rectifiers with ripple concepts.",
+      "prerequisiteIds": ["edc-diode-basics"],
+      "difficulty": 0.45,
+      "examImportance": 0.85,
+      "tags": ["half-wave", "full-wave", "ripple-factor"]
+    },
+    {
+      "id": "edc-transistor-basics",
+      "subjectId": "edc",
+      "title": "Transistor Basics",
+      "summary": "Cover transistor operation, regions, and common configurations.",
+      "prerequisiteIds": ["edc-diode-basics"],
+      "difficulty": 0.55,
+      "examImportance": 0.9,
+      "tags": ["bjt", "configurations", "operating-regions"]
+    },
+    {
+      "id": "dbms-sql-basics",
+      "subjectId": "dbms",
+      "title": "SQL Basics",
+      "summary": "Learn core SQL queries, selection, projection, and filtering.",
+      "prerequisiteIds": [],
+      "difficulty": 0.25,
+      "examImportance": 0.8,
+      "tags": ["sql", "select", "where"]
+    },
+    {
+      "id": "dbms-joins",
+      "subjectId": "dbms",
+      "title": "Joins",
+      "summary": "Understand inner, outer, and self joins with practical examples.",
+      "prerequisiteIds": ["dbms-sql-basics"],
+      "difficulty": 0.55,
+      "examImportance": 0.95,
+      "tags": ["inner-join", "outer-join", "query-plans"]
+    },
+    {
+      "id": "dbms-normalization",
+      "subjectId": "dbms",
+      "title": "Normalization",
+      "summary": "Study normal forms, anomalies, and schema refinement.",
+      "prerequisiteIds": ["dbms-sql-basics"],
+      "difficulty": 0.65,
+      "examImportance": 0.88,
+      "tags": ["1nf", "2nf", "3nf", "anomalies"]
+    }
+  ],
+  "examContexts": [
+    {
+      "id": "edc-jntu-r22",
+      "subjectId": "edc",
+      "title": "JNTU R22 EDC",
+      "description": "Exam-focused EDC preparation aligned with JNTU R22 patterns.",
+      "focusTopicIds": ["edc-diode-basics", "edc-rectifiers", "edc-transistor-basics"],
+      "tags": ["jntu-r22", "semester-exam"]
+    },
+    {
+      "id": "dbms-jntu-r22",
+      "subjectId": "dbms",
+      "title": "JNTU R22 DBMS",
+      "description": "Exam-focused DBMS preparation aligned with JNTU R22 patterns.",
+      "focusTopicIds": ["dbms-sql-basics", "dbms-joins", "dbms-normalization"],
+      "tags": ["jntu-r22", "semester-exam"]
+    }
+  ],
+  "questions": [
+    {
+      "id": "q-edc-1",
+      "subjectId": "edc",
+      "topicId": "edc-diode-basics",
+      "type": "MCQ",
+      "prompt": "A diode conducts heavily when it is in which bias condition?",
+      "options": ["Reverse bias", "Forward bias", "Breakdown only", "Open circuit"],
+      "correctOptionIndex": 1,
+      "acceptedKeywords": [],
+      "explanation": "A pn-junction diode allows significant current in forward bias.",
+      "difficulty": 0.2
+    },
+    {
+      "id": "q-edc-2",
+      "subjectId": "edc",
+      "topicId": "edc-rectifiers",
+      "type": "SHORT_ANSWER",
+      "prompt": "Name two common rectifier types.",
+      "options": [],
+      "correctOptionIndex": null,
+      "acceptedKeywords": ["half-wave", "full-wave"],
+      "minKeywordMatches": 2,
+      "explanation": "Half-wave and full-wave rectifiers are the two standard forms.",
+      "difficulty": 0.35
+    },
+    {
+      "id": "q-dbms-1",
+      "subjectId": "dbms",
+      "topicId": "dbms-sql-basics",
+      "type": "MCQ",
+      "prompt": "Which SQL clause is used to filter rows?",
+      "options": ["GROUP BY", "WHERE", "ORDER BY", "HAVING"],
+      "correctOptionIndex": 1,
+      "acceptedKeywords": [],
+      "explanation": "WHERE filters rows before grouping and ordering.",
+      "difficulty": 0.25
+    },
+    {
+      "id": "q-dbms-2",
+      "subjectId": "dbms",
+      "topicId": "dbms-joins",
+      "type": "SHORT_ANSWER",
+      "prompt": "List two join types used in relational queries.",
+      "options": [],
+      "correctOptionIndex": null,
+      "acceptedKeywords": ["inner join", "left join"],
+      "minKeywordMatches": 2,
+      "explanation": "Inner join and left join are standard join types in SQL.",
+      "difficulty": 0.45
+    },
+    {
+      "id": "q-dbms-3",
+      "subjectId": "dbms",
+      "topicId": "dbms-normalization",
+      "type": "SHORT_ANSWER",
+      "prompt": "What problem does normalization help reduce in database design?",
+      "options": [],
+      "correctOptionIndex": null,
+      "acceptedKeywords": ["redundancy", "anomalies"],
+      "minKeywordMatches": 1,
+      "explanation": "Normalization reduces redundancy and update anomalies.",
+      "difficulty": 0.5
+    }
+  ]
+}

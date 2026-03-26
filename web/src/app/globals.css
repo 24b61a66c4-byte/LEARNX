@@ -1,0 +1,119 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f5efe5;
+  --background-strong: #efe6d8;
+  --surface: rgba(255, 255, 255, 0.82);
+  --surface-strong: #fffdf9;
+  --ink: #172033;
+  --muted: #5e6778;
+  --teal: #0f766e;
+  --teal-soft: #c7f4ee;
+  --amber: #d97706;
+  --amber-soft: #fef3c7;
+  --rose-soft: #ffe3db;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(13, 148, 136, 0.08), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(245, 158, 11, 0.1), transparent 25%),
+    var(--background);
+  color: var(--ink);
+  font-family: var(--font-body), sans-serif;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-display), sans-serif;
+}
+
+::selection {
+  background: rgba(15, 118, 110, 0.18);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button,
+[role="button"],
+a,
+input,
+textarea,
+select {
+  min-height: 44px;
+}
+
+:focus-visible {
+  outline: 2px solid rgba(15, 118, 110, 0.8);
+  outline-offset: 2px;
+}
+
+.surface-card {
+  @apply rounded-[28px] border border-black/10 bg-white/80 shadow-[0_20px_70px_rgba(15,23,42,0.08)] backdrop-blur;
+}
+
+.surface-panel {
+  @apply rounded-[24px] border border-black/10 bg-[var(--surface-strong)] shadow-[0_10px_32px_rgba(15,23,42,0.06)];
+}
+
+.eyebrow {
+  @apply text-xs font-semibold uppercase tracking-[0.24em] text-teal-700;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.pill {
+  @apply inline-flex items-center gap-2 rounded-full border border-black/10 bg-white/75 px-3 py-1 text-sm font-medium shadow-sm;
+}
+
+.button-primary {
+  @apply inline-flex items-center justify-center rounded-full bg-teal-700 px-5 py-3 font-semibold text-white shadow-[0_14px_30px_rgba(15,118,110,0.25)] transition hover:bg-teal-800;
+}
+
+.button-secondary {
+  @apply inline-flex items-center justify-center rounded-full border border-black/10 bg-white/80 px-5 py-3 font-semibold text-slate-900 transition hover:bg-white;
+}
+
+.field {
+  @apply w-full rounded-2xl border border-black/10 bg-white px-4 py-3 text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-teal-400 focus:outline-none focus:ring-4 focus:ring-teal-100;
+}
+
+.safe-bottom {
+  padding-bottom: calc(5rem + env(safe-area-inset-bottom));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
