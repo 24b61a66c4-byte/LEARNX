@@ -47,6 +47,10 @@ public class CatalogService {
         return catalogData.subjects();
     }
 
+    public List<ExamContext> getExamContexts() {
+        return catalogData.examContexts();
+    }
+
     public Subject getSubject(String subjectId) {
         return findSubject(subjectId)
                 .orElseThrow(() -> new CatalogValidationException("Unknown subjectId: " + subjectId));

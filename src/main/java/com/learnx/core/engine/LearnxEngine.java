@@ -3,8 +3,10 @@ package com.learnx.core.engine;
 import com.learnx.ai.model.TutorRequest;
 import com.learnx.ai.model.TutorResponse;
 import com.learnx.ai.service.TutorService;
+import com.learnx.core.model.ExamContext;
 import com.learnx.core.model.LearnerProfile;
 import com.learnx.core.model.PerformanceSnapshot;
+import com.learnx.core.model.Question;
 import com.learnx.core.model.QuizAttempt;
 import com.learnx.core.model.QuizEvaluation;
 import com.learnx.core.model.StudyRecommendation;
@@ -74,6 +76,46 @@ public class LearnxEngine {
 
     public List<Topic> getTopicsForSubject(String subjectId) {
         return catalogService.getTopicsForSubject(subjectId);
+    }
+
+    public Subject getSubject(String subjectId) {
+        return catalogService.getSubject(subjectId);
+    }
+
+    public Topic getTopic(String topicId) {
+        return catalogService.getTopic(topicId);
+    }
+
+    public List<Topic> getPrerequisites(String topicId) {
+        return catalogService.getPrerequisites(topicId);
+    }
+
+    public List<Question> getQuestionsForTopic(String topicId) {
+        return catalogService.getQuestionsForTopic(topicId);
+    }
+
+    public List<Question> getQuestionsForSubject(String subjectId) {
+        return catalogService.getQuestionsForSubject(subjectId);
+    }
+
+    public Question getQuestion(String questionId) {
+        return catalogService.getQuestion(questionId);
+    }
+
+    public List<ExamContext> getExamContexts() {
+        return catalogService.getExamContexts();
+    }
+
+    public ExamContext getExamContext(String examContextId) {
+        return catalogService.getExamContext(examContextId);
+    }
+
+    public List<Topic> getFocusedTopics(String examContextId) {
+        return catalogService.getFocusedTopics(examContextId);
+    }
+
+    public List<LearnerProfile> findAllLearners() {
+        return learnerStore.findAll();
     }
 
     public QuizEvaluation submitQuiz(QuizAttempt attempt) {
