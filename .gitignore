@@ -12,10 +12,17 @@
 /web/.turbo/
 /web/.vercel/
 /web/coverage/
+/web/tsconfig.tsbuildinfo
 
 # OS
 Thumbs.db
 .DS_Store
+
+# Binaries — never commit installers
+*.msi
+*.exe
+*.dmg
+*.pkg
 
 # Local env and logs
 .env

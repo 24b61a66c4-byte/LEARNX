@@ -1,0 +1,30 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: learnx-api:local
+    container_name: learnx-api
+    ports:
+      - "8080:8080"
+    environment:
+      - LEARNX_GEMINI_API_KEY=${LEARNX_GEMINI_API_KEY}
+      - LEARNX_TAVILY_API_KEY=${LEARNX_TAVILY_API_KEY}
+      - LEARNX_GEMINI_MODEL=${LEARNX_GEMINI_MODEL:-gemini-2.5-flash}
+      - LEARNX_REQUEST_TIMEOUT_SECONDS=${LEARNX_REQUEST_TIMEOUT_SECONDS:-20}
+      - LEARNX_SEARCH_MAX_RESULTS=${LEARNX_SEARCH_MAX_RESULTS:-5}
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    image: learnx-web:local
+    container_name: learnx-web
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      - api
+    restart: unless-stopped

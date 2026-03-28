@@ -3,7 +3,7 @@ import { sessionGateway, catalogGateway } from '@/lib/gateways';
 import { getSubjects } from '@/lib/data/catalog';
 
 vi.mock('@/lib/storage', () => ({
-    readLocalStorage: vi.fn(),
+    readLocalStorage: vi.fn((_key: string, fallback: unknown) => fallback),
     writeLocalStorage: vi.fn(),
     setCookie: vi.fn(),
     clearCookie: vi.fn(),
@@ -22,8 +22,9 @@ describe('Session Gateway', () => {
 
     it('signs in user', () => {
         const profile = { displayName: 'Test', email: 'test@example.com' };
-        sessionGateway.signIn(profile);
-        expect(profile).toMatchInlineSnapshot();
+        const result = sessionGateway.signIn(profile);
+        expect(result.isAuthenticated).toBe(true);
+        expect(result.profile).toEqual(profile);
     });
 });
 

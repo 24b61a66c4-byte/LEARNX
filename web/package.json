@@ -17,9 +17,9 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "next": "latest",
-    "react": "latest",
-    "react-dom": "latest"
+    "next": "15.5.14",
+    "react": "19.1.0",
+    "react-dom": "19.1.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "latest",
@@ -28,11 +28,11 @@
     "@types/node": "latest",
     "@types/react": "latest",
     "@types/react-dom": "latest",
+    "@vitejs/plugin-react": "latest",
     "@vitest/ui": "latest",
     "eslint": "latest",
     "eslint-config-next": "latest",
     "jsdom": "latest",
-    "next-pwa": "latest",
     "postcss": "latest",
     "tailwindcss": "latest",
     "typescript": "latest",

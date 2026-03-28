@@ -11,14 +11,16 @@ describe('AppShell', () => {
     it('renders nav links', () => {
         (usePathname as any).mockReturnValue('/app');
         render(<AppShell>Test content</AppShell>);
-        expect(screen.getByText('Home')).toBeInTheDocument();
-        expect(screen.getByText('Subjects')).toBeInTheDocument();
+        expect(screen.getAllByText('Home').length).toBeGreaterThan(0);
+        expect(screen.getAllByText('Subjects').length).toBeGreaterThan(0);
     });
 
     it('highlights active nav', () => {
         (usePathname as any).mockReturnValue('/app/subjects');
         render(<AppShell>Test content</AppShell>);
-        const subjectsLink = screen.getByText('Subjects');
-        expect(subjectsLink).toHaveClass('bg-slate-950 text-white');
+        const subjectsLinks = screen.getAllByText('Subjects');
+        subjectsLinks.forEach((link) => {
+            expect(link).toHaveClass('bg-slate-950', 'text-white');
+        });
     });
 });
