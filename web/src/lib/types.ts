@@ -135,6 +135,7 @@ export type StudyNoteSource = "manual" | "seed" | "lesson" | "tutor" | "practice
 
 export interface StudyNote {
   id: string;
+  serverId?: number;
   subjectId: SubjectId;
   topicId: string;
   title: string;

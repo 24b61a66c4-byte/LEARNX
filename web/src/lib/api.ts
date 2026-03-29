@@ -6,6 +6,55 @@ export interface ApiResponse<T> {
   error?: string;
 }
 
+export interface ProfilePayload {
+  userId: string;
+  displayName: string;
+  age?: number;
+  cognitiveGroup?: string;
+  preferredSubjectId?: string;
+  studyGoal?: string;
+  examTarget?: string;
+  launchMode?: string;
+  interests?: string[];
+  enableVisualDiagrams?: boolean;
+  enableVoiceInput?: boolean;
+  enableQuizMode?: boolean;
+  accessibilityFeatures?: string[];
+}
+
+export interface QuizResultPayload {
+  userId: string;
+  subjectId: string;
+  topicId?: string;
+  totalQuestions: number;
+  correctCount: number;
+  scorePercent: number;
+  xpEarned?: number;
+  completedAt?: string;
+}
+
+export interface StudyNotePayload {
+  userId: string;
+  subjectId: string;
+  topicId: string;
+  title: string;
+  content: string;
+  source?: string;
+}
+
+export interface ProgressPayload {
+  userId: string;
+  subjectId: string;
+  totalXp?: number;
+  currentLevel?: number;
+  completedTopics?: number;
+  strongTopics?: string[];
+  weakTopics?: string[];
+  practiceStreakDays?: number;
+  lastPracticeDate?: string;
+  totalPracticeMinutes?: number;
+}
+
 async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`;
   const response = await fetch(url, {
@@ -21,7 +70,21 @@ async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<T> 
     throw new Error(error || `API error: ${response.status}`);
   }
 
-  return response.json();
+  if (response.status === 204) {
+    return undefined as T;
+  }
+
+  const responseText = await response.text();
+  if (!responseText) {
+    return undefined as T;
+  }
+
+  const contentType = response.headers.get("content-type") ?? "";
+  if (contentType.includes("application/json")) {
+    return JSON.parse(responseText) as T;
+  }
+
+  return responseText as T;
 }
 
 // Profile API
@@ -30,14 +93,14 @@ export const profileApi = {
     return apiFetch(`/profiles/${userId}`);
   },
 
-  async saveProfile(profile: any) {
+  async saveProfile(profile: ProfilePayload) {
     return apiFetch(`/profiles`, {
       method: "POST",
       body: JSON.stringify(profile),
     });
   },
 
-  async completeOnboarding(userId: string, profile: any) {
+  async completeOnboarding(userId: string, profile: ProfilePayload) {
     return apiFetch(`/profiles/onboarding?userId=${userId}`, {
       method: "POST",
       body: JSON.stringify(profile),
@@ -53,7 +116,7 @@ export const profileApi = {
 
 // Quiz Results API
 export const quizApi = {
-  async submitQuiz(result: any) {
+  async submitQuiz(result: QuizResultPayload) {
     return apiFetch(`/quiz-results`, {
       method: "POST",
       body: JSON.stringify(result),
@@ -75,7 +138,7 @@ export const quizApi = {
 
 // Study Notes API
 export const notesApi = {
-  async saveNote(note: any) {
+  async saveNote(note: StudyNotePayload) {
     return apiFetch(`/notes`, {
       method: "POST",
       body: JSON.stringify(note),
@@ -94,7 +157,7 @@ export const notesApi = {
     return apiFetch(`/notes/user/${userId}/topic/${topicId}`);
   },
 
-  async updateNote(noteId: number, note: any) {
+  async updateNote(noteId: number, note: Partial<StudyNotePayload>) {
     return apiFetch(`/notes/${noteId}`, {
       method: "PUT",
       body: JSON.stringify(note),
@@ -114,7 +177,7 @@ export const progressApi = {
     return apiFetch(`/progress/user/${userId}/subject/${subjectId}`);
   },
 
-  async updateProgress(progress: any) {
+  async updateProgress(progress: ProgressPayload) {
     return apiFetch(`/progress`, {
       method: "POST",
       body: JSON.stringify(progress),

@@ -54,7 +54,7 @@ npm run dev
 
 ```bash
 cp .env.example .env.local
-docker compose up --build
+docker compose --env-file .env.local up --build
 ```
 
 ## Configuration

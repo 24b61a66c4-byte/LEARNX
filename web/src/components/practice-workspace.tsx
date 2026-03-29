@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
+import { syncPracticeResult } from "@/lib/backend-sync";
 import { catalogGateway, practiceGateway } from "@/lib/gateways";
 import { SubjectId } from "@/lib/types";
 
@@ -274,6 +275,7 @@ export function PracticeWorkspace({
             });
             setResult(nextResult);
             setMobileReviewOpen(true);
+            void syncPracticeResult(nextResult).catch(() => undefined);
           }}
           type="button"
         >

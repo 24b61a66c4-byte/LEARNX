@@ -101,6 +101,7 @@ public class LearnerProfile {
     public void setAccessibilityFeatures(String[] accessibilityFeatures) { this.accessibilityFeatures = accessibilityFeatures; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 }

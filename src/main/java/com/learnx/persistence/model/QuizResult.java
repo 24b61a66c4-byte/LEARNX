@@ -26,7 +26,7 @@ public class QuizResult {
     @Column(nullable = false)
     private Integer correctCount;
 
-    @Column(nullable = false, precision = 5, scale = 2)
+    @Column(nullable = false)
     private Double scorePercent;
 
     @Column

@@ -8,6 +8,14 @@ vi.mock("next/navigation", () => ({
     useRouter: vi.fn(),
 }));
 
+vi.mock("@/lib/auth-context", () => ({
+    useAuth: () => ({
+        user: null,
+        loading: false,
+        signOut: vi.fn(),
+    }),
+}));
+
 describe("AppShell", () => {
     it("renders nav links", () => {
         vi.mocked(usePathname).mockReturnValue("/app");

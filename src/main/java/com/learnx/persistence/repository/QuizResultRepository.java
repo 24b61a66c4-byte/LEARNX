@@ -12,7 +12,9 @@ import java.util.UUID;
 @Repository
 public interface QuizResultRepository extends JpaRepository<QuizResult, Long> {
     List<QuizResult> findByUserId(UUID userId);
+
     List<QuizResult> findByUserIdAndSubjectId(UUID userId, String subjectId);
+
     List<QuizResult> findByUserIdAndTopicId(UUID userId, String topicId);
 
     @Query("SELECT AVG(q.scorePercent) FROM QuizResult q WHERE q.userId = :userId AND q.subjectId = :subjectId")

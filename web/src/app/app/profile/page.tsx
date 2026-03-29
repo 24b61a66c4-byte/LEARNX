@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 
 import { ONBOARDING_STORAGE_KEY } from "@/lib/constants";
+import { useAuth } from "@/lib/auth-context";
 import { useClientSnapshot } from "@/lib/client-snapshot";
 import { getServerDashboard, learnerStateGateway, sessionGateway } from "@/lib/gateways";
 import { readLocalStorage } from "@/lib/storage";
@@ -12,6 +13,7 @@ import { OnboardingProfile } from "@/lib/types";
 
 export default function ProfilePage() {
   const router = useRouter();
+  const { signOut, user } = useAuth();
   const { onboarding, session, dashboard } = useClientSnapshot(
     () => ({
       session: sessionGateway.getSession(),
@@ -27,7 +29,12 @@ export default function ProfilePage() {
     }),
   );
 
-  const displayName = session.profile?.displayName ?? "LearnX Student";
+  const displayName =
+    (typeof user?.user_metadata?.display_name === "string" ? user.user_metadata.display_name : null) ??
+    (typeof user?.user_metadata?.name === "string" ? user.user_metadata.name : null) ??
+    session.profile?.displayName ??
+    "LearnX Student";
+  const email = user?.email ?? session.profile?.email ?? "preview session";
   const examTarget = onboarding?.examTarget?.replaceAll("-", " ") ?? "semester exam";
   const launchMode = onboarding?.launchMode?.replaceAll("-", " ") ?? "lesson";
 
@@ -37,7 +44,7 @@ export default function ProfilePage() {
       <div className="surface-card p-6">
         <p className="eyebrow">Profile</p>
         <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-950">{displayName}</h1>
-        <p className="mt-1 text-sm text-slate-600">{session.profile?.email ?? "preview session"}</p>
+        <p className="mt-1 text-sm text-slate-600">{email}</p>
 
         <div className="mt-6 grid gap-3 sm:grid-cols-3">
           <div className="rounded-2xl bg-white p-4 shadow-sm">
@@ -112,8 +119,8 @@ export default function ProfilePage() {
           <button
             aria-label="Sign out of LearnX"
             className="button-secondary w-full"
-            onClick={() => {
-              sessionGateway.signOut();
+            onClick={async () => {
+              await signOut();
               router.push("/login");
             }}
             type="button"
@@ -125,7 +132,7 @@ export default function ProfilePage() {
 
       {/* Footer note */}
       <p className="text-xs text-slate-500 text-center">
-        Your progress is saved locally. Export your report anytime to keep a copy.
+        Your progress stays local-first and syncs when you are signed in. Export your report anytime to keep a copy.
       </p>
     </div>
   );

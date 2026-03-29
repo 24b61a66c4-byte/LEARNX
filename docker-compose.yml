@@ -1,14 +1,15 @@
 services:
   db:
-    image: mysql:8.4
-    container_name: learnx-mysql
+    image: postgres:16-alpine
+    container_name: learnx-postgres
     environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: learnx
+      POSTGRES_DB: ${LEARNX_DB_NAME:-learnx}
+      POSTGRES_USER: ${LEARNX_DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${LEARNX_DB_PASSWORD:-postgres}
     ports:
-      - "3306:3306"
+      - "5432:5432"
     volumes:
-      - mysql_data:/var/lib/mysql
+      - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
 
   api:
@@ -22,8 +23,14 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - LEARNX_GEMINI_API_KEY=${LEARNX_GEMINI_API_KEY}
-      - LEARNX_TAVILY_API_KEY=${LEARNX_TAVILY_API_KEY}
+      - LEARNX_DB_URL=${LEARNX_DB_URL:-jdbc:postgresql://db:5432/learnx}
+      - LEARNX_DB_USERNAME=${LEARNX_DB_USERNAME:-postgres}
+      - LEARNX_DB_PASSWORD=${LEARNX_DB_PASSWORD:-postgres}
+      - LEARNX_JPA_DDL_AUTO=${LEARNX_JPA_DDL_AUTO:-update}
+      - LEARNX_JPA_SHOW_SQL=${LEARNX_JPA_SHOW_SQL:-false}
+      - LEARNX_JPA_FORMAT_SQL=${LEARNX_JPA_FORMAT_SQL:-false}
+      - LEARNX_GEMINI_API_KEY=${LEARNX_GEMINI_API_KEY:-}
+      - LEARNX_TAVILY_API_KEY=${LEARNX_TAVILY_API_KEY:-}
       - LEARNX_GEMINI_MODEL=${LEARNX_GEMINI_MODEL:-gemini-2.5-flash}
       - LEARNX_REQUEST_TIMEOUT_SECONDS=${LEARNX_REQUEST_TIMEOUT_SECONDS:-20}
       - LEARNX_SEARCH_MAX_RESULTS=${LEARNX_SEARCH_MAX_RESULTS:-5}
@@ -44,4 +51,4 @@ services:
     restart: unless-stopped
 
 volumes:
-  mysql_data:
+  postgres_data:

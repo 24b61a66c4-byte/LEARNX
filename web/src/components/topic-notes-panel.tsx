@@ -1,9 +1,17 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
+import {
+  deleteSyncedStudyNote,
+  fetchBackendNotesByTopic,
+  syncStudyNote,
+} from "@/lib/backend-sync";
+import { TOPIC_NOTES_KEY } from "@/lib/constants";
 import { useClientSnapshot } from "@/lib/client-snapshot";
+import { useAuth } from "@/lib/auth-context";
 import { notesGateway } from "@/lib/gateways";
+import { readLocalStorage, writeLocalStorage } from "@/lib/storage";
 import { StudyNote, SubjectId } from "@/lib/types";
 
 interface TopicNotesPanelProps {
@@ -21,12 +29,48 @@ const sourceLabel: Record<StudyNote["source"], string> = {
   practice: "Correction card",
 };
 
+function notesMatch(left: StudyNote, right: StudyNote) {
+  if (left.serverId && right.serverId) {
+    return left.serverId === right.serverId;
+  }
+
+  return (
+    left.topicId === right.topicId &&
+    left.title.trim() === right.title.trim() &&
+    left.content.trim() === right.content.trim() &&
+    left.source === right.source
+  );
+}
+
+function mergeTopicNotes(localNotes: StudyNote[], backendNotes: StudyNote[]) {
+  const mergedNotes = [...localNotes];
+
+  backendNotes.forEach((backendNote) => {
+    const existingIndex = mergedNotes.findIndex((localNote) => notesMatch(localNote, backendNote));
+    if (existingIndex === -1) {
+      mergedNotes.unshift(backendNote);
+      return;
+    }
+
+    const existingNote = mergedNotes[existingIndex];
+    mergedNotes[existingIndex] = {
+      ...existingNote,
+      ...backendNote,
+      id: existingNote.id,
+      serverId: backendNote.serverId ?? existingNote.serverId,
+    };
+  });
+
+  return mergedNotes;
+}
+
 export function TopicNotesPanel({
   subjectId,
   topicId,
   topicTitle,
   seedNotes,
 }: TopicNotesPanelProps) {
+  const { user } = useAuth();
   const [notesVersion, setNotesVersion] = useState(0);
   const [title, setTitle] = useState(`${topicTitle} quick note`);
   const [draft, setDraft] = useState("");
@@ -44,6 +88,41 @@ export function TopicNotesPanel({
     [seedNotes],
   );
 
+  useEffect(() => {
+    let cancelled = false;
+
+    async function hydrateTopicNotes() {
+      if (!user?.id) {
+        return;
+      }
+
+      try {
+        const backendNotes = await fetchBackendNotesByTopic(topicId);
+        if (cancelled || backendNotes.length === 0) {
+          return;
+        }
+
+        const storedNotes = readLocalStorage<StudyNote[]>(TOPIC_NOTES_KEY, []);
+        const mergedNotes = mergeTopicNotes(storedNotes, backendNotes);
+
+        if (JSON.stringify(mergedNotes) === JSON.stringify(storedNotes)) {
+          return;
+        }
+
+        writeLocalStorage(TOPIC_NOTES_KEY, mergedNotes);
+        setNotesVersion((current) => current + 1);
+      } catch {
+        // Keep the local notebook available even if backend hydration fails.
+      }
+    }
+
+    void hydrateTopicNotes();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [topicId, user?.id]);
+
   function appendSeed(seed: string) {
     setDraft((current) => {
       const prefix = current.trim() ? `${current.trim()}\n` : "";
@@ -53,7 +132,7 @@ export function TopicNotesPanel({
 
   function saveNote(source: StudyNote["source"] = "manual") {
     try {
-      notesGateway.saveTopicNote({
+      const localNote = notesGateway.saveTopicNote({
         subjectId,
         topicId,
         title,
@@ -64,6 +143,30 @@ export function TopicNotesPanel({
       setDraft("");
       setTitle(`${topicTitle} quick note`);
       setError(null);
+
+      void syncStudyNote(localNote)
+        .then((syncedNote) => {
+          if (!syncedNote) {
+            return;
+          }
+
+          const storedNotes = readLocalStorage<StudyNote[]>(TOPIC_NOTES_KEY, []);
+          writeLocalStorage(
+            TOPIC_NOTES_KEY,
+            storedNotes.map((note) =>
+              note.id === localNote.id
+                ? {
+                  ...note,
+                  ...syncedNote,
+                  id: localNote.id,
+                  serverId: syncedNote.serverId ?? note.serverId,
+                }
+                : note,
+            ),
+          );
+          setNotesVersion((current) => current + 1);
+        })
+        .catch(() => undefined);
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message.replace("validation:", "Validation error:") : "Could not save note.");
     }
@@ -71,7 +174,7 @@ export function TopicNotesPanel({
 
   function quickSaveSeed(seed: string, index: number) {
     try {
-      notesGateway.saveTopicNote({
+      const localNote = notesGateway.saveTopicNote({
         subjectId,
         topicId,
         title: `${topicTitle} key idea ${notes.length + index + 1}`,
@@ -80,6 +183,30 @@ export function TopicNotesPanel({
       });
       setNotesVersion((current) => current + 1);
       setError(null);
+
+      void syncStudyNote(localNote)
+        .then((syncedNote) => {
+          if (!syncedNote) {
+            return;
+          }
+
+          const storedNotes = readLocalStorage<StudyNote[]>(TOPIC_NOTES_KEY, []);
+          writeLocalStorage(
+            TOPIC_NOTES_KEY,
+            storedNotes.map((note) =>
+              note.id === localNote.id
+                ? {
+                  ...note,
+                  ...syncedNote,
+                  id: localNote.id,
+                  serverId: syncedNote.serverId ?? note.serverId,
+                }
+                : note,
+            ),
+          );
+          setNotesVersion((current) => current + 1);
+        })
+        .catch(() => undefined);
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message.replace("validation:", "Validation error:") : "Could not save note.");
     }
@@ -154,7 +281,7 @@ export function TopicNotesPanel({
       <div className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm font-semibold text-slate-900">Saved topic notebook</p>
-          <span className="text-xs uppercase tracking-[0.18em] text-slate-500">Local preview storage</span>
+          <span className="text-xs uppercase tracking-[0.18em] text-slate-500">Local-first sync</span>
         </div>
         {notes.length ? (
           notes.map((note) => (
@@ -167,8 +294,12 @@ export function TopicNotesPanel({
                 <button
                   className="rounded-full border border-black/10 px-3 py-1 text-xs font-semibold text-slate-700 transition hover:bg-slate-100"
                   onClick={() => {
+                    const noteToDelete = notes.find((item) => item.id === note.id);
                     notesGateway.deleteTopicNote(note.id);
                     setNotesVersion((current) => current + 1);
+                    if (noteToDelete) {
+                      void deleteSyncedStudyNote(noteToDelete).catch(() => undefined);
+                    }
                   }}
                   type="button"
                 >

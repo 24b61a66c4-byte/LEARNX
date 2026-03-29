@@ -2,6 +2,7 @@ package com.learnx.ai.provider;
 
 import com.learnx.ai.model.TutorPrompt;
 import com.learnx.ai.model.TutorResponse;
+import com.learnx.core.model.AgeCategory;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -23,7 +24,8 @@ class AiProviderTest {
                 "Overall accuracy=0.40",
                 "",
                 "Explain normalization in exam style",
-                List.of()));
+                List.of(),
+                AgeCategory.TEENS));
 
         assertTrue(response.fallback());
         assertFalse(response.explanation().isBlank());

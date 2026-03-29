@@ -28,7 +28,6 @@ import {
   setCookie,
   writeLocalStorage,
 } from "@/lib/storage";
-import { profileApi, quizApi, notesApi, progressApi } from "@/lib/api";
 import {
   AppSession,
   DashboardView,
@@ -423,41 +422,19 @@ export function getServerDashboard(preferredSubjectId?: SubjectId): DashboardVie
 
 export const sessionGateway: SessionGateway = {
   getSession() {
-    // Try to get session from localStorage first (for offline support)
-    const cached = readLocalStorage<AppSession>(SESSION_STORAGE_KEY, defaultSession);
-    
-    // In a real implementation, this would fetch from backend via API
-    // Session auth is now handled by Supabase auth context
-    return cached;
+    return readLocalStorage<AppSession>(SESSION_STORAGE_KEY, defaultSession);
   },
   signIn(profile) {
-    // Auth is handled by Supabase auth context
-    // This just persists the session locally
     return persistSession(profile, Boolean(getOnboardingProfile()));
   },
   signUp(profile) {
-    // Auth is handled by Supabase auth context
-    // Clear onboarding and persist session
     clearLocalStorage(ONBOARDING_STORAGE_KEY);
     return persistSession(profile, false);
   },
   completeOnboarding(profile) {
-    // Save onboarding profile to backend API (fire-and-forget)
     writeLocalStorage(ONBOARDING_STORAGE_KEY, profile);
     const currentSession = readLocalStorage<AppSession>(SESSION_STORAGE_KEY, defaultSession);
-    
-    // Dispatch async backend save in background (non-blocking)
-    if (typeof window !== "undefined") {
-      // Fire-and-forget API call
-      import("@/lib/api").then(({ profileApi }) => {
-        // Note: userId would come from Supabase auth context via useBackendApi()
-        // This is a placeholder - actual implementation in component layer
-        console.debug("Onboarding profile saved locally, can sync via useBackendApi() in component");
-      }).catch((error) => {
-        console.error("Failed to import API module:", error);
-      });
-    }
-    
+
     return persistSession(
       currentSession.profile ?? {
         displayName: "LearnX Student",
@@ -470,6 +447,11 @@ export const sessionGateway: SessionGateway = {
     clearCookie(SESSION_COOKIE);
     clearCookie(ONBOARDED_COOKIE);
     clearLocalStorage(SESSION_STORAGE_KEY);
+    clearLocalStorage(ONBOARDING_STORAGE_KEY);
+    clearLocalStorage(PRACTICE_HISTORY_KEY);
+    clearLocalStorage(TOPIC_NOTES_KEY);
+    clearLocalStorage(TUTOR_THREADS_KEY);
+    clearLocalStorage(LAST_TOPIC_KEY);
   },
 };
 
@@ -560,7 +542,60 @@ export const tutorGateway: TutorGateway = {
       throw new Error("validation: Prompt violates tutor safety policy.");
     }
 
-    await wait(450);
+    await wait(200);
+
+    const onboardingProfile = getOnboardingProfile();
+    const learnerId = readLocalStorage<{ profile: { email: string } | null } | null>(SESSION_STORAGE_KEY, null)?.profile?.email ?? "guest";
+
+    // Attempt real backend call first
+    try {
+      const res = await fetch(
+        (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080") + "/api/tutor",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            learnerId,
+            subjectId,
+            topicId: topicId ?? "",
+            examContextId: "",
+            userQuestion: sanitized,
+            maxResources: 3,
+          }),
+          signal: AbortSignal.timeout(12000),
+        }
+      );
+
+      if (res.ok) {
+        const data = await res.json() as {
+          explanation: string;
+          examAnswerOutline: string;
+          keyPoints: string[];
+          fallback: boolean;
+          aiResponse: { text: string; model: string; mode: string; latencyMs: number };
+        };
+        const answer = data.explanation ?? data.aiResponse?.text ?? "";
+        return {
+          answer,
+          followUpPrompt:
+            mode === "quiz-me"
+              ? "Want me to generate a 2-question drill on this topic next?"
+              : mode === "exam-answer"
+                ? EXAM_WORD_HINTS["exam-answer"]
+                : "Want a shorter note version or a quick quiz on this topic?",
+          aiResponse: {
+            text: answer,
+            model: data.aiResponse?.model ?? "learnx-gemini",
+            mode: mode,
+            latencyMs: data.aiResponse?.latencyMs ?? 0,
+          },
+        };
+      }
+    } catch {
+      // Fall through to local mock if backend is unreachable
+    }
+
+    // Local fallback mock
     const subject = getSubjectById(subjectId);
     const topic = topicId ? getTopicById(topicId) : null;
     const lesson = topicId ? getLessonByTopicId(topicId) : null;
@@ -586,7 +621,7 @@ export const tutorGateway: TutorGateway = {
         text: answer,
         model: "learnx-mock-v1",
         mode,
-        latencyMs: 450,
+        latencyMs: 200,
       },
     };
   },
@@ -601,7 +636,6 @@ export const tutorGateway: TutorGateway = {
 
 export const notesGateway: NotesGateway = {
   getTopicNotes(topicId) {
-    // Return cached notes from localStorage
     return getStoredNotes()
       .filter((note) => note.topicId === topicId)
       .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
@@ -624,24 +658,7 @@ export const notesGateway: NotesGateway = {
       updatedAt: timestamp,
     };
 
-    // Save locally
     writeLocalStorage(TOPIC_NOTES_KEY, [note, ...getStoredNotes()]);
-
-    // Fire-and-forget: try to save to backend API
-    if (typeof window !== "undefined") {
-      // This would be called from component using useBackendApi()
-      // Dispatch in background without awaiting
-      setTimeout(() => {
-        import("@/lib/api").then(({ notesApi }) => {
-          // This requires userId from auth context which we don't have at gateway level
-          // Implementation should be in component: await backendApi.notes.saveNote(note)
-          console.debug("Note saved locally, can sync via useBackendApi() in component");
-        }).catch(() => {
-          // Silently fail - note already saved locally
-        });
-      }, 0);
-    }
-
     return note;
   },
   deleteTopicNote(noteId) {
@@ -649,18 +666,6 @@ export const notesGateway: NotesGateway = {
       TOPIC_NOTES_KEY,
       getStoredNotes().filter((note) => note.id !== noteId),
     );
-
-    // Fire-and-forget: try to delete from backend API
-    if (typeof window !== "undefined") {
-      setTimeout(() => {
-        import("@/lib/api").then(() => {
-          // Implementation should be in component: await backendApi.notes.deleteNote(noteId)
-          console.debug("Note deleted locally, can sync via useBackendApi() in component");
-        }).catch(() => {
-          // Silently fail - note already deleted locally
-        });
-      }, 0);
-    }
   },
 };
 
@@ -714,21 +719,7 @@ export const practiceGateway: PracticeGateway = {
       badgeAwarded: earnedBadge?.label ?? null,
     };
 
-    // Save locally
     writeLocalStorage(PRACTICE_HISTORY_KEY, [persistedResult, ...previousHistory]);
-
-    // Fire-and-forget: try to save to backend API
-    if (typeof window !== "undefined") {
-      setTimeout(() => {
-        import("@/lib/api").then(({ quizApi }) => {
-          // This requires userId from auth context which we don't have at gateway level
-          // Implementation should be in component: await backendApi.quiz.submitQuiz(result)
-          console.debug("Quiz result saved locally, can sync via useBackendApi() in component");
-        }).catch(() => {
-          // Silently fail - result already saved locally
-        });
-      }, 0);
-    }
 
     return persistedResult;
   },

@@ -11,7 +11,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.UUID;
 
-@Component
+@Component("learnxRequestContextFilter")
 public class RequestContextFilter extends OncePerRequestFilter {
 
     public static final String REQUEST_ID_KEY = "requestId";

@@ -29,6 +29,7 @@ AI/Search:
 - Use `Dockerfile` for backend container.
 - Use `web/Dockerfile` for frontend container.
 - Use `docker-compose.yml` for local full-stack orchestration.
+- Run `docker compose --env-file .env.local up --build` when you want Compose to load values from `.env.local`.
 
 ## Production Checklist
 

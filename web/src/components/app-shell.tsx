@@ -7,6 +7,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { CommandPalette } from "@/components/command-palette";
 import { LearnxLogo } from "@/components/learnx-logo";
 import { ONBOARDING_STORAGE_KEY } from "@/lib/constants";
+import { useAuth } from "@/lib/auth-context";
 import { useClientSnapshot } from "@/lib/client-snapshot";
 import {
   defaultSession,
@@ -88,6 +89,7 @@ function NavLink({
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
+  const { signOut, user } = useAuth();
   const [paletteOpen, setPaletteOpen] = useState(false);
   const shellState = useClientSnapshot(getShellState, getServerShellState);
 
@@ -105,7 +107,13 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   const { dashboard, onboarding, session } = shellState;
   const todaySegments = Array.from({ length: dashboard.dailyGoalTarget }, (_, index) => index < dashboard.todayAttempts);
-  const firstName = session.profile?.displayName?.split(" ")[0] ?? "Student";
+  const displayName =
+    (typeof user?.user_metadata?.display_name === "string" ? user.user_metadata.display_name : null) ??
+    (typeof user?.user_metadata?.name === "string" ? user.user_metadata.name : null) ??
+    session.profile?.displayName ??
+    "LearnX Student";
+  const email = user?.email ?? session.profile?.email ?? "local session";
+  const firstName = displayName.split(" ")[0] ?? "Student";
   const focusLine = onboarding
     ? `Focus: ${onboarding.preferredSubjectId.toUpperCase()} • ${formatStudyGoal(onboarding.studyGoal)} • ${formatExamTarget(onboarding.examTarget)}`
     : "Choose one subject, protect the streak, and keep the flow simple.";
@@ -200,14 +208,14 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="space-y-3 rounded-[24px] bg-slate-950 px-5 py-5 text-white">
             <p className="text-xs uppercase tracking-[0.22em] text-teal-200">Logged in</p>
             <div>
-              <p className="font-semibold">{session.profile?.displayName ?? "LearnX Student"}</p>
-              <p className="text-sm text-slate-300">{session.profile?.email ?? "local session"}</p>
+              <p className="font-semibold">{displayName}</p>
+              <p className="text-sm text-slate-300">{email}</p>
             </div>
             <button
               aria-label="Sign out of LearnX and return to login"
               className="button-secondary w-full bg-white/10 text-white hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-slate-950"
-              onClick={() => {
-                sessionGateway.signOut();
+              onClick={async () => {
+                await signOut();
                 router.push("/login");
               }}
               type="button"

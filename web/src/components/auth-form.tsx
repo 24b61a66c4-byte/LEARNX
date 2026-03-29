@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { syncSessionFromAuthUser } from "@/lib/backend-sync";
+import { sessionGateway } from "@/lib/gateways";
 import { signUpWithEmail, signInWithEmail, supabase } from "@/lib/supabase";
 
 interface AuthFormProps {
@@ -33,9 +35,7 @@ export function AuthForm({ mode }: AuthFormProps) {
           return;
         }
         if (data.user) {
-          await supabase.auth.updateUser({
-            data: { display_name: displayName || email.split("@")[0] },
-          });
+          await syncSessionFromAuthUser(data.user);
         }
         router.push("/app");
       } else {
@@ -48,6 +48,10 @@ export function AuthForm({ mode }: AuthFormProps) {
         if (data.user) {
           await supabase.auth.updateUser({
             data: { display_name: displayName.trim() || email.split("@")[0] },
+          });
+          sessionGateway.signUp({
+            displayName: displayName.trim() || email.split("@")[0],
+            email: data.user.email ?? email.trim(),
           });
         }
         router.push("/app/onboarding");

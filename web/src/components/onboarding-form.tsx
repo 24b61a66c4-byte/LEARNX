@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { syncOnboardingProfile } from "@/lib/backend-sync";
 import { sessionGateway } from "@/lib/gateways";
 import { AccessibilityFeature, CognitiveGroup, ExamTarget, LaunchMode, StudyGoal, SubjectId } from "@/lib/types";
 
@@ -129,8 +130,8 @@ export function OnboardingForm() {
     );
   }
 
-  function completeOnboarding() {
-    sessionGateway.completeOnboarding({
+  function buildOnboardingProfile(overrides?: Partial<Parameters<typeof sessionGateway.completeOnboarding>[0]>) {
+    return {
       preferredSubjectId: subjectId,
       studyGoal,
       examTarget,
@@ -142,7 +143,14 @@ export function OnboardingForm() {
       enableVoiceInput,
       enableQuizMode,
       accessibilityFeatures: accessibilityFeatures.length > 0 ? accessibilityFeatures : undefined,
-    });
+      ...overrides,
+    };
+  }
+
+  function completeOnboarding() {
+    const profile = buildOnboardingProfile();
+    sessionGateway.completeOnboarding(profile);
+    void syncOnboardingProfile(profile).catch(() => undefined);
     router.push("/app");
   }
 
@@ -446,17 +454,21 @@ export function OnboardingForm() {
             <button
               className="button-secondary"
               onClick={() => {
-                sessionGateway.completeOnboarding({
+                const profile = buildOnboardingProfile({
                   preferredSubjectId: "dbms",
                   studyGoal: "prepare-exams",
                   examTarget: "semester-exam",
                   launchMode: "lesson",
                   age: 16,
                   cognitiveGroup: "teens",
+                  interests: undefined,
                   enableVisualDiagrams: true,
                   enableVoiceInput: true,
                   enableQuizMode: true,
+                  accessibilityFeatures: undefined,
                 });
+                sessionGateway.completeOnboarding(profile);
+                void syncOnboardingProfile(profile).catch(() => undefined);
                 router.push("/app");
               }}
               type="button"
