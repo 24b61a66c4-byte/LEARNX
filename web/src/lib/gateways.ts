@@ -8,6 +8,7 @@ import {
   PRACTICE_HISTORY_KEY,
   SESSION_COOKIE,
   SESSION_STORAGE_KEY,
+  TOPIC_NOTES_KEY,
   TUTOR_MAX_PROMPT_LENGTH,
   TUTOR_THREADS_KEY,
 } from "@/lib/constants";
@@ -40,6 +41,8 @@ import {
   RewardBadge,
   RewardSnapshot,
   SessionProfile,
+  StudyNote,
+  StudyNoteSource,
   SubjectId,
   Topic,
   TutorMode,
@@ -80,6 +83,18 @@ export interface TutorGateway {
   appendThread(thread: TutorThread): void;
 }
 
+export interface NotesGateway {
+  getTopicNotes(topicId: string): StudyNote[];
+  saveTopicNote(input: {
+    subjectId: SubjectId;
+    topicId: string;
+    title: string;
+    content: string;
+    source?: StudyNoteSource;
+  }): StudyNote;
+  deleteTopicNote(noteId: string): void;
+}
+
 export interface PracticeGateway {
   getQuickPractice(subjectId?: SubjectId, topicId?: string): Question[];
   submit(input: {
@@ -90,7 +105,7 @@ export interface PracticeGateway {
   getHistory(): PracticeResult[];
 }
 
-const defaultSession: AppSession = {
+export const defaultSession: AppSession = {
   isAuthenticated: false,
   profile: null,
   onboarded: false,
@@ -100,6 +115,14 @@ function wait(ms: number) {
   return new Promise((resolve) => {
     setTimeout(resolve, ms);
   });
+}
+
+function createClientId(prefix: string) {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return `${prefix}-${crypto.randomUUID()}`;
+  }
+
+  return `${prefix}-${Date.now()}`;
 }
 
 function hasBlockedContent(prompt: string) {
@@ -140,6 +163,10 @@ function getHistory() {
 
 function getThreads() {
   return readLocalStorage<TutorThread[]>(TUTOR_THREADS_KEY, []);
+}
+
+function getStoredNotes() {
+  return readLocalStorage<StudyNote[]>(TOPIC_NOTES_KEY, []);
 }
 
 function persistSession(profile: SessionProfile, onboarded: boolean) {
@@ -367,6 +394,32 @@ function buildProgressSnapshot(history: PracticeResult[]): ProgressSnapshot {
   };
 }
 
+export function getServerProgressSnapshot(): ProgressSnapshot {
+  return buildProgressSnapshot([]);
+}
+
+export function getServerDashboard(preferredSubjectId?: SubjectId): DashboardView {
+  const targetSubject = preferredSubjectId ?? "dbms";
+  const topics = getTopicsBySubject(targetSubject);
+  const fallbackTopic = topics[0] ?? getTopicsBySubject("dbms")[0] ?? null;
+  const rewards = getServerProgressSnapshot().rewards;
+
+  return {
+    resumeTopic: null,
+    recommendation: fallbackTopic
+      ? {
+        title: fallbackTopic.title,
+        reason: "Start the next recommended topic in your selected subject.",
+        href: `/app/learn/${fallbackTopic.subjectId}/${fallbackTopic.id}`,
+      }
+      : null,
+    quickPracticeHref: "/app/practice",
+    rewards,
+    todayAttempts: 0,
+    dailyGoalTarget: DAILY_PRACTICE_TARGET,
+  };
+}
+
 export const sessionGateway: SessionGateway = {
   getSession() {
     return readLocalStorage<AppSession>(SESSION_STORAGE_KEY, defaultSession);
@@ -519,6 +572,41 @@ export const tutorGateway: TutorGateway = {
   appendThread(thread) {
     const current = getThreads().filter((item) => item.id !== thread.id);
     writeLocalStorage(TUTOR_THREADS_KEY, [thread, ...current]);
+  },
+};
+
+export const notesGateway: NotesGateway = {
+  getTopicNotes(topicId) {
+    return getStoredNotes()
+      .filter((note) => note.topicId === topicId)
+      .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
+  },
+  saveTopicNote({ subjectId, topicId, title, content, source = "manual" }) {
+    const sanitizedContent = content.trim();
+    if (!sanitizedContent) {
+      throw new Error("validation: Note content must not be empty.");
+    }
+
+    const timestamp = new Date().toISOString();
+    const note: StudyNote = {
+      id: createClientId("note"),
+      subjectId,
+      topicId,
+      title: title.trim() || "Quick note",
+      content: sanitizedContent,
+      source,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    };
+
+    writeLocalStorage(TOPIC_NOTES_KEY, [note, ...getStoredNotes()]);
+    return note;
+  },
+  deleteTopicNote(noteId) {
+    writeLocalStorage(
+      TOPIC_NOTES_KEY,
+      getStoredNotes().filter((note) => note.id !== noteId),
+    );
   },
 };
 

@@ -5,7 +5,12 @@ import Link from "next/link";
 import { QuestRail } from "@/components/quest-rail";
 import { ONBOARDING_STORAGE_KEY } from "@/lib/constants";
 import { useClientSnapshot } from "@/lib/client-snapshot";
-import { catalogGateway, learnerStateGateway } from "@/lib/gateways";
+import {
+  catalogGateway,
+  getServerDashboard,
+  getServerProgressSnapshot,
+  learnerStateGateway,
+} from "@/lib/gateways";
 import { readLocalStorage } from "@/lib/storage";
 import { DashboardView, OnboardingProfile, ProgressSnapshot } from "@/lib/types";
 
@@ -21,8 +26,8 @@ export function DashboardPanel() {
     },
     () => ({
       onboarding: null as OnboardingProfile | null,
-      dashboard: learnerStateGateway.getDashboard(),
-      progress: learnerStateGateway.getProgressSnapshot(),
+      dashboard: getServerDashboard(),
+      progress: getServerProgressSnapshot(),
     }),
   );
 
@@ -61,9 +66,9 @@ export function DashboardPanel() {
   ];
   const workspaceFeed = [
     {
-      lane: "Watch lane",
-      title: `${continueTitle} as an 8-minute lecture`,
-      detail: "The topic page should feel like a guided explainer, not just a block of notes.",
+      lane: `${activeSubject.id.toUpperCase()} workspace`,
+      title: `${continueTitle} -> tutor -> notes -> drill`,
+      detail: "Open one topic in the center lane, let the tutor explain it, save one note, then close with a drill.",
       href: continueHref,
     },
     {
@@ -190,19 +195,18 @@ export function DashboardPanel() {
           <div className="surface-panel p-5">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="eyebrow">Subject shelf</p>
-                <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-950">Where students actually start</h2>
+                <p className="eyebrow">Subjects</p>
+                <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-950">Pick the live track you want to keep open</h2>
               </div>
               <span className="reward-chip">2 live tracks</span>
             </div>
             <div className="mt-4 space-y-3">
               {subjects.map((subject) => (
                 <Link
-                  className={`block rounded-[24px] border px-4 py-4 transition hover:-translate-y-0.5 ${
-                    subject.id === activeSubject.id
+                  className={`block rounded-[24px] border px-4 py-4 transition hover:-translate-y-0.5 ${subject.id === activeSubject.id
                       ? "border-teal-300 bg-teal-50"
                       : "border-black/10 bg-white/80 hover:bg-white"
-                  }`}
+                    }`}
                   href={`/app/subjects/${subject.id}`}
                   key={subject.id}
                 >
@@ -236,23 +240,30 @@ export function DashboardPanel() {
           <div className="surface-card p-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <p className="eyebrow">Study feed</p>
+                <p className="eyebrow">Lesson center</p>
                 <h2 className="mt-2 text-3xl font-bold tracking-tight text-slate-950">
-                  One topic, many ways to understand it
+                  Your {activeSubject.id.toUpperCase()} workspace -&gt; drill
                 </h2>
               </div>
               <span className="reward-chip">Read + search + note + drill</span>
             </div>
             <div className="mt-5 space-y-4">
-              {workspaceFeed.map((item) => (
+              {workspaceFeed.map((item, index) => (
                 <Link
-                  className="block rounded-[28px] border border-black/10 bg-white/82 px-5 py-5 shadow-sm transition hover:-translate-y-0.5 hover:bg-white"
+                  className={`block rounded-[28px] border border-black/10 px-5 py-5 shadow-sm transition hover:-translate-y-0.5 ${index === 0 ? "bg-slate-950 text-white hover:bg-slate-900" : "bg-white/82 hover:bg-white"}`}
                   href={item.href}
                   key={item.title}
                 >
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{item.lane}</p>
-                  <h3 className="mt-2 text-xl font-bold tracking-tight text-slate-950">{item.title}</h3>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">{item.detail}</p>
+                  <p className={`text-xs font-semibold uppercase tracking-[0.18em] ${index === 0 ? "text-slate-300" : "text-slate-500"}`}>{item.lane}</p>
+                  <h3 className={`mt-2 text-xl font-bold tracking-tight ${index === 0 ? "text-white" : "text-slate-950"}`}>{item.title}</h3>
+                  <p className={`mt-2 text-sm leading-6 ${index === 0 ? "text-slate-200" : "text-slate-600"}`}>{item.detail}</p>
+                  {index === 0 ? (
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <span className="pill border-white/10 bg-white/10 text-white">Lesson open</span>
+                      <span className="pill border-white/10 bg-white/10 text-white">Tutor ready</span>
+                      <span className="pill border-white/10 bg-white/10 text-white">Drill next</span>
+                    </div>
+                  ) : null}
                 </Link>
               ))}
             </div>
@@ -265,8 +276,8 @@ export function DashboardPanel() {
           <div className="surface-panel p-5">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="eyebrow">Copilot thread</p>
-                <h3 className="mt-2 text-xl font-bold tracking-tight text-slate-950">Less AI panel, more study partner</h3>
+                <p className="eyebrow">Tutor lane</p>
+                <h3 className="mt-2 text-xl font-bold tracking-tight text-slate-950">Keep the coach on the right, not as a separate app</h3>
               </div>
               <span className="reward-chip">Live context</span>
             </div>
@@ -281,10 +292,10 @@ export function DashboardPanel() {
             </div>
             <div className="mt-4 grid gap-3">
               <Link className="button-primary" href="/app/ask">
-                Open copilot workspace
+                Open tutor workspace
               </Link>
               <Link className="button-secondary" href={dashboard.quickPracticeHref}>
-                Jump into drill mode
+                Move straight to drill
               </Link>
             </div>
           </div>

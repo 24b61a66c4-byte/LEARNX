@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 import { LessonBlock } from "@/components/lesson-block";
 import { PracticeWorkspace } from "@/components/practice-workspace";
 import { ResumeTracker } from "@/components/resume-tracker";
+import { SearchLane } from "@/components/search-lane";
+import { TopicNotesPanel } from "@/components/topic-notes-panel";
 import { TutorPanel } from "@/components/tutor-panel";
 import { getLessonByTopicId, getSubjectById, getTopicById } from "@/lib/data/catalog";
 import { SubjectId } from "@/lib/types";
@@ -27,6 +29,8 @@ export default async function TopicPage({
     lesson?.blocks[0]?.content[0] ?? "Open the first lesson block and turn it into one revision line.",
     lesson?.blocks.find((block) => block.kind === "exam")?.content[0] ??
       "Ask the copilot to convert the topic into one exam-ready answer.",
+    lesson?.blocks.find((block) => block.kind === "mistake-watch")?.content[0] ??
+      "Save the first common mistake you notice and turn it into a correction card.",
   ];
   const searchSuggestions = [
     `${topic.title} explained with one real example`,
@@ -93,41 +97,14 @@ export default async function TopicPage({
 
       <div className="grid gap-6 xl:grid-cols-[0.8fr_1.15fr_0.95fr]">
         <div className="space-y-6">
-          <div className="surface-panel p-5">
-            <p className="eyebrow">Search prompts</p>
-            <h2 className="mt-2 text-xl font-bold tracking-tight text-slate-950">What to search next</h2>
-            <div className="mt-4 space-y-3">
-              {searchSuggestions.map((item) => (
-                <div className="rounded-[22px] border border-black/10 bg-white/82 px-4 py-4 shadow-sm" key={item}>
-                  <p className="text-sm leading-6 text-slate-700">{item}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="surface-panel p-5">
-            <p className="eyebrow">Notebook seeds</p>
-            <h3 className="mt-2 text-xl font-bold tracking-tight text-slate-950">Start your notes here</h3>
-            <div className="mt-4 space-y-3">
-              {noteSeeds.map((item) => (
-                <div className="rounded-[22px] border border-black/10 bg-white/82 px-4 py-4 shadow-sm" key={item}>
-                  <p className="text-sm leading-6 text-slate-700">{item}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="surface-panel p-5">
-            <p className="eyebrow">Watch lane</p>
-            <div className="mt-4 space-y-3">
-              {watchLane.map((item) => (
-                <div className="rounded-[22px] border border-black/10 bg-white/82 px-4 py-4 shadow-sm" key={item.title}>
-                  <p className="font-semibold text-slate-950">{item.title}</p>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">{item.detail}</p>
-                </div>
-              ))}
-            </div>
-          </div>
+          <SearchLane
+            key={`search-${topic.id}`}
+            searchSuggestions={searchSuggestions}
+            tags={topic.tags}
+            topicSummary={topic.summary}
+            topicTitle={topic.title}
+            watchLane={watchLane}
+          />
         </div>
 
         <div className="space-y-5">
@@ -157,6 +134,14 @@ export default async function TopicPage({
               <LessonBlock block={block} key={block.id} />
             ))}
           </div>
+
+          <TopicNotesPanel
+            key={`notes-${topic.id}`}
+            seedNotes={noteSeeds}
+            subjectId={subject.id}
+            topicId={topic.id}
+            topicTitle={topic.title}
+          />
         </div>
 
         <div className="space-y-6">

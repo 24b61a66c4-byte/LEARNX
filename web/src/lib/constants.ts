@@ -5,6 +5,7 @@ export const ONBOARDING_STORAGE_KEY = "learnx.onboarding";
 export const PRACTICE_HISTORY_KEY = "learnx.practiceHistory";
 export const TUTOR_THREADS_KEY = "learnx.tutorThreads";
 export const LAST_TOPIC_KEY = "learnx.lastTopic";
+export const TOPIC_NOTES_KEY = "learnx.topicNotes";
 
 export const TUTOR_MAX_PROMPT_LENGTH = 1200;
 export const LEVEL_XP_STEP = 160;

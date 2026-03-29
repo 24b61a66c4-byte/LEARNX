@@ -37,6 +37,21 @@ Short version:
 - updated loading and profile wording to sound like a student-facing preview instead of an internal mock
 - reduced some repeated “protected workspace” language in the shell
 
+### 4. Student Workspace Upgrade
+
+- replaced static topic-page prompt cards with a real search lane that gives web, video, and exam-search actions
+- added a persistent local notes lane for per-topic revision cards, note drafts, and seed capture
+- connected lesson blocks directly to the notes lane so the topic page behaves more like one study studio
+
+### 5. Blackbox Review Pass
+
+- strengthened the landing page with stronger proof, a clearer primary CTA, a workspace preview block, and a sticky mobile CTA
+- pushed the dashboard harder into a subject-left, lesson-center, tutor-right rhythm
+- reworked the tutor into a clearer 60/20/20 layout:
+  live thread + note lane + search/watch lane
+- added drill/save follow-through from the tutor and weak-question follow-up from practice into the tutor
+- added progress-page drill plans from weak topics and made badges more mobile-friendly
+
 ## Confirmed Improvement Areas
 
 ### Product Foundation

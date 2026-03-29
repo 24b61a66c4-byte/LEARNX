@@ -8,7 +8,12 @@ import { CommandPalette } from "@/components/command-palette";
 import { LearnxLogo } from "@/components/learnx-logo";
 import { ONBOARDING_STORAGE_KEY } from "@/lib/constants";
 import { useClientSnapshot } from "@/lib/client-snapshot";
-import { learnerStateGateway, sessionGateway } from "@/lib/gateways";
+import {
+  defaultSession,
+  getServerDashboard,
+  learnerStateGateway,
+  sessionGateway,
+} from "@/lib/gateways";
 import { readLocalStorage } from "@/lib/storage";
 import { AppSession, DashboardView, OnboardingProfile } from "@/lib/types";
 
@@ -53,8 +58,8 @@ function getShellState(): {
 
 function getServerShellState() {
   return {
-    session: sessionGateway.getSession(),
-    dashboard: learnerStateGateway.getDashboard(),
+    session: defaultSession,
+    dashboard: getServerDashboard(),
     onboarding: null as OnboardingProfile | null,
   };
 }
@@ -85,9 +90,8 @@ function NavLink({
   return (
     <Link
       aria-current={active ? "page" : undefined}
-      className={`inline-flex items-center rounded-full text-sm font-semibold transition ${
-        compact ? "justify-center px-2 py-2 text-[0.72rem]" : "px-4 py-2.5"
-      } ${active ? "bg-slate-950 text-white shadow-md" : "text-slate-600 hover:bg-white/80"}`}
+      className={`inline-flex items-center rounded-full text-sm font-semibold transition ${compact ? "justify-center px-2 py-2 text-[0.72rem]" : "px-4 py-2.5"
+        } ${active ? "bg-slate-950 text-white shadow-md" : "text-slate-600 hover:bg-white/80"}`}
       href={href}
     >
       {label}

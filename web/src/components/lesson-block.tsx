@@ -21,7 +21,9 @@ export function LessonBlock({ block }: { block: LessonBlockType }) {
           <p className="eyebrow">{labelByKind[block.kind]}</p>
           <h3 className="mt-2 text-2xl font-bold tracking-tight text-slate-950">{block.title}</h3>
         </div>
-        <span className="pill">Save to notes</span>
+        <a className="pill" href="#topic-notes">
+          Send to notes lane
+        </a>
       </div>
 
       {useStructuredList ? (

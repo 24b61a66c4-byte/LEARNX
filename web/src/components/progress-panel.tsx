@@ -3,13 +3,21 @@
 import Link from "next/link";
 
 import { useClientSnapshot } from "@/lib/client-snapshot";
-import { learnerStateGateway } from "@/lib/gateways";
+import { getServerProgressSnapshot, learnerStateGateway } from "@/lib/gateways";
 
 export function ProgressPanel() {
   const snapshot = useClientSnapshot(
     () => learnerStateGateway.getProgressSnapshot(),
-    () => learnerStateGateway.getProgressSnapshot(),
+    () => getServerProgressSnapshot(),
   );
+  const drillPlans = snapshot.weakTopics.map((topic, index) => ({
+    topic,
+    title: index === 0 ? "Recovery drill" : "Keep the weak-topic loop moving",
+    detail:
+      topic.accuracy < 50
+        ? "Re-open the lesson, ask one tutor question, then run a short topic drill."
+        : "One revise-and-drill cycle should move this topic back into your safe zone.",
+  }));
 
   return (
     <section className="grid gap-6 lg:grid-cols-[1.1fr_1fr]">
@@ -88,12 +96,12 @@ export function ProgressPanel() {
 
         <div className="surface-panel p-6">
           <p className="eyebrow">Badges and strengths</p>
-          <div className="mt-4 flex flex-wrap gap-2">
+          <div className="-mx-1 mt-4 flex gap-2 overflow-x-auto px-1 pb-1 sm:flex-wrap sm:overflow-visible">
             {snapshot.rewards.badges.length === 0 ? (
               <span className="reward-chip">First badge waiting</span>
             ) : (
               snapshot.rewards.badges.map((badge) => (
-                <span className="reward-chip" key={badge.id}>
+                <span className="reward-chip min-w-max" key={badge.id}>
                   {badge.label}
                 </span>
               ))
@@ -112,6 +120,31 @@ export function ProgressPanel() {
                 </li>
               ))}
             </ul>
+          )}
+        </div>
+
+        <div className="surface-panel p-6">
+          <p className="eyebrow">Drill plans</p>
+          {drillPlans.length === 0 ? (
+            <p className="mt-3 text-sm text-slate-600">Weak-topic drill plans appear automatically after a few practice runs.</p>
+          ) : (
+            <div className="mt-4 space-y-3">
+              {drillPlans.map((plan) => (
+                <div className="rounded-2xl bg-white px-4 py-4 shadow-sm" key={plan.topic.topicId}>
+                  <p className="font-semibold text-slate-950">{plan.title}</p>
+                  <p className="mt-1 text-sm font-medium text-slate-700">{plan.topic.title}</p>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">{plan.detail}</p>
+                  <div className="mt-4 flex flex-wrap gap-3">
+                    <Link className="button-secondary" href={`/app/learn/${plan.topic.subjectId}/${plan.topic.topicId}`}>
+                      Revise topic
+                    </Link>
+                    <Link className="button-secondary" href={`/app/learn/${plan.topic.subjectId}/${plan.topic.topicId}#drill-dock`}>
+                      Open drill
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
         </div>
       </div>

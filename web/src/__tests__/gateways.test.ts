@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { catalogGateway, learnerStateGateway, practiceGateway, sessionGateway } from "@/lib/gateways";
+import { catalogGateway, learnerStateGateway, notesGateway, practiceGateway, sessionGateway } from "@/lib/gateways";
 import { readLocalStorage, writeLocalStorage } from "@/lib/storage";
 
 vi.mock("@/lib/storage", () => ({
@@ -101,6 +101,30 @@ describe("Practice Gateway", () => {
     });
 
     expect(result.xpEarned).toBeGreaterThan(0);
+    expect(vi.mocked(writeLocalStorage)).toHaveBeenCalled();
+  });
+});
+
+describe("Notes Gateway", () => {
+  it("saves and persists a topic note", () => {
+    vi.mocked(readLocalStorage).mockImplementation((key: string, fallback: unknown) => {
+      if (key === "learnx.topicNotes") {
+        return [];
+      }
+
+      return fallback;
+    });
+
+    const result = notesGateway.saveTopicNote({
+      subjectId: "dbms",
+      topicId: "dbms-joins",
+      title: "Joins quick note",
+      content: "Inner join returns matching rows. Left join keeps all rows from the left table.",
+      source: "lesson",
+    });
+
+    expect(result.topicId).toBe("dbms-joins");
+    expect(result.source).toBe("lesson");
     expect(vi.mocked(writeLocalStorage)).toHaveBeenCalled();
   });
 });

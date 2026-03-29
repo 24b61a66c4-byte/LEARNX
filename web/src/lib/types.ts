@@ -118,6 +118,19 @@ export interface ProgressSnapshot {
   rewards: RewardSnapshot;
 }
 
+export type StudyNoteSource = "manual" | "seed" | "lesson" | "tutor" | "practice";
+
+export interface StudyNote {
+  id: string;
+  subjectId: SubjectId;
+  topicId: string;
+  title: string;
+  content: string;
+  source: StudyNoteSource;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface PracticeSubmission {
   questionId: string;
   answer: string;
