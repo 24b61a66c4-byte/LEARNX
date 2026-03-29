@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 
+import { QuestRail } from "@/components/quest-rail";
 import { ONBOARDING_STORAGE_KEY } from "@/lib/constants";
 import { learnerStateGateway } from "@/lib/gateways";
 import { readLocalStorage } from "@/lib/storage";
@@ -27,6 +28,35 @@ export function DashboardPanel() {
       </section>
     );
   }
+
+  const latestBadge = dashboard.rewards.badges[dashboard.rewards.badges.length - 1];
+  const questItems = [
+    {
+      id: "resume",
+      title: dashboard.resumeTopic ? `Resume ${dashboard.resumeTopic.title}` : "Choose a flagship topic",
+      detail: dashboard.resumeTopic
+        ? "Jump back into the lesson flow before your context fades."
+        : "Start the first subject path and trigger your study loop.",
+      xp: 40,
+      href: dashboard.resumeTopic
+        ? `/app/learn/${dashboard.resumeTopic.subjectId}/${dashboard.resumeTopic.id}`
+        : "/app/subjects",
+    },
+    {
+      id: "practice",
+      title: "Finish one quick drill",
+      detail: `Today: ${dashboard.todayAttempts}/${dashboard.dailyGoalTarget} drills completed.`,
+      xp: 60,
+      href: dashboard.quickPracticeHref,
+    },
+    {
+      id: "tutor",
+      title: dashboard.recommendation ? `Ask about ${dashboard.recommendation.title}` : "Ask the AI tutor",
+      detail: "Turn one confusion into an exam-ready explanation or a quiz.",
+      xp: 35,
+      href: "/app/ask",
+    },
+  ];
 
   return (
     <section className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
@@ -70,6 +100,38 @@ export function DashboardPanel() {
             </Link>
           </div>
         ) : null}
+
+        <div className="surface-panel p-6">
+          <p className="eyebrow">Reward loop</p>
+          <div className="mt-4 grid gap-3 sm:grid-cols-3">
+            <div className="rounded-2xl bg-white p-4 shadow-sm">
+              <p className="text-sm text-slate-500">Level</p>
+              <p className="mt-2 text-3xl font-bold text-slate-950">{dashboard.rewards.level}</p>
+            </div>
+            <div className="rounded-2xl bg-white p-4 shadow-sm">
+              <p className="text-sm text-slate-500">XP</p>
+              <p className="mt-2 text-3xl font-bold text-slate-950">{dashboard.rewards.xp}</p>
+            </div>
+            <div className="rounded-2xl bg-white p-4 shadow-sm">
+              <p className="text-sm text-slate-500">Streak</p>
+              <p className="mt-2 text-3xl font-bold text-slate-950">{dashboard.rewards.streakDays}d</p>
+            </div>
+          </div>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <span className="reward-chip">{dashboard.rewards.leaderboardLabel}</span>
+            <span className="reward-chip">
+              {dashboard.todayAttempts}/{dashboard.dailyGoalTarget} drills today
+            </span>
+            <span className="reward-chip">{dashboard.rewards.nextBadgeLabel}</span>
+          </div>
+          {latestBadge ? (
+            <p className="mt-4 text-sm leading-6 text-slate-600">
+              Latest badge: <strong className="text-slate-900">{latestBadge.label}</strong> - {latestBadge.description}
+            </p>
+          ) : null}
+        </div>
+
+        <QuestRail items={questItems} />
       </div>
 
       <div className="space-y-6">

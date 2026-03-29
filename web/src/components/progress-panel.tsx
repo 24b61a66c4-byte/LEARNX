@@ -13,7 +13,9 @@ export function ProgressPanel() {
     return (
       <section className="surface-card p-6">
         <p className="eyebrow">Loading progress</p>
-        <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-950">Collecting your latest study history...</h2>
+        <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-950">
+          Collecting your latest study history...
+        </h2>
         <div className="mt-4 grid gap-3 sm:grid-cols-3">
           <div className="h-20 animate-pulse rounded-2xl bg-slate-200" />
           <div className="h-20 animate-pulse rounded-2xl bg-slate-200" />
@@ -34,13 +36,18 @@ export function ProgressPanel() {
               <p className="mt-2 text-3xl font-bold text-slate-950">{snapshot.completedAttempts}</p>
             </div>
             <div className="rounded-2xl bg-white p-4 shadow-sm">
-              <p className="text-sm text-slate-500">Weak topics</p>
-              <p className="mt-2 text-3xl font-bold text-slate-950">{snapshot.weakTopics.length}</p>
+              <p className="text-sm text-slate-500">Daily streak</p>
+              <p className="mt-2 text-3xl font-bold text-slate-950">{snapshot.rewards.streakDays}d</p>
             </div>
             <div className="rounded-2xl bg-white p-4 shadow-sm">
-              <p className="text-sm text-slate-500">Strong topics</p>
-              <p className="mt-2 text-3xl font-bold text-slate-950">{snapshot.strongTopics.length}</p>
+              <p className="text-sm text-slate-500">XP</p>
+              <p className="mt-2 text-3xl font-bold text-slate-950">{snapshot.rewards.xp}</p>
             </div>
+          </div>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <span className="reward-chip">{snapshot.rewards.leaderboardLabel}</span>
+            <span className="reward-chip">Level {snapshot.rewards.level}</span>
+            <span className="reward-chip">{snapshot.rewards.nextBadgeLabel}</span>
           </div>
         </div>
 
@@ -52,10 +59,18 @@ export function ProgressPanel() {
             <ul className="mt-4 space-y-3">
               {snapshot.recentActivity.map((item) => (
                 <li className="rounded-2xl bg-white px-4 py-4 shadow-sm" key={item.completedAt}>
-                  <p className="font-semibold text-slate-950">{item.scorePercent}% score</p>
-                  <p className="mt-1 text-sm text-slate-600">
-                    {item.subjectId.toUpperCase()} {item.topicId ? `• ${item.topicId}` : "• mixed practice"}
-                  </p>
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <p className="font-semibold text-slate-950">{item.scorePercent}% score</p>
+                      <p className="mt-1 text-sm text-slate-600">
+                        {item.subjectId.toUpperCase()} {item.topicId ? `• ${item.topicId}` : "• mixed practice"}
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <span className="pill">{item.correctCount}/{item.totalCount} correct</span>
+                      <span className="pill">+{item.xpEarned} XP</span>
+                    </div>
+                  </div>
                 </li>
               ))}
             </ul>
@@ -86,9 +101,20 @@ export function ProgressPanel() {
         </div>
 
         <div className="surface-panel p-6">
-          <p className="eyebrow">Strong topics</p>
+          <p className="eyebrow">Badges and strengths</p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {snapshot.rewards.badges.length === 0 ? (
+              <span className="reward-chip">First badge waiting</span>
+            ) : (
+              snapshot.rewards.badges.map((badge) => (
+                <span className="reward-chip" key={badge.id}>
+                  {badge.label}
+                </span>
+              ))
+            )}
+          </div>
           {snapshot.strongTopics.length === 0 ? (
-            <p className="mt-3 text-sm text-slate-600">Strong topics will appear here after a few solid practice runs.</p>
+            <p className="mt-4 text-sm text-slate-600">Strong topics will appear here after a few solid practice runs.</p>
           ) : (
             <ul className="mt-4 space-y-3">
               {snapshot.strongTopics.map((topic) => (

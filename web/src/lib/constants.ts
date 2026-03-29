@@ -7,6 +7,8 @@ export const TUTOR_THREADS_KEY = "learnx.tutorThreads";
 export const LAST_TOPIC_KEY = "learnx.lastTopic";
 
 export const TUTOR_MAX_PROMPT_LENGTH = 1200;
+export const LEVEL_XP_STEP = 160;
+export const DAILY_PRACTICE_TARGET = 2;
 
 export const TUTOR_MODE_LABELS = {
     explain: "Explain",

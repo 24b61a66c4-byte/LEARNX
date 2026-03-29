@@ -23,6 +23,7 @@ export function PracticeWorkspace({
   const topicOptions = useMemo(() => catalogGateway.getTopicsBySubject(subjectId), [subjectId]);
   const questions = practiceGateway.getQuickPractice(subjectId, topicId || undefined);
   const hasQuestions = questions.length > 0;
+  const answeredCount = questions.filter((question) => Boolean(answers[question.id]?.trim())).length;
 
   return (
     <section className="surface-card space-y-5 p-5">
@@ -34,6 +35,22 @@ export function PracticeWorkspace({
         <p className="text-sm leading-6 text-slate-600">
           Practice history is local-only in this slice, but the scoring contract is already separated behind a gateway.
         </p>
+        <div className="rounded-2xl border border-white/35 bg-white/70 px-4 py-4">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-sm font-semibold text-slate-900">Momentum meter</p>
+              <p className="mt-1 text-xs text-slate-500">
+                Keep one uninterrupted run going to stack XP and streak-safe practice.
+              </p>
+            </div>
+            <span className="reward-chip">{answeredCount}/{questions.length || 5} answered</span>
+          </div>
+          <div className="momentum-meter mt-4">
+            {Array.from({ length: Math.max(questions.length, 5) }).map((_, index) => (
+              <span data-active={index < answeredCount} key={index} />
+            ))}
+          </div>
+        </div>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
@@ -163,13 +180,19 @@ export function PracticeWorkspace({
             <p className="mt-2 text-sm text-slate-600">
               {result.correctCount} correct out of {result.totalCount}.
             </p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <span className="reward-chip">+{result.xpEarned} XP</span>
+              {result.badgeAwarded ? <span className="reward-chip">{result.badgeAwarded}</span> : null}
+              {result.correctCount === result.totalCount ? <span className="reward-chip">Perfect chain</span> : null}
+            </div>
           </div>
 
           <div className="space-y-3">
             {result.answers.map((answer) => (
               <article
-                className={`rounded-2xl border px-4 py-4 ${answer.correct ? "border-teal-200 bg-teal-50" : "border-rose-200 bg-rose-50"
-                  }`}
+                className={`rounded-2xl border px-4 py-4 ${
+                  answer.correct ? "border-teal-200 bg-teal-50" : "border-rose-200 bg-rose-50"
+                }`}
                 key={answer.questionId}
               >
                 <p className="font-semibold text-slate-950">{answer.prompt}</p>

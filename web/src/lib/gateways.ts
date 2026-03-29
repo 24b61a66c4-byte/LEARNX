@@ -1,6 +1,8 @@
 import {
+  DAILY_PRACTICE_TARGET,
   EXAM_WORD_HINTS,
   LAST_TOPIC_KEY,
+  LEVEL_XP_STEP,
   ONBOARDED_COOKIE,
   ONBOARDING_STORAGE_KEY,
   PRACTICE_HISTORY_KEY,
@@ -32,8 +34,11 @@ import {
   PracticeResult,
   PracticeSubmission,
   ProgressSnapshot,
+  ProgressTopicSummary,
   Question,
   RecommendationView,
+  RewardBadge,
+  RewardSnapshot,
   SessionProfile,
   SubjectId,
   Topic,
@@ -102,6 +107,29 @@ function hasBlockedContent(prompt: string) {
   return ["hate", "kill", "abuse", "harass"].some((item) => normalized.includes(item));
 }
 
+function toDayKey(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, "0");
+  const day = `${date.getDate()}`.padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function getDayDifference(leftKey: string, rightKey: string) {
+  const left = new Date(`${leftKey}T00:00:00`);
+  const right = new Date(`${rightKey}T00:00:00`);
+
+  if (Number.isNaN(left.getTime()) || Number.isNaN(right.getTime())) {
+    return Number.POSITIVE_INFINITY;
+  }
+
+  return Math.round((left.getTime() - right.getTime()) / (1000 * 60 * 60 * 24));
+}
+
 function getOnboardingProfile(): OnboardingProfile | null {
   return readLocalStorage<OnboardingProfile | null>(ONBOARDING_STORAGE_KEY, null);
 }
@@ -152,6 +180,190 @@ function evaluateAnswer(question: Question, answer: string) {
     correct,
     score: correct ? 1 : matches.length / needed,
     correctAnswer: getQuestionAnswerLabel(question),
+  };
+}
+
+function calculateXpForResult(result: Pick<PracticeResult, "scorePercent" | "correctCount" | "topicId">) {
+  const masteryBonus = result.scorePercent >= 85 ? 20 : result.scorePercent >= 70 ? 10 : 0;
+  const topicBonus = result.topicId ? 5 : 0;
+  return 20 + result.scorePercent + result.correctCount * 5 + masteryBonus + topicBonus;
+}
+
+function getRewardBadges(input: {
+  completedAttempts: number;
+  streakDays: number;
+  history: PracticeResult[];
+  strongTopics: ProgressTopicSummary[];
+  weakTopics: ProgressTopicSummary[];
+}): RewardBadge[] {
+  const badges: RewardBadge[] = [];
+
+  if (input.completedAttempts >= 1) {
+    badges.push({
+      id: "first-drill",
+      label: "First Drill",
+      description: "Completed the first practice run.",
+    });
+  }
+
+  if (input.history.some((result) => result.scorePercent >= 85)) {
+    badges.push({
+      id: "sharp-answer",
+      label: "Sharp Answer",
+      description: "Scored at least 85% in one drill.",
+    });
+  }
+
+  if (input.streakDays >= 3) {
+    badges.push({
+      id: "consistency-streak",
+      label: "Consistency Streak",
+      description: "Studied on three consecutive days.",
+    });
+  }
+
+  if (input.strongTopics.length >= 2) {
+    badges.push({
+      id: "concept-anchor",
+      label: "Concept Anchor",
+      description: "Built strong confidence across multiple topics.",
+    });
+  }
+
+  if (input.completedAttempts >= 5 && input.weakTopics.length <= 1) {
+    badges.push({
+      id: "recovery-run",
+      label: "Recovery Run",
+      description: "Turned repeated practice into visible recovery.",
+    });
+  }
+
+  return badges;
+}
+
+function getNextBadgeLabel(completedAttempts: number, streakDays: number, badges: RewardBadge[]) {
+  const earned = new Set(badges.map((badge) => badge.id));
+
+  if (!earned.has("first-drill")) {
+    return "Complete your first drill";
+  }
+
+  if (!earned.has("sharp-answer")) {
+    return "Hit 85% on one practice";
+  }
+
+  if (!earned.has("consistency-streak")) {
+    const daysLeft = Math.max(0, 3 - streakDays);
+    return `${daysLeft} more day${daysLeft === 1 ? "" : "s"} to earn Consistency Streak`;
+  }
+
+  if (!earned.has("concept-anchor")) {
+    return "Build 2 strong topics to unlock Concept Anchor";
+  }
+
+  if (!earned.has("recovery-run")) {
+    return `${Math.max(0, 5 - completedAttempts)} more drills to unlock Recovery Run`;
+  }
+
+  return "All current badges unlocked";
+}
+
+function buildRewardSnapshot(
+  history: PracticeResult[],
+  strongTopics: ProgressTopicSummary[],
+  weakTopics: ProgressTopicSummary[],
+): RewardSnapshot {
+  const todayKey = toDayKey(new Date().toISOString());
+  const uniqueDays = [...new Set(history.map((result) => toDayKey(result.completedAt)).filter(Boolean))].sort(
+    (left, right) => right.localeCompare(left),
+  );
+
+  let streakDays = 0;
+  const latestDay = uniqueDays[0];
+  if (latestDay && getDayDifference(todayKey, latestDay) <= 1) {
+    let previousDay = latestDay;
+    streakDays = 1;
+
+    for (let index = 1; index < uniqueDays.length; index += 1) {
+      const day = uniqueDays[index];
+      if (getDayDifference(previousDay, day) === 1) {
+        streakDays += 1;
+        previousDay = day;
+        continue;
+      }
+      break;
+    }
+  }
+
+  const xp = history.reduce(
+    (sum, result) => sum + (result.xpEarned ?? calculateXpForResult(result)),
+    0,
+  );
+  const level = Math.max(1, Math.floor(xp / LEVEL_XP_STEP) + 1);
+  const xpToNextLevel = level * LEVEL_XP_STEP - xp;
+  const percentile = Math.min(98, 55 + Math.round(xp / 30));
+  const badges = getRewardBadges({
+    completedAttempts: history.length,
+    streakDays,
+    history,
+    strongTopics,
+    weakTopics,
+  });
+
+  return {
+    xp,
+    level,
+    xpToNextLevel,
+    streakDays,
+    percentile,
+    leaderboardLabel: `Top ${Math.max(2, 100 - percentile)}% pace`,
+    nextBadgeLabel: getNextBadgeLabel(history.length, streakDays, badges),
+    badges,
+  };
+}
+
+function buildProgressSnapshot(history: PracticeResult[]): ProgressSnapshot {
+  const summaries = new Map<string, { title: string; subjectId: SubjectId; scores: number[] }>();
+
+  history.forEach((result) => {
+    if (!result.topicId) {
+      return;
+    }
+
+    const topic = getTopicById(result.topicId);
+    if (!topic) {
+      return;
+    }
+
+    const current = summaries.get(topic.id) ?? {
+      title: topic.title,
+      subjectId: topic.subjectId,
+      scores: [],
+    };
+    current.scores.push(result.scorePercent);
+    summaries.set(topic.id, current);
+  });
+
+  const topicSummaries = [...summaries.entries()].map(([topicId, summary]) => ({
+    topicId,
+    title: summary.title,
+    subjectId: summary.subjectId,
+    accuracy: Math.round(
+      summary.scores.reduce((sum, value) => sum + value, 0) / summary.scores.length,
+    ),
+    attempts: summary.scores.length,
+  }));
+
+  const weakTopics = topicSummaries.filter((topic) => topic.accuracy < 70).slice(0, 3);
+  const strongTopics = topicSummaries.filter((topic) => topic.accuracy >= 80).slice(0, 3);
+  const rewards = buildRewardSnapshot(history, strongTopics, weakTopics);
+
+  return {
+    completedAttempts: history.length,
+    weakTopics,
+    strongTopics,
+    recentActivity: history.slice(0, 4),
+    rewards,
   };
 }
 
@@ -237,53 +449,24 @@ export const learnerStateGateway: LearnerStateGateway = {
     };
   },
   getDashboard(preferredSubjectId) {
+    const history = getHistory();
     const recommendation = learnerStateGateway.getRecommendation(preferredSubjectId);
     const resumeTopic = learnerStateGateway.getLastVisitedTopic();
+    const progress = buildProgressSnapshot(history);
+    const todayKey = toDayKey(new Date().toISOString());
+    const todayAttempts = history.filter((item) => toDayKey(item.completedAt) === todayKey).length;
+
     return {
       resumeTopic,
       recommendation,
       quickPracticeHref: "/app/practice",
+      rewards: progress.rewards,
+      todayAttempts,
+      dailyGoalTarget: DAILY_PRACTICE_TARGET,
     };
   },
   getProgressSnapshot() {
-    const history = getHistory();
-    const summaries = new Map<string, { title: string; subjectId: SubjectId; scores: number[] }>();
-
-    history.forEach((result) => {
-      if (!result.topicId) {
-        return;
-      }
-
-      const topic = getTopicById(result.topicId);
-      if (!topic) {
-        return;
-      }
-
-      const current = summaries.get(topic.id) ?? {
-        title: topic.title,
-        subjectId: topic.subjectId,
-        scores: [],
-      };
-      current.scores.push(result.scorePercent);
-      summaries.set(topic.id, current);
-    });
-
-    const topicSummaries = [...summaries.entries()].map(([topicId, summary]) => ({
-      topicId,
-      title: summary.title,
-      subjectId: summary.subjectId,
-      accuracy: Math.round(
-        summary.scores.reduce((sum, value) => sum + value, 0) / summary.scores.length,
-      ),
-      attempts: summary.scores.length,
-    }));
-
-    return {
-      completedAttempts: history.length,
-      weakTopics: topicSummaries.filter((topic) => topic.accuracy < 70).slice(0, 3),
-      strongTopics: topicSummaries.filter((topic) => topic.accuracy >= 80).slice(0, 3),
-      recentActivity: history.slice(0, 4),
-    };
+    return buildProgressSnapshot(getHistory());
   },
 };
 
@@ -344,6 +527,7 @@ export const practiceGateway: PracticeGateway = {
     return getQuestions(subjectId, topicId).slice(0, 5);
   },
   submit({ subjectId, topicId, answers }) {
+    const previousHistory = getHistory();
     const questionBank = practiceGateway.getQuickPractice(subjectId, topicId);
     const evaluated = questionBank.map((question) => {
       const submitted = answers.find((answer) => answer.questionId === question.id);
@@ -363,18 +547,33 @@ export const practiceGateway: PracticeGateway = {
     const totalScore = evaluated.reduce((sum, answer) => sum + answer.score, 0);
     const scorePercent =
       questionBank.length === 0 ? 0 : Math.round((totalScore / questionBank.length) * 100);
-    const result: PracticeResult = {
+    const baseResult = {
       subjectId,
       topicId,
       scorePercent,
       correctCount: evaluated.filter((answer) => answer.correct).length,
       totalCount: evaluated.length,
-      answers: evaluated,
       completedAt: new Date().toISOString(),
     };
+    const xpEarned = calculateXpForResult(baseResult);
+    const result: PracticeResult = {
+      ...baseResult,
+      xpEarned,
+      badgeAwarded: null,
+      answers: evaluated,
+    };
 
-    writeLocalStorage(PRACTICE_HISTORY_KEY, [result, ...getHistory()]);
-    return result;
+    const previousBadges = new Set(buildProgressSnapshot(previousHistory).rewards.badges.map((badge) => badge.id));
+    const nextHistory = [result, ...previousHistory];
+    const nextBadges = buildProgressSnapshot(nextHistory).rewards.badges;
+    const earnedBadge = nextBadges.find((badge) => !previousBadges.has(badge.id));
+    const persistedResult: PracticeResult = {
+      ...result,
+      badgeAwarded: earnedBadge?.label ?? null,
+    };
+
+    writeLocalStorage(PRACTICE_HISTORY_KEY, [persistedResult, ...previousHistory]);
+    return persistedResult;
   },
   getHistory,
 };

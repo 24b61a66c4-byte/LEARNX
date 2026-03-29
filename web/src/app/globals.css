@@ -1,10 +1,10 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f5efe5;
-  --background-strong: #efe6d8;
-  --surface: rgba(255, 255, 255, 0.82);
-  --surface-strong: #fffdf9;
+  --background: #f4ecde;
+  --background-strong: #ece1d0;
+  --surface: rgba(255, 255, 255, 0.72);
+  --surface-strong: rgba(255, 253, 249, 0.9);
   --ink: #172033;
   --muted: #5e6778;
   --teal: #0f766e;
@@ -12,6 +12,8 @@
   --amber: #d97706;
   --amber-soft: #fef3c7;
   --rose-soft: #ffe3db;
+  --glass-border: rgba(255, 255, 255, 0.35);
+  --depth: 0 16px 40px rgba(15, 23, 42, 0.08);
 }
 
 * {
@@ -25,7 +27,8 @@ html {
 body {
   min-height: 100vh;
   background:
-    radial-gradient(circle at top left, rgba(13, 148, 136, 0.08), transparent 28%),
+    radial-gradient(circle at top left, rgba(13, 148, 136, 0.1), transparent 28%),
+    radial-gradient(circle at 85% 18%, rgba(244, 114, 182, 0.08), transparent 18%),
     radial-gradient(circle at bottom right, rgba(245, 158, 11, 0.1), transparent 25%),
     var(--background);
   color: var(--ink);
@@ -72,11 +75,15 @@ select {
 }
 
 .surface-card {
-  @apply rounded-[28px] border border-black/10 bg-white/80 shadow-[0_20px_70px_rgba(15,23,42,0.08)] backdrop-blur;
+  @apply rounded-[28px] border bg-white/75 backdrop-blur-xl;
+  border-color: var(--glass-border);
+  box-shadow: var(--depth);
 }
 
 .surface-panel {
-  @apply rounded-[24px] border border-black/10 bg-[var(--surface-strong)] shadow-[0_10px_32px_rgba(15,23,42,0.06)];
+  @apply rounded-[24px] border bg-[var(--surface-strong)] backdrop-blur-lg;
+  border-color: rgba(255, 255, 255, 0.32);
+  box-shadow: 0 10px 32px rgba(15, 23, 42, 0.06);
 }
 
 .eyebrow {
@@ -91,6 +98,31 @@ select {
   @apply inline-flex items-center gap-2 rounded-full border border-black/10 bg-white/75 px-3 py-1 text-sm font-medium shadow-sm;
 }
 
+.reward-chip {
+  @apply inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-semibold text-slate-900;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.18), rgba(15, 118, 110, 0.16));
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+}
+
+.shell-stat-card {
+  @apply rounded-[22px] border bg-white/82 px-4 py-4;
+  border-color: rgba(15, 23, 42, 0.08);
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.05);
+}
+
+.momentum-meter {
+  @apply flex items-center gap-2;
+}
+
+.momentum-meter span {
+  @apply block h-2.5 flex-1 rounded-full bg-slate-200/80 transition;
+}
+
+.momentum-meter span[data-active="true"] {
+  background: linear-gradient(90deg, rgba(15, 118, 110, 0.9), rgba(245, 158, 11, 0.88));
+  box-shadow: 0 0 16px rgba(15, 118, 110, 0.18);
+}
+
 .button-primary {
   @apply inline-flex items-center justify-center rounded-full bg-teal-700 px-5 py-3 font-semibold text-white shadow-[0_14px_30px_rgba(15,118,110,0.25)] transition hover:bg-teal-800;
 }
@@ -101,6 +133,11 @@ select {
 
 .field {
   @apply w-full rounded-2xl border border-black/10 bg-white px-4 py-3 text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-teal-400 focus:outline-none focus:ring-4 focus:ring-teal-100;
+}
+
+.command-kbd {
+  @apply inline-flex items-center justify-center rounded-lg border border-black/10 bg-white/80 px-2 py-1 text-[0.7rem] font-semibold text-slate-700;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.05);
 }
 
 .safe-bottom {
