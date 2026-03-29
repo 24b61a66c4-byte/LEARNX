@@ -97,7 +97,11 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [shellState, setShellState] = useState(() => getShellState());
 
   useEffect(() => {
-    setShellState(getShellState());
+    const frame = window.setTimeout(() => {
+      setShellState(getShellState());
+    }, 0);
+
+    return () => window.clearTimeout(frame);
   }, [pathname]);
 
   useEffect(() => {
