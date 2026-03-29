@@ -1,0 +1,11 @@
+.git
+.gitignore
+.vscode
+.idea
+.tools
+target
+web/node_modules
+web/.next
+web/coverage
+*.log
+*.msi
