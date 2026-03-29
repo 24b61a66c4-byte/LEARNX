@@ -40,6 +40,9 @@ export function DashboardPanel() {
   const continueHref = dashboard.resumeTopic
     ? `/app/learn/${dashboard.resumeTopic.subjectId}/${dashboard.resumeTopic.id}`
     : "/app/subjects";
+  const tutorHref = dashboard.resumeTopic
+    ? `/app/ask?subjectId=${dashboard.resumeTopic.subjectId}&topicId=${dashboard.resumeTopic.id}`
+    : `/app/ask?subjectId=${activeSubject.id}`;
   const continueTitle = dashboard.resumeTopic?.title ?? dashboard.recommendation?.title ?? "SQL Basics";
   const quickPrompts = [
     `Explain ${continueTitle} like a short lecture`,
@@ -75,7 +78,7 @@ export function DashboardPanel() {
       lane: "Search lane",
       title: `Web-backed doubts on ${continueTitle}`,
       detail: "Search-oriented prompts, examples, and misconceptions should sit beside the chat instead of outside the product.",
-      href: "/app/ask",
+      href: tutorHref,
     },
     {
       lane: "Note lane",
@@ -114,7 +117,7 @@ export function DashboardPanel() {
       title: `Ask for help on ${continueTitle}`,
       detail: "Use the copilot as part tutor, part search assistant, part note-maker.",
       xp: 35,
-      href: "/app/ask",
+      href: tutorHref,
     },
     {
       id: "practice",
@@ -170,7 +173,7 @@ export function DashboardPanel() {
                   <Link className="button-primary" href={continueHref}>
                     Open study studio
                   </Link>
-                  <Link className="button-secondary" href="/app/ask">
+                  <Link className="button-secondary" href={tutorHref}>
                     Open copilot chat
                   </Link>
                 </div>
@@ -291,7 +294,7 @@ export function DashboardPanel() {
               </div>
             </div>
             <div className="mt-4 grid gap-3">
-              <Link className="button-primary" href="/app/ask">
+              <Link className="button-primary" href={tutorHref}>
                 Open tutor workspace
               </Link>
               <Link className="button-secondary" href={dashboard.quickPracticeHref}>

@@ -25,24 +25,6 @@ const navItems = [
   { href: "/app/progress", label: "Progress" },
 ];
 
-const quickActions = [
-  {
-    href: "/app/ask",
-    label: "Ask the tutor",
-    detail: "Turn one confusion into a clear explanation.",
-  },
-  {
-    href: "/app/practice",
-    label: "Start a drill",
-    detail: "Keep the streak alive with a fast question set.",
-  },
-  {
-    href: "/app/progress",
-    label: "See rewards",
-    detail: "Track XP, badges, and momentum in one place.",
-  },
-];
-
 function getShellState(): {
   session: AppSession;
   dashboard: DashboardView;
@@ -123,6 +105,26 @@ export function AppShell({ children }: { children: ReactNode }) {
   const focusLine = onboarding
     ? `Focus: ${onboarding.preferredSubjectId.toUpperCase()} • ${formatStudyGoal(onboarding.studyGoal)}`
     : "Choose one subject, protect the streak, and keep the flow simple.";
+  const tutorHref = dashboard.resumeTopic
+    ? `/app/ask?subjectId=${dashboard.resumeTopic.subjectId}&topicId=${dashboard.resumeTopic.id}`
+    : `/app/ask?subjectId=${onboarding?.preferredSubjectId ?? "dbms"}`;
+  const quickActions = [
+    {
+      href: tutorHref,
+      label: "Ask the tutor",
+      detail: "Turn one confusion into a clear explanation with the current topic attached.",
+    },
+    {
+      href: dashboard.quickPracticeHref,
+      label: "Start a drill",
+      detail: "Keep the streak alive with a fast question set.",
+    },
+    {
+      href: "/app/progress",
+      label: "See rewards",
+      detail: "Track XP, badges, and momentum in one place.",
+    },
+  ];
 
   return (
     <>
@@ -228,7 +230,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">{focusLine}</p>
                 </div>
                 <div className="flex flex-wrap gap-3">
-                  <Link className="button-primary" href="/app/ask">
+                  <Link className="button-primary" href={tutorHref}>
                     Ask the tutor
                   </Link>
                   <Link className="button-secondary" href={dashboard.quickPracticeHref}>
@@ -266,7 +268,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             </div>
           </div>
           <div className="mb-5 flex flex-wrap gap-3 lg:hidden">
-            <Link className="button-primary" href="/app/ask">
+            <Link className="button-primary" href={tutorHref}>
               Ask AI
             </Link>
             <Link className="button-secondary" href={dashboard.quickPracticeHref}>

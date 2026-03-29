@@ -7,7 +7,8 @@ import { ResumeTracker } from "@/components/resume-tracker";
 import { SearchLane } from "@/components/search-lane";
 import { TopicNotesPanel } from "@/components/topic-notes-panel";
 import { TutorPanel } from "@/components/tutor-panel";
-import { getLessonByTopicId, getSubjectById, getTopicById } from "@/lib/data/catalog";
+import { getSubjectById } from "@/lib/data/catalog";
+import { getTopicWorkspaceContext } from "@/lib/topic-workspace";
 import { SubjectId } from "@/lib/types";
 
 export default async function TopicPage({
@@ -17,36 +18,13 @@ export default async function TopicPage({
 }) {
   const { subjectId, topicId } = await params;
   const subject = getSubjectById(subjectId);
-  const topic = getTopicById(topicId);
-  const lesson = getLessonByTopicId(topicId);
+  const workspaceContext = getTopicWorkspaceContext(subjectId, topicId);
+  const topic = workspaceContext?.topic;
+  const lesson = workspaceContext?.lesson;
 
-  if (!subject || !topic || topic.subjectId !== subject.id) {
+  if (!subject || !workspaceContext || !topic) {
     notFound();
   }
-
-  const noteSeeds = [
-    topic.summary,
-    lesson?.blocks[0]?.content[0] ?? "Open the first lesson block and turn it into one revision line.",
-    lesson?.blocks.find((block) => block.kind === "exam")?.content[0] ??
-      "Ask the copilot to convert the topic into one exam-ready answer.",
-    lesson?.blocks.find((block) => block.kind === "mistake-watch")?.content[0] ??
-      "Save the first common mistake you notice and turn it into a correction card.",
-  ];
-  const searchSuggestions = [
-    `${topic.title} explained with one real example`,
-    `Common mistakes in ${topic.title}`,
-    `${topic.title} viva questions and exam answers`,
-  ];
-  const watchLane = [
-    {
-      title: `${topic.title} as a short lecture`,
-      detail: "Think in terms of a focused classroom explanation or video recap, not isolated notes.",
-    },
-    {
-      title: `${topic.title} with examples and visuals`,
-      detail: "Use diagrams, analogies, and short examples before memorizing final answers.",
-    },
-  ];
 
   return (
     <section className="space-y-6">
@@ -67,10 +45,10 @@ export default async function TopicPage({
                 ))}
               </div>
               <div className="flex flex-wrap gap-3">
-                <Link className="button-primary" href="/app/ask">
+                <Link className="button-primary" href={`/app/ask?subjectId=${subject.id}&topicId=${topic.id}`}>
                   Open copilot on full page
                 </Link>
-                <Link className="button-secondary" href="/app/practice">
+                <Link className="button-secondary" href={`/app/practice?subjectId=${subject.id}&topicId=${topic.id}`}>
                   Open drill mode
                 </Link>
               </div>
@@ -99,11 +77,11 @@ export default async function TopicPage({
         <div className="space-y-6">
           <SearchLane
             key={`search-${topic.id}`}
-            searchSuggestions={searchSuggestions}
+            searchSuggestions={workspaceContext.searchSuggestions}
             tags={topic.tags}
             topicSummary={topic.summary}
             topicTitle={topic.title}
-            watchLane={watchLane}
+            watchLane={workspaceContext.watchLane}
           />
         </div>
 
@@ -137,7 +115,7 @@ export default async function TopicPage({
 
           <TopicNotesPanel
             key={`notes-${topic.id}`}
-            seedNotes={noteSeeds}
+            seedNotes={workspaceContext.noteSeeds}
             subjectId={subject.id}
             topicId={topic.id}
             topicTitle={topic.title}

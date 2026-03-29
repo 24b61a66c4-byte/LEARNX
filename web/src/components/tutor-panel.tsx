@@ -36,9 +36,17 @@ interface TutorPanelProps {
   defaultSubjectId?: SubjectId;
   defaultTopicId?: string;
   initialPrompt?: string;
+  showFloatingActions?: boolean;
+  showSupportLanes?: boolean;
 }
 
-export function TutorPanel({ defaultSubjectId = "dbms", defaultTopicId, initialPrompt = "" }: TutorPanelProps) {
+export function TutorPanel({
+  defaultSubjectId = "dbms",
+  defaultTopicId,
+  initialPrompt = "",
+  showFloatingActions = true,
+  showSupportLanes = true,
+}: TutorPanelProps) {
   const subjects = catalogGateway.getSubjects();
   const [subjectId, setSubjectId] = useState<SubjectId>(defaultSubjectId);
   const [topicId, setTopicId] = useState<string>(defaultTopicId ?? "");
@@ -223,7 +231,7 @@ export function TutorPanel({ defaultSubjectId = "dbms", defaultTopicId, initialP
         </div>
       </div>
 
-      <div className="grid gap-5 xl:grid-cols-[1.55fr_0.72fr_0.72fr]">
+      <div className={showSupportLanes ? "grid gap-5 xl:grid-cols-[1.55fr_0.72fr_0.72fr]" : "space-y-5"}>
         <div className="surface-card space-y-5 p-5 xl:min-h-[46rem]">
           <div className="space-y-2">
             <div className="flex flex-wrap items-start justify-between gap-3">
@@ -350,67 +358,69 @@ export function TutorPanel({ defaultSubjectId = "dbms", defaultTopicId, initialP
           </div>
         </div>
 
-        <div className="-mx-1 flex snap-x gap-5 overflow-x-auto px-1 xl:mx-0 xl:grid xl:gap-5 xl:overflow-visible">
-          <div className="surface-panel min-w-[82%] snap-start p-5 xl:min-w-0">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="eyebrow">Notes lane</p>
-                <h4 className="mt-2 text-xl font-bold tracking-tight text-slate-950">20% for note capture</h4>
-              </div>
-              <span className="reward-chip">Save-ready</span>
-            </div>
-            <div className="mt-4 space-y-3">
-              {noteSeeds.map((seed) => (
-                <div className="rounded-[20px] bg-slate-50 px-3 py-3 text-sm leading-6 text-slate-700" key={seed}>
-                  {seed}
+        {showSupportLanes ? (
+          <div className="-mx-1 flex snap-x gap-5 overflow-x-auto px-1 xl:mx-0 xl:grid xl:gap-5 xl:overflow-visible">
+            <div className="surface-panel min-w-[82%] snap-start p-5 xl:min-w-0">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="eyebrow">Notes lane</p>
+                  <h4 className="mt-2 text-xl font-bold tracking-tight text-slate-950">20% for note capture</h4>
                 </div>
-              ))}
-            </div>
-            <div className="mt-4 rounded-[20px] border border-black/10 bg-white/84 px-4 py-4 shadow-sm">
-              <p className="text-sm font-semibold text-slate-900">Save move</p>
-              <p className="mt-2 text-sm leading-6 text-slate-600">
-                Turn the strongest answer into one note card, then convert one mistake into a correction card.
-              </p>
-            </div>
-          </div>
-
-          <div className="surface-panel min-w-[82%] snap-start p-5 xl:min-w-0">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="eyebrow">Search lane</p>
-                <h4 className="mt-2 text-xl font-bold tracking-tight text-slate-950">20% for search and watch</h4>
+                <span className="reward-chip">Save-ready</span>
               </div>
-              <span className="reward-chip">Web-ready</span>
-            </div>
-            <div className="mt-4 space-y-3">
-              {researchCards.map((card) =>
-                card.href ? (
-                  <Link
-                    className="block rounded-[24px] border border-black/10 bg-white/82 p-4 shadow-sm transition hover:-translate-y-0.5 hover:bg-white"
-                    href={card.href}
-                    key={card.title}
-                    rel={card.href.startsWith("http") ? "noreferrer" : undefined}
-                    target={card.href.startsWith("http") ? "_blank" : undefined}
-                  >
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{card.label}</p>
-                    <p className="mt-2 font-semibold text-slate-950">{card.title}</p>
-                    <p className="mt-2 text-sm leading-6 text-slate-600">{card.detail}</p>
-                    <p className="mt-3 text-sm font-semibold text-teal-700">{card.action}</p>
-                  </Link>
-                ) : (
-                  <div className="rounded-[24px] border border-black/10 bg-white/82 p-4 shadow-sm" key={card.title}>
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{card.label}</p>
-                    <p className="mt-2 font-semibold text-slate-950">{card.title}</p>
-                    <p className="mt-2 text-sm leading-6 text-slate-600">{card.detail}</p>
+              <div className="mt-4 space-y-3">
+                {noteSeeds.map((seed) => (
+                  <div className="rounded-[20px] bg-slate-50 px-3 py-3 text-sm leading-6 text-slate-700" key={seed}>
+                    {seed}
                   </div>
-                ),
-              )}
+                ))}
+              </div>
+              <div className="mt-4 rounded-[20px] border border-black/10 bg-white/84 px-4 py-4 shadow-sm">
+                <p className="text-sm font-semibold text-slate-900">Save move</p>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  Turn the strongest answer into one note card, then convert one mistake into a correction card.
+                </p>
+              </div>
+            </div>
+
+            <div className="surface-panel min-w-[82%] snap-start p-5 xl:min-w-0">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="eyebrow">Search lane</p>
+                  <h4 className="mt-2 text-xl font-bold tracking-tight text-slate-950">20% for search and watch</h4>
+                </div>
+                <span className="reward-chip">Web-ready</span>
+              </div>
+              <div className="mt-4 space-y-3">
+                {researchCards.map((card) =>
+                  card.href ? (
+                    <Link
+                      className="block rounded-[24px] border border-black/10 bg-white/82 p-4 shadow-sm transition hover:-translate-y-0.5 hover:bg-white"
+                      href={card.href}
+                      key={card.title}
+                      rel={card.href.startsWith("http") ? "noreferrer" : undefined}
+                      target={card.href.startsWith("http") ? "_blank" : undefined}
+                    >
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{card.label}</p>
+                      <p className="mt-2 font-semibold text-slate-950">{card.title}</p>
+                      <p className="mt-2 text-sm leading-6 text-slate-600">{card.detail}</p>
+                      <p className="mt-3 text-sm font-semibold text-teal-700">{card.action}</p>
+                    </Link>
+                  ) : (
+                    <div className="rounded-[24px] border border-black/10 bg-white/82 p-4 shadow-sm" key={card.title}>
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{card.label}</p>
+                      <p className="mt-2 font-semibold text-slate-950">{card.title}</p>
+                      <p className="mt-2 text-sm leading-6 text-slate-600">{card.detail}</p>
+                    </div>
+                  ),
+                )}
+              </div>
             </div>
           </div>
-        </div>
+        ) : null}
       </div>
 
-      {selectedTopic ? (
+      {selectedTopic && showFloatingActions ? (
         <div className="pointer-events-none fixed bottom-24 right-4 z-30 flex flex-col gap-3 sm:bottom-6">
           <Link
             className="pointer-events-auto inline-flex min-h-12 items-center justify-center rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white shadow-[0_18px_36px_rgba(15,23,42,0.2)] transition hover:bg-slate-900"
