@@ -72,6 +72,17 @@ Short version:
 2. Reduce repeated shell messaging and keep copy centered on the next learning action.
 3. Strengthen mobile rhythm and thumb-friendly flow.
 
+### Landing / Conversion Layer
+
+1. Add a real workspace visual to the hero so visitors can immediately understand the product.
+2. Tighten CTA hierarchy:
+   one strong primary action, one clearly different secondary action.
+3. Shorten hero messaging and make it more benefit-driven.
+4. Add a simple “How it works” section for first-time visitors.
+5. Add proof and completeness:
+   student badge, lightweight testimonials, footer, and stronger product framing.
+6. Keep landing improvements subordinate to the core student workspace work so LearnX stays product-first, not marketing-first.
+
 ### Backend / Realism
 
 1. Replace mock gateway flows with real API wiring.
@@ -120,6 +131,7 @@ Short version:
 - accessibility pass
 - richer reward visuals
 - stronger landing proof and conversion cues
+- hero visual, landing navbar, how-it-works section, and footer
 
 ## Acceptance Markers For The Next Pass
 
