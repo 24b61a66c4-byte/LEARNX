@@ -7,6 +7,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { CommandPalette } from "@/components/command-palette";
 import { LearnxLogo } from "@/components/learnx-logo";
 import { ONBOARDING_STORAGE_KEY } from "@/lib/constants";
+import { useClientSnapshot } from "@/lib/client-snapshot";
 import { learnerStateGateway, sessionGateway } from "@/lib/gateways";
 import { readLocalStorage } from "@/lib/storage";
 import { AppSession, DashboardView, OnboardingProfile } from "@/lib/types";
@@ -37,10 +38,6 @@ const quickActions = [
   },
 ];
 
-function getFallbackDashboard() {
-  return learnerStateGateway.getDashboard();
-}
-
 function getShellState(): {
   session: AppSession;
   dashboard: DashboardView;
@@ -51,6 +48,14 @@ function getShellState(): {
     session: sessionGateway.getSession(),
     dashboard: learnerStateGateway.getDashboard(onboarding?.preferredSubjectId),
     onboarding,
+  };
+}
+
+function getServerShellState() {
+  return {
+    session: sessionGateway.getSession(),
+    dashboard: learnerStateGateway.getDashboard(),
+    onboarding: null as OnboardingProfile | null,
   };
 }
 
@@ -94,15 +99,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [paletteOpen, setPaletteOpen] = useState(false);
-  const [shellState, setShellState] = useState(() => getShellState());
-
-  useEffect(() => {
-    const frame = window.setTimeout(() => {
-      setShellState(getShellState());
-    }, 0);
-
-    return () => window.clearTimeout(frame);
-  }, [pathname]);
+  const shellState = useClientSnapshot(getShellState, getServerShellState);
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -122,7 +119,6 @@ export function AppShell({ children }: { children: ReactNode }) {
   const focusLine = onboarding
     ? `Focus: ${onboarding.preferredSubjectId.toUpperCase()} • ${formatStudyGoal(onboarding.studyGoal)}`
     : "Choose one subject, protect the streak, and keep the flow simple.";
-  const fallbackDashboard = getFallbackDashboard();
 
   return (
     <>
@@ -201,7 +197,6 @@ export function AppShell({ children }: { children: ReactNode }) {
               className="button-secondary w-full bg-white/10 text-white hover:bg-white/15"
               onClick={() => {
                 sessionGateway.signOut();
-                setShellState(getShellState());
                 router.push("/login");
               }}
               type="button"
@@ -222,7 +217,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   <span className="reward-chip">{dashboard.rewards.leaderboardLabel}</span>
                 </div>
                 <div>
-                  <p className="eyebrow">Protected workspace</p>
+                  <p className="eyebrow">Study cockpit</p>
                   <h1 className="text-xl font-bold tracking-tight text-slate-950 sm:text-2xl">
                     Welcome back, {firstName}
                   </h1>
@@ -257,12 +252,10 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <div className="shell-stat-card">
                   <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Next move</p>
                   <p className="mt-2 text-lg font-bold tracking-tight text-slate-950">
-                    {dashboard.recommendation?.title ?? fallbackDashboard.recommendation?.title ?? "Open a drill"}
+                    {dashboard.recommendation?.title ?? "Open a drill"}
                   </p>
                   <p className="mt-1 text-sm text-slate-600">
-                    {dashboard.recommendation?.reason ??
-                      fallbackDashboard.recommendation?.reason ??
-                      "Use practice or tutor mode to create the next study win."}
+                    {dashboard.recommendation?.reason ?? "Use practice or tutor mode to create the next study win."}
                   </p>
                 </div>
               </div>
@@ -281,9 +274,9 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
           <div>
             <div>
-              <p className="eyebrow">Protected workspace</p>
+              <p className="eyebrow">Study cockpit</p>
               <h2 className="mt-2 text-lg font-bold tracking-tight text-slate-950 sm:hidden">
-                Study like it is your main app
+                Keep one study flow open
               </h2>
             </div>
           </div>

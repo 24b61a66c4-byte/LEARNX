@@ -16,7 +16,7 @@ export function AuthForm({ mode }: AuthFormProps) {
   const [submitting, setSubmitting] = useState(false);
 
   const title = useMemo(
-    () => (mode === "login" ? "Welcome back" : "Create your LearnX workspace"),
+    () => (mode === "login" ? "Enter your LearnX workspace" : "Create your LearnX workspace"),
     [mode],
   );
 
@@ -46,7 +46,8 @@ export function AuthForm({ mode }: AuthFormProps) {
         <p className="eyebrow">{mode === "login" ? "Login" : "Sign up"}</p>
         <h1 className="text-3xl font-bold tracking-tight text-slate-950">{title}</h1>
         <p className="muted text-sm">
-          This is a local mock auth flow for the frontend slice. Real auth stays out of scope for now.
+          Use any email to enter the current preview. Your study flow is saved on this device while full account sync is
+          still being wired in.
         </p>
       </div>
 

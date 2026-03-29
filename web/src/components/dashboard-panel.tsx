@@ -1,33 +1,34 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
 
 import { QuestRail } from "@/components/quest-rail";
 import { ONBOARDING_STORAGE_KEY } from "@/lib/constants";
+import { useClientSnapshot } from "@/lib/client-snapshot";
 import { catalogGateway, learnerStateGateway } from "@/lib/gateways";
 import { readLocalStorage } from "@/lib/storage";
 import { DashboardView, OnboardingProfile, ProgressSnapshot } from "@/lib/types";
 
 export function DashboardPanel() {
-  const [onboarding] = useState<OnboardingProfile | null>(() =>
-    readLocalStorage<OnboardingProfile | null>(ONBOARDING_STORAGE_KEY, null),
+  const workspaceState = useClientSnapshot(
+    () => {
+      const onboarding = readLocalStorage<OnboardingProfile | null>(ONBOARDING_STORAGE_KEY, null);
+      return {
+        onboarding,
+        dashboard: learnerStateGateway.getDashboard(onboarding?.preferredSubjectId),
+        progress: learnerStateGateway.getProgressSnapshot(),
+      };
+    },
+    () => ({
+      onboarding: null as OnboardingProfile | null,
+      dashboard: learnerStateGateway.getDashboard(),
+      progress: learnerStateGateway.getProgressSnapshot(),
+    }),
   );
-  const [dashboard] = useState<DashboardView | null>(() =>
-    learnerStateGateway.getDashboard(onboarding?.preferredSubjectId),
-  );
-  const [progress] = useState<ProgressSnapshot | null>(() => learnerStateGateway.getProgressSnapshot());
 
-  if (!dashboard || !progress) {
-    return (
-      <section className="surface-card p-6">
-        <p className="eyebrow">Loading workspace</p>
-        <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-950">
-          Preparing your student workspace...
-        </h2>
-      </section>
-    );
-  }
+  const onboarding = workspaceState.onboarding;
+  const dashboard: DashboardView = workspaceState.dashboard;
+  const progress: ProgressSnapshot = workspaceState.progress;
 
   const subjects = catalogGateway.getSubjects();
   const activeSubject = subjects.find((subject) => subject.id === onboarding?.preferredSubjectId) ?? subjects[0];

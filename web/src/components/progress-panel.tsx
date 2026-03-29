@@ -1,29 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
 
+import { useClientSnapshot } from "@/lib/client-snapshot";
 import { learnerStateGateway } from "@/lib/gateways";
-import { ProgressSnapshot } from "@/lib/types";
 
 export function ProgressPanel() {
-  const [snapshot] = useState<ProgressSnapshot | null>(() => learnerStateGateway.getProgressSnapshot());
-
-  if (!snapshot) {
-    return (
-      <section className="surface-card p-6">
-        <p className="eyebrow">Loading progress</p>
-        <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-950">
-          Collecting your latest study history...
-        </h2>
-        <div className="mt-4 grid gap-3 sm:grid-cols-3">
-          <div className="h-20 animate-pulse rounded-2xl bg-slate-200" />
-          <div className="h-20 animate-pulse rounded-2xl bg-slate-200" />
-          <div className="h-20 animate-pulse rounded-2xl bg-slate-200" />
-        </div>
-      </section>
-    );
-  }
+  const snapshot = useClientSnapshot(
+    () => learnerStateGateway.getProgressSnapshot(),
+    () => learnerStateGateway.getProgressSnapshot(),
+  );
 
   return (
     <section className="grid gap-6 lg:grid-cols-[1.1fr_1fr]">

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { KeyboardEvent, useEffect, useMemo, useState } from "react";
 
 import {
@@ -25,6 +26,12 @@ const modeDescriptions: Record<TutorMode, string> = {
   "quiz-me": "Bounce into a tutor-led self-check while the concept is still fresh.",
 };
 
+const responseStages = [
+  "Analyzing the topic",
+  "Structuring the explanation",
+  "Preparing notes and next steps",
+];
+
 interface TutorPanelProps {
   defaultSubjectId?: SubjectId;
   defaultTopicId?: string;
@@ -39,6 +46,7 @@ export function TutorPanel({ defaultSubjectId = "dbms", defaultTopicId }: TutorP
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [thread, setThread] = useState<TutorThread | null>(null);
+  const [responseStageIndex, setResponseStageIndex] = useState(0);
 
   const availableTopics = useMemo(() => catalogGateway.getTopicsBySubject(subjectId), [subjectId]);
   const wordCount = prompt.trim().length === 0 ? 0 : prompt.trim().split(/\s+/).length;
@@ -75,12 +83,25 @@ export function TutorPanel({ defaultSubjectId = "dbms", defaultTopicId }: TutorP
     setThread(existing ?? null);
   }, [subjectId, topicId]);
 
+  useEffect(() => {
+    if (!sending) {
+      return;
+    }
+
+    const interval = window.setInterval(() => {
+      setResponseStageIndex((current) => (current + 1) % responseStages.length);
+    }, 900);
+
+    return () => window.clearInterval(interval);
+  }, [sending]);
+
   async function submitPrompt() {
     if (!prompt.trim()) {
       return;
     }
 
     setSending(true);
+    setResponseStageIndex(0);
     setError(null);
 
     const threadId = thread?.id ?? createThreadId();
@@ -123,6 +144,7 @@ export function TutorPanel({ defaultSubjectId = "dbms", defaultTopicId }: TutorP
       const message = submitError instanceof Error ? submitError.message : "The copilot could not respond.";
       setError(message.replace("validation:", "Validation error:"));
     } finally {
+      setResponseStageIndex(0);
       setSending(false);
     }
   }
@@ -274,13 +296,32 @@ export function TutorPanel({ defaultSubjectId = "dbms", defaultTopicId }: TutorP
             </div>
           )}
           {sending ? (
-            <div className="space-y-2 rounded-[24px] bg-slate-100 px-4 py-3">
+            <div className="space-y-3 rounded-[24px] bg-slate-100 px-4 py-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal-700">
+                {responseStages[responseStageIndex]}
+              </p>
               <div className="h-2 w-2/3 animate-pulse rounded bg-slate-300" />
               <div className="h-2 w-1/2 animate-pulse rounded bg-slate-300" />
               <div className="h-2 w-1/3 animate-pulse rounded bg-slate-300" />
             </div>
           ) : null}
         </div>
+
+        {selectedTopic ? (
+          <div className="rounded-[24px] border border-black/10 bg-white/82 px-4 py-4 shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-slate-900">Best next step after the answer</p>
+                <p className="mt-1 text-sm leading-6 text-slate-600">
+                  Use the same topic immediately in a short drill so the explanation turns into retention.
+                </p>
+              </div>
+              <Link className="button-secondary" href={`/app/learn/${subjectId}/${selectedTopic.id}#drill-dock`}>
+                Start topic check
+              </Link>
+            </div>
+          </div>
+        ) : null}
 
         <label className="block space-y-2">
           <span className="text-sm font-semibold text-slate-800">Workspace prompt</span>

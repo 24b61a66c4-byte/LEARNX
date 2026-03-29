@@ -21,12 +21,15 @@ export function PracticeWorkspace({
 
   const subjects = catalogGateway.getSubjects();
   const topicOptions = useMemo(() => catalogGateway.getTopicsBySubject(subjectId), [subjectId]);
-  const questions = practiceGateway.getQuickPractice(subjectId, topicId || undefined);
+  const topicQuestions = practiceGateway.getQuickPractice(subjectId, topicId || undefined);
+  const usingMixedFallback = Boolean(topicId) && topicQuestions.length === 0;
+  const questions = usingMixedFallback ? practiceGateway.getQuickPractice(subjectId, undefined) : topicQuestions;
   const hasQuestions = questions.length > 0;
   const answeredCount = questions.filter((question) => Boolean(answers[question.id]?.trim())).length;
+  const selectedTopic = topicOptions.find((topic) => topic.id === topicId);
 
   return (
-    <section className="surface-card space-y-5 p-5">
+    <section className="surface-card space-y-5 p-5" id="drill-dock">
       <div className="space-y-2">
         <p className="eyebrow">Drill dock</p>
         <h3 className="text-2xl font-bold tracking-tight text-slate-950">
@@ -52,6 +55,12 @@ export function PracticeWorkspace({
             ))}
           </div>
         </div>
+        {usingMixedFallback ? (
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm leading-6 text-amber-900">
+            No seeded drill exists for <strong>{selectedTopic?.title ?? "this topic"}</strong> yet, so LearnX switched
+            you to a mixed {subjectId.toUpperCase()} drill instead of leaving the study flow empty.
+          </div>
+        ) : null}
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
@@ -79,11 +88,11 @@ export function PracticeWorkspace({
           Topic
           <select
             className="field"
-            onChange={(event) => {
-              setTopicId(event.target.value);
-              setAnswers({});
-              setResult(null);
-            }}
+              onChange={(event) => {
+                setTopicId(event.target.value);
+                setAnswers({});
+                setResult(null);
+              }}
             value={topicId}
           >
             <option value="">Mixed workspace drill</option>
@@ -150,7 +159,7 @@ export function PracticeWorkspace({
         </div>
       ) : (
         <div className="rounded-2xl border border-dashed border-black/10 px-4 py-8 text-center text-sm text-slate-500">
-          No seeded drill exists for this exact topic yet. Switch to mixed practice and keep the studio moving.
+          No question bank is available for this subject yet. Keep the lesson open and use the copilot until drills are added.
         </div>
       )}
 
@@ -161,7 +170,7 @@ export function PracticeWorkspace({
           setResult(
             practiceGateway.submit({
               subjectId,
-              topicId: topicId || undefined,
+              topicId: usingMixedFallback ? undefined : topicId || undefined,
               answers: questions.map((question) => ({
                 questionId: question.id,
                 answer: answers[question.id] ?? "",
