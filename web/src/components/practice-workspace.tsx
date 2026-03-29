@@ -28,19 +28,20 @@ export function PracticeWorkspace({
   return (
     <section className="surface-card space-y-5 p-5">
       <div className="space-y-2">
-        <p className="eyebrow">Quick practice</p>
+        <p className="eyebrow">Drill dock</p>
         <h3 className="text-2xl font-bold tracking-tight text-slate-950">
-          Run a 5-question drill without leaving the app
+          Close the loop while the concept is still fresh
         </h3>
         <p className="text-sm leading-6 text-slate-600">
-          Practice history is local-only in this slice, but the scoring contract is already separated behind a gateway.
+          The student flow should not end at chat. Read the lesson, ask the copilot, then test the idea before you
+          leave the workspace.
         </p>
         <div className="rounded-2xl border border-white/35 bg-white/70 px-4 py-4">
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="text-sm font-semibold text-slate-900">Momentum meter</p>
               <p className="mt-1 text-xs text-slate-500">
-                Keep one uninterrupted run going to stack XP and streak-safe practice.
+                Every answered question keeps the session moving toward notes, revision, and XP.
               </p>
             </div>
             <span className="reward-chip">{answeredCount}/{questions.length || 5} answered</span>
@@ -85,7 +86,7 @@ export function PracticeWorkspace({
             }}
             value={topicId}
           >
-            <option value="">Mixed subject practice</option>
+            <option value="">Mixed workspace drill</option>
             {topicOptions.map((topic) => (
               <option key={topic.id} value={topic.id}>
                 {topic.title}
@@ -100,9 +101,12 @@ export function PracticeWorkspace({
           {questions.map((question, index) => (
             <article className="surface-panel space-y-4 p-5" key={question.id}>
               <div className="flex items-start justify-between gap-3">
-                <h4 className="text-lg font-semibold text-slate-950">
-                  {index + 1}. {question.prompt}
-                </h4>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                    Drill {index + 1}
+                  </p>
+                  <h4 className="mt-2 text-lg font-semibold text-slate-950">{question.prompt}</h4>
+                </div>
                 <span className="pill">{question.type === "MCQ" ? "MCQ" : "Short answer"}</span>
               </div>
 
@@ -137,7 +141,7 @@ export function PracticeWorkspace({
                       [question.id]: event.target.value,
                     }))
                   }
-                  placeholder="Type your answer in simple exam language..."
+                  placeholder="Write it the way you would explain it in class or in an exam answer..."
                   value={answers[question.id] ?? ""}
                 />
               )}
@@ -146,7 +150,7 @@ export function PracticeWorkspace({
         </div>
       ) : (
         <div className="rounded-2xl border border-dashed border-black/10 px-4 py-8 text-center text-sm text-slate-500">
-          No question bank is seeded for this exact topic yet. Switch to mixed subject practice to keep moving.
+          No seeded drill exists for this exact topic yet. Switch to mixed practice and keep the studio moving.
         </div>
       )}
 
@@ -167,23 +171,36 @@ export function PracticeWorkspace({
         }
         type="button"
       >
-        Submit practice
+        Score this drill
       </button>
 
       {result ? (
         <div className="surface-panel space-y-5 p-5">
           <div>
-            <p className="eyebrow">Result</p>
-            <h4 className="mt-2 text-2xl font-bold tracking-tight text-slate-950">
-              {result.scorePercent}% score
-            </h4>
+            <p className="eyebrow">Drill result</p>
+            <h4 className="mt-2 text-2xl font-bold tracking-tight text-slate-950">{result.scorePercent}% score</h4>
             <p className="mt-2 text-sm text-slate-600">
-              {result.correctCount} correct out of {result.totalCount}.
+              {result.correctCount} correct out of {result.totalCount}. Use the misses as note prompts, not just marks.
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
               <span className="reward-chip">+{result.xpEarned} XP</span>
               {result.badgeAwarded ? <span className="reward-chip">{result.badgeAwarded}</span> : null}
               {result.correctCount === result.totalCount ? <span className="reward-chip">Perfect chain</span> : null}
+            </div>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="rounded-[24px] border border-black/10 bg-white/82 p-4 shadow-sm">
+              <p className="text-sm font-semibold text-slate-900">Next note to make</p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                Save the first wrong explanation as a correction card in your notebook.
+              </p>
+            </div>
+            <div className="rounded-[24px] border border-black/10 bg-white/82 p-4 shadow-sm">
+              <p className="text-sm font-semibold text-slate-900">Best follow-up</p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                Re-open the copilot and ask it to explain the exact mistakes from this drill.
+              </p>
             </div>
           </div>
 
