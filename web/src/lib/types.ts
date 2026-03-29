@@ -8,6 +8,8 @@ export type StudyGoal =
   | "revise-weak-topics";
 export type ExamTarget = "semester-exam" | "internal-assessment" | "lab-viva" | "interview-prep";
 export type LaunchMode = "lesson" | "coach" | "streak";
+export type CognitiveGroup = "kids" | "tweens" | "teens" | "adults";
+export type AccessibilityFeature = "high-contrast" | "large-text" | "screen-reader" | "voice-mode";
 
 export interface Subject {
   id: SubjectId;
@@ -87,6 +89,13 @@ export interface OnboardingProfile {
   studyGoal: StudyGoal;
   examTarget?: ExamTarget;
   launchMode?: LaunchMode;
+  age?: number;
+  cognitiveGroup?: CognitiveGroup;
+  interests?: string[];
+  enableVisualDiagrams?: boolean;
+  enableVoiceInput?: boolean;
+  enableQuizMode?: boolean;
+  accessibilityFeatures?: AccessibilityFeature[];
 }
 
 export interface ProgressTopicSummary {

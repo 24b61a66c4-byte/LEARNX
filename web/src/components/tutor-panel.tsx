@@ -254,7 +254,8 @@ export function TutorPanel({
             <div className="-mx-1 mt-2 flex snap-x gap-2 overflow-x-auto px-1 pb-1">
               {samplePrompts.map((item) => (
                 <button
-                  className="min-w-[14rem] snap-start rounded-full border border-black/10 px-3 py-1 text-left text-xs font-semibold text-slate-700 transition hover:bg-slate-100"
+                  aria-label={`Use sample prompt: ${item}`}
+                  className="min-w-[14rem] snap-start rounded-full border border-black/10 px-3 py-1 text-left text-xs font-semibold text-slate-700 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-950 focus:ring-offset-2"
                   key={item}
                   onClick={() => setPrompt(item)}
                   type="button"
@@ -284,9 +285,11 @@ export function TutorPanel({
             {thread?.messages?.length ? (
               thread.messages.map((message) => (
                 <article
+                  aria-label={`${message.role === "assistant" ? "Copilot" : "Your"} message: ${message.text.substring(0, 50)}...`}
                   className={`rounded-[24px] px-4 py-3 text-sm leading-6 ${message.role === "assistant" ? "bg-teal-50 text-slate-800" : "bg-slate-950 text-white"
                     }`}
                   key={message.id}
+                  role="region"
                 >
                   <p className="mb-1 text-xs font-semibold uppercase tracking-[0.18em] opacity-70">
                     {message.role === "assistant" ? "LearnX copilot" : "You"}
@@ -314,7 +317,8 @@ export function TutorPanel({
           <label className="block space-y-2">
             <span className="text-sm font-semibold text-slate-800">Workspace prompt</span>
             <textarea
-              className="field min-h-32 resize-y"
+              aria-label="Enter your question or prompt for the copilot (Enter to send, Shift+Enter for newline)"
+              className="field min-h-32 resize-y focus:outline-none focus:ring-2 focus:ring-slate-950 focus:ring-offset-2"
               onKeyDown={handlePromptKeyDown}
               onChange={(event) => setPrompt(event.target.value)}
               placeholder="Explain the topic like a short lecture, tell me what to search next, and turn the answer into notes. (Enter to send, Shift+Enter for newline)"
@@ -333,7 +337,8 @@ export function TutorPanel({
           ) : null}
 
           <button
-            className="button-primary w-full"
+            aria-label={sending ? "Generating response from copilot" : `Send prompt to copilot (${wordCount} words)`}
+            className="button-primary w-full focus:outline-none focus:ring-2 focus:ring-slate-950 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={sending || !prompt.trim()}
             onClick={submitPrompt}
             type="button"

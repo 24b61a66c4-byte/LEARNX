@@ -60,6 +60,31 @@ Short version:
 - subject cards now surface mastery preview, topic coverage, and continue-topic hints
 - topic cards now show topic-level progress state plus direct lesson and drill actions
 
+### 7. Profile Upgrade & Accessibility Pass
+
+- added GitHub-style streak calendar to profile showing 12-week practice activity with current and longest streak tracking
+- created `StreakCalendar` component with intensity visualization (none/light/medium/strong) based on daily drill count
+- added "Export Progress Report" functionality that generates a browser-printable PDF summary with:
+  - student name, exam target, launch style, preferred subject
+  - practice session count, total XP, average score, distinct topics practiced
+  - recent session history and study notes count
+  - date generated and link to LearnX app
+- enhanced profile page as a student control center with:
+  - momentum snapshot showing XP, level, and leaderboard rank
+  - badges earned display
+  - study goal context
+  - clear export and sign-out actions
+- accessibility hardening across interactive surfaces:
+  - added `aria-label` to icon-only and action buttons (search palette, sign out, submit drill, send tutor prompt)
+  - improved quiz MCQ accessibility with `<fieldset>` container, `<legend>`, and aria-labels for options (A, B, C, D)
+  - added focus ring styles (focus:outline-none focus:ring-2 focus:ring-offset-2) on buttons and form inputs
+  - added `aria-pressed` state to tutor mode selector buttons
+  - added `aria-label` to sample prompt buttons and tutor textarea with context
+  - improved message accessibility in tutor thread with `role="region"` and aria-labels
+  - disabled state styling and aria accuracy for practice submit button with answered/total context
+  - improved command palette button keyboard shortcut labeling (Ctrl+K)
+  - added visible focus indicators and improved keyboard navigation across all new components
+
 ## Confirmed Improvement Areas
 
 ### Product Foundation

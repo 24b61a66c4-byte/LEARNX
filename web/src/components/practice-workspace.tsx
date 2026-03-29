@@ -200,14 +200,17 @@ export function PracticeWorkspace({
               </div>
 
               {question.type === "MCQ" ? (
-                <div className="grid gap-3">
-                  {question.options.map((option) => (
+                <fieldset className="space-y-3">
+                  <legend className="sr-only">Select your answer</legend>
+                  {question.options.map((option, optionIndex) => (
                     <label
-                      className="flex items-center gap-3 rounded-2xl border border-black/10 bg-white px-4 py-3"
+                      className="flex items-center gap-3 rounded-2xl border border-black/10 bg-white px-4 py-3 cursor-pointer transition hover:bg-slate-50 focus-within:ring-2 focus-within:ring-slate-950 focus-within:ring-offset-2"
                       key={option}
                     >
                       <input
+                        aria-label={`Option ${String.fromCharCode(65 + optionIndex)}: ${option}`}
                         checked={answers[question.id] === option}
+                        className="focus:outline-none"
                         name={question.id}
                         onChange={() =>
                           setAnswers((current) => ({
@@ -220,10 +223,11 @@ export function PracticeWorkspace({
                       <span className="text-sm text-slate-700">{option}</span>
                     </label>
                   ))}
-                </div>
+                </fieldset>
               ) : (
                 <textarea
-                  className="field min-h-24 resize-y"
+                  aria-label={`Write your answer to: ${question.prompt}`}
+                  className="field min-h-24 resize-y focus:outline-none focus:ring-2 focus:ring-slate-950 focus:ring-offset-2"
                   onChange={(event) =>
                     setAnswers((current) => ({
                       ...current,
@@ -256,7 +260,9 @@ export function PracticeWorkspace({
 
       {hasQuestions ? (
         <button
-          className="button-primary w-full"
+          aria-label={`Score this drill (${answeredCount}/${questions.length} questions answered)`}
+          className="button-primary w-full focus:outline-none focus:ring-2 focus:ring-slate-950 focus:ring-offset-2"
+          disabled={answeredCount < questions.length}
           onClick={() => {
             const nextResult = practiceGateway.submit({
               subjectId,

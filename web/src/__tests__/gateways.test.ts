@@ -1,6 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { catalogGateway, learnerStateGateway, notesGateway, practiceGateway, sessionGateway } from "@/lib/gateways";
+import {
+  catalogGateway,
+  getServerDashboard,
+  getServerProgressSnapshot,
+  learnerStateGateway,
+  notesGateway,
+  practiceGateway,
+  sessionGateway,
+} from "@/lib/gateways";
 import { readLocalStorage, writeLocalStorage } from "@/lib/storage";
 
 vi.mock("@/lib/storage", () => ({
@@ -34,6 +42,30 @@ describe("Catalog Gateway", () => {
     const subjects = catalogGateway.getSubjects();
     expect(Array.isArray(subjects)).toBe(true);
     expect(subjects.length).toBeGreaterThan(0);
+  });
+});
+
+describe("Server-safe snapshots", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("returns a deterministic server progress snapshot without storage reads", () => {
+    const snapshot = getServerProgressSnapshot();
+
+    expect(snapshot.completedAttempts).toBe(0);
+    expect(snapshot.recentActivity).toHaveLength(0);
+    expect(snapshot.rewards.level).toBe(1);
+    expect(vi.mocked(readLocalStorage)).not.toHaveBeenCalled();
+  });
+
+  it("returns a server dashboard fallback without storage reads", () => {
+    const dashboard = getServerDashboard("dbms");
+
+    expect(dashboard.todayAttempts).toBe(0);
+    expect(dashboard.quickPracticeHref).toBe("/app/practice");
+    expect(dashboard.recommendation).not.toBeNull();
+    expect(vi.mocked(readLocalStorage)).not.toHaveBeenCalled();
   });
 });
 

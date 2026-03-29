@@ -204,7 +204,8 @@ export function AppShell({ children }: { children: ReactNode }) {
               <p className="text-sm text-slate-300">{session.profile?.email ?? "local session"}</p>
             </div>
             <button
-              className="button-secondary w-full bg-white/10 text-white hover:bg-white/15"
+              aria-label="Sign out of LearnX and return to login"
+              className="button-secondary w-full bg-white/10 text-white hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-slate-950"
               onClick={() => {
                 sessionGateway.signOut();
                 router.push("/login");
@@ -240,7 +241,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   <Link className="button-secondary" href={dashboard.quickPracticeHref}>
                     Quick practice
                   </Link>
-                  <button className="button-secondary px-4" onClick={() => setPaletteOpen(true)} type="button">
+                  <button aria-label="Open command palette to search topics (Ctrl+K)" className="button-secondary px-4 focus:outline-none focus:ring-2 focus:ring-slate-950 focus:ring-offset-2" onClick={() => setPaletteOpen(true)} type="button">
                     Search topics
                   </button>
                 </div>
