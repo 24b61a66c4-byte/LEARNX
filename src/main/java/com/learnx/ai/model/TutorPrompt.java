@@ -11,9 +11,9 @@ public record TutorPrompt(
         String topicSummary,
         String examTitle,
         String learnerSummary,
+        String conversationContext,
         String userQuestion,
-        List<SearchResult> searchResults
-) {
+        List<SearchResult> searchResults) {
 
     public TutorPrompt {
         subjectName = normalize(subjectName);
@@ -21,6 +21,7 @@ public record TutorPrompt(
         topicSummary = normalize(topicSummary);
         examTitle = normalize(examTitle);
         learnerSummary = normalize(learnerSummary);
+        conversationContext = normalize(conversationContext);
         userQuestion = normalize(userQuestion);
         searchResults = searchResults == null ? List.of() : List.copyOf(searchResults);
     }
@@ -35,7 +36,11 @@ public record TutorPrompt(
                 .append("Topic Summary: ").append(topicSummary).append('\n')
                 .append("Exam Context: ").append(examTitle.isBlank() ? "General study mode" : examTitle).append('\n')
                 .append("Learner Summary: ").append(learnerSummary).append('\n')
-                .append("Learner Question: ").append(userQuestion.isBlank() ? "Explain this topic clearly." : userQuestion).append('\n');
+                .append("Recent Conversation Context: ")
+                .append(conversationContext.isBlank() ? "No prior chat context available." : conversationContext)
+                .append('\n')
+                .append("Learner Question: ")
+                .append(userQuestion.isBlank() ? "Explain this topic clearly." : userQuestion).append('\n');
 
         if (!searchResults.isEmpty()) {
             builder.append("\nGrounding Sources:\n");

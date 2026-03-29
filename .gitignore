@@ -16,6 +16,12 @@
 /web/public/sw.js
 /web/public/workbox-*.js
 
+# Build artifacts and binaries
+*.class
+*.jar
+*.war
+*.msi
+
 # OS
 Thumbs.db
 .DS_Store

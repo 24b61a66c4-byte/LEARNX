@@ -21,10 +21,7 @@ export function PracticeWorkspace({
 
   const subjects = catalogGateway.getSubjects();
   const topicOptions = useMemo(() => catalogGateway.getTopicsBySubject(subjectId), [subjectId]);
-  const questions = useMemo(
-    () => practiceGateway.getQuickPractice(subjectId, topicId || undefined),
-    [subjectId, topicId],
-  );
+  const questions = practiceGateway.getQuickPractice(subjectId, topicId || undefined);
   const hasQuestions = questions.length > 0;
 
   return (
@@ -171,9 +168,8 @@ export function PracticeWorkspace({
           <div className="space-y-3">
             {result.answers.map((answer) => (
               <article
-                className={`rounded-2xl border px-4 py-4 ${
-                  answer.correct ? "border-teal-200 bg-teal-50" : "border-rose-200 bg-rose-50"
-                }`}
+                className={`rounded-2xl border px-4 py-4 ${answer.correct ? "border-teal-200 bg-teal-50" : "border-rose-200 bg-rose-50"
+                  }`}
                 key={answer.questionId}
               >
                 <p className="font-semibold text-slate-950">{answer.prompt}</p>

@@ -1,14 +1,14 @@
 package com.learnx.core.service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-
 import com.learnx.core.model.Question;
 import com.learnx.core.model.QuestionEvaluation;
+import com.learnx.core.model.QuestionType;
 import com.learnx.core.model.QuizAttempt;
 import com.learnx.core.model.QuizEvaluation;
 import com.learnx.core.model.SubmittedAnswer;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 
 /**
  * Scores learner quiz attempts against the immutable catalog question bank.
@@ -50,8 +50,7 @@ public class QuizEngine {
                 totalScore,
                 correctCount,
                 Math.max(0, totalQuestions - correctCount),
-                attempt.getDurationSeconds()
-        );
+                attempt.getDurationSeconds());
     }
 
     private QuestionEvaluation evaluateQuestion(Question question, SubmittedAnswer submittedAnswer) {
@@ -70,8 +69,7 @@ public class QuizEngine {
                 correct,
                 correct ? 1.0 : 0.0,
                 question.explanation(),
-                List.of()
-        );
+                List.of());
     }
 
     private QuestionEvaluation evaluateShortAnswer(Question question, SubmittedAnswer submittedAnswer) {
@@ -92,8 +90,7 @@ public class QuizEngine {
                 correct,
                 score,
                 question.explanation(),
-                matchedKeywords
-        );
+                matchedKeywords);
     }
 
     private void validateQuestionContext(Question question, QuizAttempt attempt) {

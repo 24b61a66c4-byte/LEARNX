@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { ONBOARDING_STORAGE_KEY } from "@/lib/constants";
 import { learnerStateGateway } from "@/lib/gateways";
@@ -9,16 +9,13 @@ import { readLocalStorage } from "@/lib/storage";
 import { DashboardView, OnboardingProfile, ProgressSnapshot } from "@/lib/types";
 
 export function DashboardPanel() {
-  const [onboarding, setOnboarding] = useState<OnboardingProfile | null>(null);
-  const [dashboard, setDashboard] = useState<DashboardView | null>(null);
-  const [progress, setProgress] = useState<ProgressSnapshot | null>(null);
-
-  useEffect(() => {
-    const storedOnboarding = readLocalStorage<OnboardingProfile | null>(ONBOARDING_STORAGE_KEY, null);
-    setOnboarding(storedOnboarding);
-    setDashboard(learnerStateGateway.getDashboard(storedOnboarding?.preferredSubjectId));
-    setProgress(learnerStateGateway.getProgressSnapshot());
-  }, []);
+  const [onboarding] = useState<OnboardingProfile | null>(() =>
+    readLocalStorage<OnboardingProfile | null>(ONBOARDING_STORAGE_KEY, null),
+  );
+  const [dashboard] = useState<DashboardView | null>(() =>
+    learnerStateGateway.getDashboard(onboarding?.preferredSubjectId),
+  );
+  const [progress] = useState<ProgressSnapshot | null>(() => learnerStateGateway.getProgressSnapshot());
 
   if (!dashboard || !progress) {
     return (

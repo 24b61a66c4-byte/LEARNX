@@ -1,0 +1,21 @@
+version: 2
+updates:
+  - package-ecosystem: "maven"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "java"
+    commit-message:
+      prefix: "deps"
+
+  - package-ecosystem: "npm"
+    directory: "/web"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "web"
+    commit-message:
+      prefix: "deps"

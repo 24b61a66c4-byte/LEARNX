@@ -1,10 +1,12 @@
 import {
+  EXAM_WORD_HINTS,
   LAST_TOPIC_KEY,
   ONBOARDED_COOKIE,
   ONBOARDING_STORAGE_KEY,
   PRACTICE_HISTORY_KEY,
   SESSION_COOKIE,
   SESSION_STORAGE_KEY,
+  TUTOR_MAX_PROMPT_LENGTH,
   TUTOR_THREADS_KEY,
 } from "@/lib/constants";
 import {
@@ -93,6 +95,11 @@ function wait(ms: number) {
   return new Promise((resolve) => {
     setTimeout(resolve, ms);
   });
+}
+
+function hasBlockedContent(prompt: string) {
+  const normalized = prompt.toLowerCase();
+  return ["hate", "kill", "abuse", "harass"].some((item) => normalized.includes(item));
 }
 
 function getOnboardingProfile(): OnboardingProfile | null {
@@ -282,6 +289,17 @@ export const learnerStateGateway: LearnerStateGateway = {
 
 export const tutorGateway: TutorGateway = {
   async ask({ subjectId, topicId, prompt, mode }) {
+    const sanitized = prompt.trim();
+    if (!sanitized) {
+      throw new Error("validation: Prompt must not be empty.");
+    }
+    if (sanitized.length > TUTOR_MAX_PROMPT_LENGTH) {
+      throw new Error(`validation: Prompt exceeds ${TUTOR_MAX_PROMPT_LENGTH} characters.`);
+    }
+    if (hasBlockedContent(sanitized)) {
+      throw new Error("validation: Prompt violates tutor safety policy.");
+    }
+
     await wait(450);
     const subject = getSubjectById(subjectId);
     const topic = topicId ? getTopicById(topicId) : null;
@@ -295,12 +313,21 @@ export const tutorGateway: TutorGateway = {
       "quiz-me": `Quick self-check on ${focus}: explain it in one line, give one example, and identify one common mistake or confusion.`,
     };
 
+    const answer = `${answerMap[mode]} Your prompt was: "${sanitized}".`;
     return {
-      answer: `${answerMap[mode]} Your prompt was: "${prompt.trim()}".`,
+      answer,
       followUpPrompt:
         mode === "quiz-me"
           ? "Want me to generate a 2-question drill on this topic next?"
-          : "Want a shorter note version or a quick quiz on this topic?",
+          : mode === "exam-answer"
+            ? EXAM_WORD_HINTS["exam-answer"]
+            : "Want a shorter note version or a quick quiz on this topic?",
+      aiResponse: {
+        text: answer,
+        model: "learnx-mock-v1",
+        mode,
+        latencyMs: 450,
+      },
     };
   },
   getThreads() {

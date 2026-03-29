@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { ONBOARDING_STORAGE_KEY } from "@/lib/constants";
@@ -10,17 +10,10 @@ import { AppSession, OnboardingProfile } from "@/lib/types";
 
 export default function ProfilePage() {
   const router = useRouter();
-  const [session, setSession] = useState<AppSession>({
-    isAuthenticated: false,
-    profile: null,
-    onboarded: false,
-  });
-  const [onboarding, setOnboarding] = useState<OnboardingProfile | null>(null);
-
-  useEffect(() => {
-    setSession(sessionGateway.getSession());
-    setOnboarding(readLocalStorage<OnboardingProfile | null>(ONBOARDING_STORAGE_KEY, null));
-  }, []);
+  const [session] = useState<AppSession>(() => sessionGateway.getSession());
+  const [onboarding] = useState<OnboardingProfile | null>(() =>
+    readLocalStorage<OnboardingProfile | null>(ONBOARDING_STORAGE_KEY, null),
+  );
 
   return (
     <section className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">

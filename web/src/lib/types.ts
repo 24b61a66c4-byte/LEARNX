@@ -53,13 +53,13 @@ export interface Question {
 export interface LessonBlock {
   id: string;
   kind:
-    | "summary"
-    | "deep-dive"
-    | "steps"
-    | "example"
-    | "exam"
-    | "mistake-watch"
-    | "formula";
+  | "summary"
+  | "deep-dive"
+  | "steps"
+  | "example"
+  | "exam"
+  | "mistake-watch"
+  | "formula";
   title: string;
   content: string[];
 }
@@ -148,6 +148,12 @@ export interface TutorMessage {
 export interface TutorResponse {
   answer: string;
   followUpPrompt: string;
+  aiResponse: {
+    text: string;
+    model: string;
+    mode: TutorMode;
+    latencyMs: number;
+  };
 }
 
 export interface TutorThread {

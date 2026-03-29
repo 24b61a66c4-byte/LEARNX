@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { catalogGateway } from "@/lib/gateways";
@@ -15,22 +15,21 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
   const [query, setQuery] = useState("");
   const results = useMemo(() => catalogGateway.search(query), [query]);
 
+  const handleClose = useCallback(() => {
+    setQuery("");
+    onClose();
+  }, [onClose]);
+
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape" && open) {
-        onClose();
+        handleClose();
       }
     }
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [onClose, open]);
-
-  useEffect(() => {
-    if (!open) {
-      setQuery("");
-    }
-  }, [open]);
+  }, [handleClose, open]);
 
   if (!open) {
     return null;
@@ -41,7 +40,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
       aria-modal="true"
       aria-label="Command palette"
       className="fixed inset-0 z-50 flex items-start justify-center bg-slate-950/30 px-4 pt-[10vh] backdrop-blur-sm"
-      onClick={onClose}
+      onClick={handleClose}
       role="dialog"
     >
       <div className="surface-card w-full max-w-2xl overflow-hidden" onClick={(event) => event.stopPropagation()}>
@@ -70,7 +69,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
                   <button
                     className="flex w-full items-center justify-between rounded-2xl border border-black/10 bg-white/70 px-4 py-3 text-left transition hover:bg-white"
                     onClick={() => {
-                      onClose();
+                      handleClose();
                       router.push(result.href);
                     }}
                     type="button"

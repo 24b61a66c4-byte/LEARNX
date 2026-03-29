@@ -21,9 +21,9 @@ class AiProviderTest {
                 "Normalization reduces redundancy and anomalies.",
                 "JNTU R22 DBMS",
                 "Overall accuracy=0.40",
+                "",
                 "Explain normalization in exam style",
-                List.of()
-        ));
+                List.of()));
 
         assertTrue(response.fallback());
         assertFalse(response.explanation().isBlank());

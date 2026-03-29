@@ -1,15 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { KeyboardEvent, useEffect, useMemo, useState } from "react";
 
+import { EXAM_WORD_HINTS, SUBJECT_SAMPLE_PROMPTS, TUTOR_MAX_PROMPT_LENGTH, TUTOR_MODE_LABELS } from "@/lib/constants";
 import { catalogGateway, tutorGateway } from "@/lib/gateways";
 import { SubjectId, TutorMode, TutorThread } from "@/lib/types";
-
-const modeLabels: Record<TutorMode, string> = {
-  explain: "Explain",
-  "exam-answer": "Exam answer",
-  "quiz-me": "Quiz me",
-};
 
 function createThreadId() {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
@@ -34,6 +29,8 @@ export function TutorPanel({ defaultSubjectId = "dbms", defaultTopicId }: TutorP
   const [thread, setThread] = useState<TutorThread | null>(null);
 
   const availableTopics = useMemo(() => catalogGateway.getTopicsBySubject(subjectId), [subjectId]);
+  const wordCount = prompt.trim().length === 0 ? 0 : prompt.trim().split(/\s+/).length;
+  const samplePrompts = SUBJECT_SAMPLE_PROMPTS[subjectId] ?? SUBJECT_SAMPLE_PROMPTS.dbms;
 
   useEffect(() => {
     const existing = tutorGateway
@@ -71,7 +68,7 @@ export function TutorPanel({ defaultSubjectId = "dbms", defaultTopicId }: TutorP
         id: createThreadId(),
         role: "assistant" as const,
         mode,
-        text: `${response.answer}\n\n${response.followUpPrompt}`,
+        text: `${response.aiResponse.text}\n\n${response.followUpPrompt}\n\n(Model: ${response.aiResponse.model}, latency: ${response.aiResponse.latencyMs} ms)`,
         createdAt: new Date().toISOString(),
       };
 
@@ -86,10 +83,18 @@ export function TutorPanel({ defaultSubjectId = "dbms", defaultTopicId }: TutorP
       tutorGateway.appendThread(nextThread);
       setThread(nextThread);
       setPrompt("");
-    } catch {
-      setError("The mock tutor could not respond. Try again once more.");
+    } catch (submitError) {
+      const message = submitError instanceof Error ? submitError.message : "The tutor could not respond.";
+      setError(message.replace("validation:", "Validation error:"));
     } finally {
       setSending(false);
+    }
+  }
+
+  function handlePromptKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      void submitPrompt();
     }
   }
 
@@ -135,25 +140,40 @@ export function TutorPanel({ defaultSubjectId = "dbms", defaultTopicId }: TutorP
       </div>
 
       <div className="flex flex-wrap gap-2">
-        {(Object.keys(modeLabels) as TutorMode[]).map((item) => (
+        {(Object.keys(TUTOR_MODE_LABELS) as TutorMode[]).map((item) => (
           <button
             className={`pill ${mode === item ? "bg-slate-950 text-white" : ""}`}
             key={item}
             onClick={() => setMode(item)}
             type="button"
           >
-            {modeLabels[item]}
+            {TUTOR_MODE_LABELS[item]}
           </button>
         ))}
+      </div>
+
+      <div className="rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm text-slate-600">
+        <p className="font-semibold text-slate-800">Try a sample prompt</p>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {samplePrompts.map((item) => (
+            <button
+              className="rounded-full border border-black/10 px-3 py-1 text-xs font-semibold text-slate-700 transition hover:bg-slate-100"
+              key={item}
+              onClick={() => setPrompt(item)}
+              type="button"
+            >
+              {item}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="surface-panel max-h-80 space-y-3 overflow-y-auto p-4">
         {thread?.messages?.length ? (
           thread.messages.map((message) => (
             <article
-              className={`rounded-2xl px-4 py-3 text-sm leading-6 ${
-                message.role === "assistant" ? "bg-teal-50 text-slate-800" : "bg-slate-950 text-white"
-              }`}
+              className={`rounded-2xl px-4 py-3 text-sm leading-6 ${message.role === "assistant" ? "bg-teal-50 text-slate-800" : "bg-slate-950 text-white"
+                }`}
               key={message.id}
             >
               <p className="mb-1 text-xs font-semibold uppercase tracking-[0.18em] opacity-70">
@@ -167,16 +187,31 @@ export function TutorPanel({ defaultSubjectId = "dbms", defaultTopicId }: TutorP
             Ask about a topic, request an exam-style answer, or switch to quiz mode for a self-check.
           </div>
         )}
+        {sending ? (
+          <div className="space-y-2 rounded-2xl bg-slate-100 px-4 py-3">
+            <div className="h-2 w-2/3 animate-pulse rounded bg-slate-300" />
+            <div className="h-2 w-1/2 animate-pulse rounded bg-slate-300" />
+            <div className="h-2 w-1/3 animate-pulse rounded bg-slate-300" />
+          </div>
+        ) : null}
       </div>
 
       <label className="block space-y-2">
         <span className="text-sm font-semibold text-slate-800">Prompt</span>
         <textarea
           className="field min-h-28 resize-y"
+          onKeyDown={handlePromptKeyDown}
           onChange={(event) => setPrompt(event.target.value)}
-          placeholder="Explain joins with one easy example and then give me a 5-mark answer."
+          placeholder="Explain joins with one easy example and then give me a 5-mark answer. (Enter to send, Shift+Enter for newline)"
           value={prompt}
         />
+        <div className="flex items-center justify-between text-xs text-slate-500">
+          <span>{wordCount} words</span>
+          <span>{prompt.length}/{TUTOR_MAX_PROMPT_LENGTH} chars</span>
+        </div>
+        {mode !== "explain" ? (
+          <p className="text-xs font-semibold text-teal-700">{EXAM_WORD_HINTS[mode]}</p>
+        ) : null}
       </label>
 
       {error ? (

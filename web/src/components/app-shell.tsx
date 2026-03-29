@@ -28,9 +28,8 @@ function NavLink({
 }) {
   return (
     <Link
-      className={`inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold transition ${
-        active ? "bg-slate-950 text-white shadow-md" : "text-slate-600 hover:bg-white/80"
-      }`}
+      className={`inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold transition ${active ? "bg-slate-950 text-white shadow-md" : "text-slate-600 hover:bg-white/80"
+        }`}
       href={href}
     >
       {label}
@@ -42,15 +41,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [paletteOpen, setPaletteOpen] = useState(false);
-  const [session, setSession] = useState<AppSession>({
-    isAuthenticated: false,
-    profile: null,
-    onboarded: false,
-  });
-
-  useEffect(() => {
-    setSession(sessionGateway.getSession());
-  }, []);
+  const [session] = useState<AppSession>(() => sessionGateway.getSession());
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -66,7 +57,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <>
-      <CommandPalette onClose={() => setPaletteOpen(false)} open={paletteOpen} />
+      {paletteOpen ? <CommandPalette onClose={() => setPaletteOpen(false)} open={paletteOpen} /> : null}
       <div className="mx-auto flex min-h-[calc(100vh-77px)] w-full max-w-7xl gap-6 px-4 py-6 sm:px-6 lg:px-8">
         <aside className="surface-card sticky top-6 hidden h-[calc(100vh-7rem)] w-72 shrink-0 flex-col justify-between px-5 py-6 lg:flex">
           <div className="space-y-6">
