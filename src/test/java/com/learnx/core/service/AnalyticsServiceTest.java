@@ -19,7 +19,7 @@ class AnalyticsServiceTest {
         CatalogService catalogService = new CatalogService(new com.learnx.core.store.JsonCatalogStore());
         ProgressService progressService = new ProgressService();
         AnalyticsService analyticsService = new AnalyticsService(catalogService);
-        LearnerProfile learnerProfile = new LearnerProfile("learner-1", "Ricky");
+        LearnerProfile learnerProfile = new LearnerProfile("learner-1", "Ricky", 15);
 
         QuizEvaluation evaluation = new QuizEvaluation(
                 "learner-1",

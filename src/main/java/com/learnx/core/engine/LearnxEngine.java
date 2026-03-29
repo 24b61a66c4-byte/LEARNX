@@ -59,7 +59,7 @@ public class LearnxEngine {
     }
 
     public LearnerProfile initializeLearnerProfile(String learnerId, String displayName) {
-        LearnerProfile learnerProfile = new LearnerProfile(learnerId, displayName);
+        LearnerProfile learnerProfile = new LearnerProfile(learnerId, displayName, 15); // Default age to 15 (Teens) if not provided.
         learnerStore.save(learnerProfile);
         return learnerProfile;
     }

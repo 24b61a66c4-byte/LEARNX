@@ -15,7 +15,7 @@ class ProgressServiceTest {
 
     @Test
     void updatesMasteryAfterQuiz() {
-        LearnerProfile learnerProfile = new LearnerProfile("learner-1", "Ricky");
+        LearnerProfile learnerProfile = new LearnerProfile("learner-1", "Ricky", 15);
         ProgressService progressService = new ProgressService();
 
         QuizEvaluation evaluation = new QuizEvaluation(
@@ -38,7 +38,7 @@ class ProgressServiceTest {
 
     @Test
     void marksWeakTopicAfterRepeatedPoorPerformance() {
-        LearnerProfile learnerProfile = new LearnerProfile("learner-1", "Ricky");
+        LearnerProfile learnerProfile = new LearnerProfile("learner-1", "Ricky", 15);
         ProgressService progressService = new ProgressService();
 
         QuizEvaluation evaluation = new QuizEvaluation(

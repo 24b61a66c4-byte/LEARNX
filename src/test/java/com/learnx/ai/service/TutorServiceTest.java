@@ -40,7 +40,7 @@ class TutorServiceTest {
                 TutorResponse response = tutorService.answerQuestion(
                                 new TutorRequest("learner-1", "dbms", "dbms-sql-basics", "dbms-jntu-r22",
                                                 "Explain WHERE clause", 3),
-                                new LearnerProfile("learner-1", "Ricky"),
+                                new LearnerProfile("learner-1", "Ricky", 15),
                                 new PerformanceSnapshot(0.6, 0.7, 2.0, List.of("dbms-joins"), List.of(), Map.of()));
 
                 assertFalse(response.fallback());
@@ -60,7 +60,7 @@ class TutorServiceTest {
                                 new FallbackAiProvider(), 2000, false);
                 TutorResponse response = tutorService.answerQuestion(
                                 new TutorRequest("learner-1", "dbms", "dbms-sql-basics", "", "Explain SQL basics", 3),
-                                new LearnerProfile("learner-1", "Ricky"),
+                                new LearnerProfile("learner-1", "Ricky", 15),
                                 new PerformanceSnapshot(0.0, 0.0, 0.0, List.of(), List.of(), Map.of()));
 
                 assertTrue(response.fallback());
@@ -79,7 +79,7 @@ class TutorServiceTest {
                 assertThrows(IllegalArgumentException.class, () -> tutorService.answerQuestion(
                                 new TutorRequest("learner-1", "dbms", "dbms-sql-basics", "", "How to kill a process",
                                                 3),
-                                new LearnerProfile("learner-1", "Ricky"),
+                                new LearnerProfile("learner-1", "Ricky", 15),
                                 new PerformanceSnapshot(0.0, 0.0, 0.0, List.of(), List.of(), Map.of())));
         }
 
@@ -95,7 +95,7 @@ class TutorServiceTest {
                 TutorResponse response = tutorService.answerQuestion(
                                 new TutorRequest("learner-1", "dbms", "dbms-sql-basics", "",
                                                 "What SQL skill should I learn first?", 3),
-                                new LearnerProfile("learner-1", "Ricky"),
+                                new LearnerProfile("learner-1", "Ricky", 15),
                                 new PerformanceSnapshot(0.0, 0.0, 0.0, List.of(), List.of(), Map.of()));
 
                 assertFalse(response.explanation().isBlank());

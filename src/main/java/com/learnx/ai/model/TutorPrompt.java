@@ -13,7 +13,8 @@ public record TutorPrompt(
         String learnerSummary,
         String conversationContext,
         String userQuestion,
-        List<SearchResult> searchResults) {
+        List<SearchResult> searchResults,
+        com.learnx.core.model.AgeCategory ageCategory) {
 
     public TutorPrompt {
         subjectName = normalize(subjectName);
@@ -27,10 +28,11 @@ public record TutorPrompt(
     }
 
     public String toPromptText() {
+        com.learnx.ai.strategy.PromptStrategy strategy = com.learnx.ai.strategy.PromptStrategyFactory.getStrategy(ageCategory);
+
         StringBuilder builder = new StringBuilder();
-        builder.append("You are LearnX, an exam-focused smart tutor.\n")
-                .append("Return JSON with keys: explanation, examAnswerOutline, keyPoints.\n")
-                .append("Keep the answer accurate, practical, and easy to study from.\n\n")
+        builder.append(strategy.getSystemPrompt()).append('\n')
+                .append(strategy.formatResponseInstructions()).append('\n')
                 .append("Subject: ").append(subjectName).append('\n')
                 .append("Topic: ").append(topicTitle).append('\n')
                 .append("Topic Summary: ").append(topicSummary).append('\n')

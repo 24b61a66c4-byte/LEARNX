@@ -91,7 +91,8 @@ public class TutorService {
                 buildLearnerSummary(learnerProfile, topic, performanceSnapshot),
                 conversationContext,
                 request.userQuestion(),
-                searchResults);
+                searchResults,
+                learnerProfile.getAgeCategory());
 
         if (debugPromptLogging) {
             LOGGER.info("Tutor prompt debug | learner={} | subject={} | prompt={}",

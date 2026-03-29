@@ -18,7 +18,7 @@ class RecommendationEngineTest {
     @Test
     void recommendsPrerequisiteBeforeBlockedTopics() {
         RecommendationEngine engine = new RecommendationEngine(new CatalogService(new com.learnx.core.store.JsonCatalogStore()));
-        LearnerProfile learnerProfile = new LearnerProfile("learner-1", "Ricky");
+        LearnerProfile learnerProfile = new LearnerProfile("learner-1", "Ricky", 15);
 
         StudyRecommendation recommendation = engine.recommendNextStep(learnerProfile, "dbms", "dbms-jntu-r22");
 
@@ -30,7 +30,7 @@ class RecommendationEngineTest {
         CatalogService catalogService = new CatalogService(new com.learnx.core.store.JsonCatalogStore());
         RecommendationEngine engine = new RecommendationEngine(catalogService);
         ProgressService progressService = new ProgressService();
-        LearnerProfile learnerProfile = new LearnerProfile("learner-1", "Ricky");
+        LearnerProfile learnerProfile = new LearnerProfile("learner-1", "Ricky", 15);
 
         QuizEvaluation strongEvaluation = new QuizEvaluation(
                 "learner-1",
