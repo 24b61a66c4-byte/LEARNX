@@ -26,7 +26,11 @@ Launch subjects: **DBMS** and **EDC**. The path is simple: choose a subject → 
 │       ├── app/                # Next.js App Router pages
 │       ├── components/         # Reusable UI components
 │       └── lib/                # Gateways, types, constants, catalog data
-├── docs/                       # Architecture docs, blueprints, planning notes
+├── docs/
+│   ├── architecture/           # System blueprint and domain-level docs
+│   ├── planning/               # Implementation plans and checkpoints
+│   ├── coordination/           # Team coordination notes
+│   └── README.md               # Documentation index
 ├── Dockerfile                  # Backend container image
 ├── docker-compose.yml          # Local multi-service dev stack
 ├── pom.xml                     # Maven build configuration
@@ -119,6 +123,8 @@ Copy `.env.example` to `.env.local` and fill in your keys.
 4. Push and open a pull request
 
 Please run `mvn test` (backend) and `npm test` inside `web/` (frontend) before submitting.
+
+For full documentation map, see `docs/README.md`.
 
 ---
 

@@ -13,6 +13,8 @@
 /web/.vercel/
 /web/coverage/
 /web/tsconfig.tsbuildinfo
+/web/public/sw.js
+/web/public/workbox-*.js
 
 # OS
 Thumbs.db
@@ -27,5 +29,6 @@ Thumbs.db
 # Local env and logs
 .env
 .env.local
+.env.*.local
 .env.template
 *.log
