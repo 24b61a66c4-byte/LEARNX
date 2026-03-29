@@ -2,7 +2,7 @@
 
 ## 1. What LearnX Is
 
-LearnX is an AI-powered learning system for engineering education.
+LearnX is an AI-powered learning system for all learners—students of all ages and backgrounds.
 
 In simple terms, the product vision is:
 

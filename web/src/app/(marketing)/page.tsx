@@ -54,7 +54,7 @@ export default function LandingPage() {
                 Study smarter. One workspace. Zero tab-switching.
               </h1>
               <p className="max-w-2xl text-lg leading-8 text-slate-600">
-                LearnX is built for engineering students who want the feel of ChatGPT, YouTube recap, notes, web search,
+                LearnX is built for all learners—kids, teens, and adults—who want the feel of ChatGPT, YouTube recap, notes, web search,
                 tutor help, and drills without breaking the study flow every five minutes.
               </p>
             </div>

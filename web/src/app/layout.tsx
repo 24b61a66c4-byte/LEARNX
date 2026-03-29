@@ -20,7 +20,7 @@ const bodyFont = IBM_Plex_Sans({
 
 export const metadata: Metadata = {
   title: "LearnX",
-  description: "App-grade web learning for engineering students.",
+  description: "AI-powered learning for all students, all ages. Learn anything with adaptive explanations, voice, and practice.",
   applicationName: "LearnX",
   manifest: "/manifest.webmanifest",
 };

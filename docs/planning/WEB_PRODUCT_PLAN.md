@@ -103,7 +103,7 @@ The product should always suggest a next action:
 
 ### Primary users
 
-- engineering students
+- all learners (kids to adults, any subject area)
 - exam-focused learners
 - students who need faster explanations than textbooks provide
 

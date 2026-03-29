@@ -75,7 +75,7 @@ const subjectCards = [
   { id: "edc" as const, title: "EDC", detail: "Diodes, rectifiers, transistor basics" },
 ];
 
-const interestOptions = ["Programming", "Mathematics", "Physics", "Chemistry", "Computer Science", "Engineering"];
+const interestOptions = ["Programming", "Mathematics", "Physics", "Chemistry", "History", "Biology"];
 
 function getCognitiveGroup(age: number): CognitiveGroup {
   if (age >= 5 && age <= 8) return "kids";
