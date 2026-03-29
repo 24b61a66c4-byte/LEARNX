@@ -1,5 +1,19 @@
 services:
+  db:
+    image: mysql:8.4
+    container_name: learnx-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: learnx
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    restart: unless-stopped
+
   api:
+    depends_on:
+      - db
     build:
       context: .
       dockerfile: Dockerfile
@@ -28,3 +42,6 @@ services:
     depends_on:
       - api
     restart: unless-stopped
+
+volumes:
+  mysql_data:

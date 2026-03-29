@@ -17,6 +17,8 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
+    "@supabase/auth-helpers-nextjs": "^0.15.0",
+    "@supabase/supabase-js": "^2.100.1",
     "next": "15.5.14",
     "next-pwa": "^5.6.0",
     "react": "19.1.0",

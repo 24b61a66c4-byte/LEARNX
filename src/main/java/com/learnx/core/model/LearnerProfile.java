@@ -13,6 +13,7 @@ public class LearnerProfile {
 
     private final String learnerId;
     private final String displayName;
+    private int age;
     private final LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private final Map<String, TopicProgress> topicProgress;
@@ -21,7 +22,7 @@ public class LearnerProfile {
     private int totalQuestionsAnswered;
     private int totalCorrectAnswers;
 
-    public LearnerProfile(String learnerId, String displayName) {
+    public LearnerProfile(String learnerId, String displayName, int age) {
         if (learnerId == null || learnerId.isBlank()) {
             throw new IllegalArgumentException("learnerId must not be blank");
         }
@@ -30,6 +31,7 @@ public class LearnerProfile {
         }
         this.learnerId = learnerId.trim();
         this.displayName = displayName.trim();
+        this.age = age;
         this.createdAt = LocalDateTime.now();
         this.updatedAt = createdAt;
         this.topicProgress = new LinkedHashMap<>();
@@ -42,6 +44,17 @@ public class LearnerProfile {
 
     public String getDisplayName() {
         return displayName;
+    }
+
+    public int getAge() {
+        return age;
+    }
+
+    public AgeCategory getAgeCategory() {
+        if (age <= 8) return AgeCategory.KIDS;
+        if (age <= 12) return AgeCategory.TWEENS;
+        if (age <= 17) return AgeCategory.TEENS;
+        return AgeCategory.ADULTS;
     }
 
     public LocalDateTime getCreatedAt() {
