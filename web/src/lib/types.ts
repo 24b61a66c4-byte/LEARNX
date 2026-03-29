@@ -6,6 +6,8 @@ export type StudyGoal =
   | "prepare-exams"
   | "improve-problem-solving"
   | "revise-weak-topics";
+export type ExamTarget = "semester-exam" | "internal-assessment" | "lab-viva" | "interview-prep";
+export type LaunchMode = "lesson" | "coach" | "streak";
 
 export interface Subject {
   id: SubjectId;
@@ -83,6 +85,8 @@ export interface AppSession {
 export interface OnboardingProfile {
   preferredSubjectId: SubjectId;
   studyGoal: StudyGoal;
+  examTarget?: ExamTarget;
+  launchMode?: LaunchMode;
 }
 
 export interface ProgressTopicSummary {

@@ -53,6 +53,14 @@ export default function ProfilePage() {
             <strong className="text-slate-900">Goal:</strong>{" "}
             {onboarding?.studyGoal?.replaceAll("-", " ") ?? "Not set"}
           </p>
+          <p>
+            <strong className="text-slate-900">Exam target:</strong>{" "}
+            {onboarding?.examTarget?.replaceAll("-", " ") ?? "Not set"}
+          </p>
+          <p>
+            <strong className="text-slate-900">Launch style:</strong>{" "}
+            {onboarding?.launchMode?.replaceAll("-", " ") ?? "Not set"}
+          </p>
         </div>
         <button
           className="button-secondary mt-6 w-full"

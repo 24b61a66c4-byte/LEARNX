@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { sessionGateway } from "@/lib/gateways";
-import { StudyGoal, SubjectId } from "@/lib/types";
+import { ExamTarget, LaunchMode, StudyGoal, SubjectId } from "@/lib/types";
 
 const studyGoals: { value: StudyGoal; label: string; description: string }[] = [
   {
@@ -31,19 +31,42 @@ const studyGoals: { value: StudyGoal; label: string; description: string }[] = [
 
 const launchModes = [
   {
-    id: "lesson",
+    id: "lesson" as const,
     title: "Lesson-first",
     detail: "Read one topic calmly, then branch into tutor and practice only when needed.",
   },
   {
-    id: "coach",
+    id: "coach" as const,
     title: "Coach-first",
     detail: "Let the tutor unlock the topic quickly, then cement it with a short drill.",
   },
   {
-    id: "streak",
+    id: "streak" as const,
     title: "Streak-first",
     detail: "Protect the daily rhythm with a tiny but consistent study win.",
+  },
+];
+
+const examTargets: { value: ExamTarget; label: string; description: string }[] = [
+  {
+    value: "semester-exam",
+    label: "Semester exam",
+    description: "Prioritize exam-weight topics, answer framing, and compact revision loops.",
+  },
+  {
+    value: "internal-assessment",
+    label: "Internal assessment",
+    description: "Focus on fast concept cleanup and short, high-confidence practice runs.",
+  },
+  {
+    value: "lab-viva",
+    label: "Lab / viva",
+    description: "Train for explanation clarity, definitions, and likely oral questions.",
+  },
+  {
+    value: "interview-prep",
+    label: "Interview prep",
+    description: "Push for understanding, examples, and how to explain concepts out loud.",
   },
 ];
 
@@ -57,21 +80,32 @@ export function OnboardingForm() {
   const [step, setStep] = useState(0);
   const [subjectId, setSubjectId] = useState<SubjectId>("dbms");
   const [studyGoal, setStudyGoal] = useState<StudyGoal>("prepare-exams");
-  const [launchMode, setLaunchMode] = useState(launchModes[0].id);
+  const [examTarget, setExamTarget] = useState<ExamTarget>("semester-exam");
+  const [launchMode, setLaunchMode] = useState<LaunchMode>(launchModes[0].id);
 
   const selectedGoal = useMemo(
     () => studyGoals.find((goal) => goal.value === studyGoal) ?? studyGoals[0],
     [studyGoal],
   );
+  const selectedExamTarget = useMemo(
+    () => examTargets.find((target) => target.value === examTarget) ?? examTargets[0],
+    [examTarget],
+  );
   const selectedSubject = useMemo(
     () => subjectCards.find((subject) => subject.id === subjectId) ?? subjectCards[0],
     [subjectId],
+  );
+  const selectedLaunchMode = useMemo(
+    () => launchModes.find((mode) => mode.id === launchMode) ?? launchModes[0],
+    [launchMode],
   );
 
   function completeOnboarding() {
     sessionGateway.completeOnboarding({
       preferredSubjectId: subjectId,
       studyGoal,
+      examTarget,
+      launchMode,
     });
     router.push("/app");
   }
@@ -88,7 +122,7 @@ export function OnboardingForm() {
         </div>
 
         <div className="grid gap-3 sm:grid-cols-3">
-          {["Pick subject", "Choose goal", "Start day one"].map((label, index) => (
+          {["Pick subject", "Goal + target", "Start day one"].map((label, index) => (
             <div
               className={`rounded-2xl border px-4 py-4 ${
                 index === step
@@ -131,24 +165,54 @@ export function OnboardingForm() {
         ) : null}
 
         {step === 1 ? (
-          <div className="space-y-3">
-            <p className="text-sm font-semibold text-slate-800">Choose your current goal</p>
-            <div className="grid gap-3">
-              {studyGoals.map((goal) => (
-                <button
-                  className={`rounded-[24px] border px-5 py-4 text-left transition ${
-                    studyGoal === goal.value
-                      ? "border-teal-500 bg-teal-50 shadow-sm"
-                      : "border-black/10 bg-white hover:bg-slate-50"
-                  }`}
-                  key={goal.value}
-                  onClick={() => setStudyGoal(goal.value)}
-                  type="button"
+          <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+            <div className="space-y-3">
+              <p className="text-sm font-semibold text-slate-800">Choose your current goal</p>
+              <div className="grid gap-3">
+                {studyGoals.map((goal) => (
+                  <button
+                    className={`rounded-[24px] border px-5 py-4 text-left transition ${
+                      studyGoal === goal.value
+                        ? "border-teal-500 bg-teal-50 shadow-sm"
+                        : "border-black/10 bg-white hover:bg-slate-50"
+                    }`}
+                    key={goal.value}
+                    onClick={() => setStudyGoal(goal.value)}
+                    type="button"
+                  >
+                    <p className="font-semibold text-slate-950">{goal.label}</p>
+                    <p className="mt-1 text-sm text-slate-600">{goal.description}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="surface-panel space-y-4 p-5">
+              <div>
+                <p className="eyebrow">Exam target</p>
+                <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-950">What are you studying for right now?</h2>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  This helps LearnX tune the study tone toward semester answers, viva clarity, or interview-style understanding.
+                </p>
+              </div>
+              <label className="space-y-2">
+                <span className="text-sm font-semibold text-slate-800">Exam goal</span>
+                <select
+                  className="field"
+                  onChange={(event) => setExamTarget(event.target.value as ExamTarget)}
+                  value={examTarget}
                 >
-                  <p className="font-semibold text-slate-950">{goal.label}</p>
-                  <p className="mt-1 text-sm text-slate-600">{goal.description}</p>
-                </button>
-              ))}
+                  {examTargets.map((target) => (
+                    <option key={target.value} value={target.value}>
+                      {target.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <div className="rounded-[22px] border border-black/10 bg-white/84 px-4 py-4 shadow-sm">
+                <p className="font-semibold text-slate-950">{selectedExamTarget.label}</p>
+                <p className="mt-2 text-sm leading-6 text-slate-600">{selectedExamTarget.description}</p>
+              </div>
             </div>
           </div>
         ) : null}
@@ -183,7 +247,9 @@ export function OnboardingForm() {
               <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-950">
                 {selectedSubject.title} + {selectedGoal.label}
               </h2>
-              <p className="mt-3 text-sm leading-6 text-slate-600">{selectedGoal.description}</p>
+              <p className="mt-3 text-sm leading-6 text-slate-600">
+                {selectedGoal.description} Current target: {selectedExamTarget.label}. Launch style: {selectedLaunchMode.title}.
+              </p>
               <div className="mt-4 space-y-3">
                 <div className="rounded-2xl bg-white p-4 shadow-sm">
                   <p className="text-sm font-semibold text-slate-900">Quest 1</p>
@@ -201,6 +267,7 @@ export function OnboardingForm() {
               <div className="mt-4 flex flex-wrap gap-2">
                 <span className="reward-chip">+100 XP start</span>
                 <span className="reward-chip">First badge waiting</span>
+                <span className="reward-chip">{selectedExamTarget.label}</span>
               </div>
             </div>
           </div>
@@ -219,6 +286,8 @@ export function OnboardingForm() {
                 sessionGateway.completeOnboarding({
                   preferredSubjectId: "dbms",
                   studyGoal: "prepare-exams",
+                  examTarget: "semester-exam",
+                  launchMode: "lesson",
                 });
                 router.push("/app");
               }}

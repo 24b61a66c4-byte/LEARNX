@@ -52,6 +52,14 @@ Short version:
 - added drill/save follow-through from the tutor and weak-question follow-up from practice into the tutor
 - added progress-page drill plans from weak topics and made badges more mobile-friendly
 
+### 6. Onboarding And Subjects Pass
+
+- onboarding now stores a real exam target and launch style instead of only subject + study goal
+- app shell and profile now reflect exam-target context from onboarding
+- subjects page now shows continue-now guidance, preferred-subject focus, and mastery-aware subject cards
+- subject cards now surface mastery preview, topic coverage, and continue-topic hints
+- topic cards now show topic-level progress state plus direct lesson and drill actions
+
 ## Confirmed Improvement Areas
 
 ### Product Foundation

@@ -19,9 +19,9 @@ export default function LandingPage() {
     },
   ];
   const proofStats = [
-    "JNTU EDC: 90% mocks via tutor + drills",
-    "DBMS joins -> notes in one study thread",
-    "Ask, search, save, then drill without tab switching",
+    "One doubt clarified -> one drill completed",
+    "One explanation -> one saved revision card",
+    "One topic session -> no tab switching",
   ];
   const workflow = [
     {
@@ -81,14 +81,14 @@ export default function LandingPage() {
                 <div className="flex flex-wrap items-center justify-between gap-3 rounded-[24px] bg-white/78 px-4 py-3 shadow-sm">
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Live proof</p>
-                    <p className="mt-1 text-sm font-semibold text-slate-950">JNTU EDC mock sprint</p>
+                    <p className="mt-1 text-sm font-semibold text-slate-950">Outcome-first study loop</p>
                   </div>
-                  <span className="reward-chip">90% via tutor + drills</span>
+                  <span className="reward-chip">Clarify -&gt; Save -&gt; Drill</span>
                 </div>
                 <div className="rounded-[24px] bg-slate-950 px-5 py-5 text-white shadow-[0_20px_50px_rgba(15,23,42,0.18)] hero-float">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-300">Workspace command</p>
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-300">Student command</p>
                   <p className="mt-3 text-lg font-semibold tracking-tight">
-                    “Teach rectifiers like a short lecture, show what I should search, and turn it into exam notes.”
+                    &ldquo;Teach this topic like a short lecture, show what to search next, and convert it into revision notes.&rdquo;
                   </p>
                 </div>
                 <div className="grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
@@ -164,10 +164,10 @@ export default function LandingPage() {
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <p className="eyebrow">Student proof block</p>
-              <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-950">Built for real revision behavior</h2>
+              <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-950">Built for measurable study outcomes</h2>
               <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-                LearnX is designed for one focused session loop: understand the topic, ask one doubt, save one note, and
-                finish one drill.
+                Every session should end with visible output: one concept understood, one note card saved, and one
+                drill result recorded.
               </p>
             </div>
             <Link className="button-primary" href="/signup">
@@ -178,17 +178,17 @@ export default function LandingPage() {
             <div className="rounded-[20px] border border-black/10 bg-slate-950 px-4 py-4 text-white">
               <p className="text-xs uppercase tracking-[0.18em] text-slate-300">Session speed</p>
               <p className="mt-2 text-2xl font-bold tracking-tight">~10 min</p>
-              <p className="mt-1 text-sm text-slate-300">From topic open to drill score</p>
+              <p className="mt-1 text-sm text-slate-300">Topic open -&gt; tutor answer -&gt; drill score</p>
             </div>
             <div className="rounded-[20px] border border-black/10 bg-white px-4 py-4">
               <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Flow integrity</p>
               <p className="mt-2 text-2xl font-bold tracking-tight text-slate-950">1 workspace</p>
-              <p className="mt-1 text-sm text-slate-600">Lesson, tutor, search cues, and notes together</p>
+              <p className="mt-1 text-sm text-slate-600">Lesson, tutor, search cues, notes, and drill in one lane</p>
             </div>
             <div className="rounded-[20px] border border-black/10 bg-white px-4 py-4">
               <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Retention move</p>
-              <p className="mt-2 text-2xl font-bold tracking-tight text-slate-950">Drill after chat</p>
-              <p className="mt-1 text-sm text-slate-600">Convert explanation into memory before exit</p>
+              <p className="mt-2 text-2xl font-bold tracking-tight text-slate-950">Note + drill closeout</p>
+              <p className="mt-1 text-sm text-slate-600">Convert explanation into revision and recall before exit</p>
             </div>
           </div>
         </section>

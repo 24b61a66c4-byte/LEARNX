@@ -58,6 +58,10 @@ function formatStudyGoal(goal?: OnboardingProfile["studyGoal"]) {
   return goal ? goal.replaceAll("-", " ") : "steady daily practice";
 }
 
+function formatExamTarget(target?: OnboardingProfile["examTarget"]) {
+  return target ? target.replaceAll("-", " ") : "semester exam";
+}
+
 function NavLink({
   href,
   label,
@@ -103,7 +107,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const todaySegments = Array.from({ length: dashboard.dailyGoalTarget }, (_, index) => index < dashboard.todayAttempts);
   const firstName = session.profile?.displayName?.split(" ")[0] ?? "Student";
   const focusLine = onboarding
-    ? `Focus: ${onboarding.preferredSubjectId.toUpperCase()} • ${formatStudyGoal(onboarding.studyGoal)}`
+    ? `Focus: ${onboarding.preferredSubjectId.toUpperCase()} • ${formatStudyGoal(onboarding.studyGoal)} • ${formatExamTarget(onboarding.examTarget)}`
     : "Choose one subject, protect the streak, and keep the flow simple.";
   const tutorHref = dashboard.resumeTopic
     ? `/app/ask?subjectId=${dashboard.resumeTopic.subjectId}&topicId=${dashboard.resumeTopic.id}`
