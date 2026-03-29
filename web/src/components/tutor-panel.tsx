@@ -53,6 +53,10 @@ export function TutorPanel({ defaultSubjectId = "dbms", defaultTopicId, initialP
   const wordCount = prompt.trim().length === 0 ? 0 : prompt.trim().split(/\s+/).length;
   const samplePrompts = SUBJECT_SAMPLE_PROMPTS[subjectId] ?? SUBJECT_SAMPLE_PROMPTS.dbms;
   const selectedTopic = availableTopics.find((topic) => topic.id === topicId);
+  const hasAssistantReply = Boolean(thread?.messages?.some((message) => message.role === "assistant"));
+  const practiceHref = selectedTopic
+    ? `/app/practice?subjectId=${subjectId}&topicId=${selectedTopic.id}`
+    : `/app/practice?subjectId=${subjectId}`;
   const lesson = selectedTopic ? getLessonByTopicId(selectedTopic.id) : null;
   const noteSeeds = [
     selectedTopic?.summary,
@@ -256,9 +260,8 @@ export function TutorPanel({ defaultSubjectId = "dbms", defaultTopicId, initialP
           <div className="grid gap-3 md:grid-cols-3">
             {(Object.keys(TUTOR_MODE_LABELS) as TutorMode[]).map((item) => (
               <button
-                className={`rounded-[22px] border px-4 py-4 text-left transition ${
-                  mode === item ? "border-teal-500 bg-teal-50 shadow-sm" : "border-black/10 bg-white hover:bg-slate-50"
-                }`}
+                className={`rounded-[22px] border px-4 py-4 text-left transition ${mode === item ? "border-teal-500 bg-teal-50 shadow-sm" : "border-black/10 bg-white hover:bg-slate-50"
+                  }`}
                 key={item}
                 onClick={() => setMode(item)}
                 type="button"
@@ -273,9 +276,8 @@ export function TutorPanel({ defaultSubjectId = "dbms", defaultTopicId, initialP
             {thread?.messages?.length ? (
               thread.messages.map((message) => (
                 <article
-                  className={`rounded-[24px] px-4 py-3 text-sm leading-6 ${
-                    message.role === "assistant" ? "bg-teal-50 text-slate-800" : "bg-slate-950 text-white"
-                  }`}
+                  className={`rounded-[24px] px-4 py-3 text-sm leading-6 ${message.role === "assistant" ? "bg-teal-50 text-slate-800" : "bg-slate-950 text-white"
+                    }`}
                   key={message.id}
                 >
                   <p className="mb-1 text-xs font-semibold uppercase tracking-[0.18em] opacity-70">
@@ -330,6 +332,22 @@ export function TutorPanel({ defaultSubjectId = "dbms", defaultTopicId, initialP
           >
             {sending ? "Generating response..." : "Send to copilot"}
           </button>
+
+          <div className="rounded-[24px] border border-black/10 bg-white/82 px-4 py-4 shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-slate-900">Next study action</p>
+                <p className="mt-1 text-sm leading-6 text-slate-600">
+                  {hasAssistantReply
+                    ? "You got an explanation. Lock retention with a short drill now."
+                    : "After one response, jump into a quick drill while the concept is fresh."}
+                </p>
+              </div>
+              <Link className="button-secondary" href={practiceHref}>
+                Start mini-drill
+              </Link>
+            </div>
+          </div>
         </div>
 
         <div className="-mx-1 flex snap-x gap-5 overflow-x-auto px-1 xl:mx-0 xl:grid xl:gap-5 xl:overflow-visible">
