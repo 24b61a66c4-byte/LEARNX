@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { sessionGateway } from "@/lib/gateways";
-import { StudyGoal, SubjectId } from "@/lib/types";
+import { ExamTarget, LaunchMode, StudyGoal, SubjectId } from "@/lib/types";
 
 const studyGoals: { value: StudyGoal; label: string; description: string }[] = [
   {
@@ -29,91 +29,283 @@ const studyGoals: { value: StudyGoal; label: string; description: string }[] = [
   },
 ];
 
+const launchModes = [
+  {
+    id: "lesson" as const,
+    title: "Lesson-first",
+    detail: "Read one topic calmly, then branch into tutor and practice only when needed.",
+  },
+  {
+    id: "coach" as const,
+    title: "Coach-first",
+    detail: "Let the tutor unlock the topic quickly, then cement it with a short drill.",
+  },
+  {
+    id: "streak" as const,
+    title: "Streak-first",
+    detail: "Protect the daily rhythm with a tiny but consistent study win.",
+  },
+];
+
+const examTargets: { value: ExamTarget; label: string; description: string }[] = [
+  {
+    value: "semester-exam",
+    label: "Semester exam",
+    description: "Prioritize exam-weight topics, answer framing, and compact revision loops.",
+  },
+  {
+    value: "internal-assessment",
+    label: "Internal assessment",
+    description: "Focus on fast concept cleanup and short, high-confidence practice runs.",
+  },
+  {
+    value: "lab-viva",
+    label: "Lab / viva",
+    description: "Train for explanation clarity, definitions, and likely oral questions.",
+  },
+  {
+    value: "interview-prep",
+    label: "Interview prep",
+    description: "Push for understanding, examples, and how to explain concepts out loud.",
+  },
+];
+
+const subjectCards = [
+  { id: "dbms" as const, title: "DBMS", detail: "SQL, joins, normalization" },
+  { id: "edc" as const, title: "EDC", detail: "Diodes, rectifiers, transistor basics" },
+];
+
 export function OnboardingForm() {
   const router = useRouter();
+  const [step, setStep] = useState(0);
   const [subjectId, setSubjectId] = useState<SubjectId>("dbms");
   const [studyGoal, setStudyGoal] = useState<StudyGoal>("prepare-exams");
+  const [examTarget, setExamTarget] = useState<ExamTarget>("semester-exam");
+  const [launchMode, setLaunchMode] = useState<LaunchMode>(launchModes[0].id);
+
+  const selectedGoal = useMemo(
+    () => studyGoals.find((goal) => goal.value === studyGoal) ?? studyGoals[0],
+    [studyGoal],
+  );
+  const selectedExamTarget = useMemo(
+    () => examTargets.find((target) => target.value === examTarget) ?? examTargets[0],
+    [examTarget],
+  );
+  const selectedSubject = useMemo(
+    () => subjectCards.find((subject) => subject.id === subjectId) ?? subjectCards[0],
+    [subjectId],
+  );
+  const selectedLaunchMode = useMemo(
+    () => launchModes.find((mode) => mode.id === launchMode) ?? launchModes[0],
+    [launchMode],
+  );
+
+  function completeOnboarding() {
+    sessionGateway.completeOnboarding({
+      preferredSubjectId: subjectId,
+      studyGoal,
+      examTarget,
+      launchMode,
+    });
+    router.push("/app");
+  }
 
   return (
-    <section className="mx-auto max-w-3xl space-y-6">
+    <section className="mx-auto max-w-4xl space-y-6">
       <div className="surface-card space-y-6 px-6 py-8 sm:px-8">
         <div className="space-y-2">
           <p className="eyebrow">Onboarding</p>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-950">Set your first study path</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-950">Launch your first study rhythm</h1>
           <p className="muted text-sm">
-            Keep this small for now: pick one subject and one goal. You can change both later.
+            Keep it small for now. LearnX only needs one subject, one goal, and one launch style to start strong.
           </p>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          {[
-            { id: "dbms" as const, title: "DBMS", detail: "SQL, joins, normalization" },
-            { id: "edc" as const, title: "EDC", detail: "Diodes, rectifiers, transistor basics" },
-          ].map((subject) => (
-            <button
-              className={`rounded-[24px] border px-5 py-5 text-left transition ${
-                subjectId === subject.id
-                  ? "border-teal-500 bg-teal-50 shadow-sm"
-                  : "border-black/10 bg-white hover:bg-slate-50"
+        <div className="grid gap-3 sm:grid-cols-3">
+          {["Pick subject", "Goal + target", "Start day one"].map((label, index) => (
+            <div
+              className={`rounded-2xl border px-4 py-4 ${
+                index === step
+                  ? "border-teal-500 bg-teal-50"
+                  : index < step
+                    ? "border-teal-200 bg-white"
+                    : "border-black/10 bg-white/80"
               }`}
-              key={subject.id}
-              onClick={() => setSubjectId(subject.id)}
-              type="button"
+              key={label}
             >
-              <p className="text-lg font-semibold text-slate-950">{subject.title}</p>
-              <p className="mt-2 text-sm text-slate-600">{subject.detail}</p>
-            </button>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                Step {index + 1}
+              </p>
+              <p className="mt-2 font-semibold text-slate-950">{label}</p>
+            </div>
           ))}
         </div>
 
-        <div className="space-y-3">
-          <p className="text-sm font-semibold text-slate-800">Choose your current goal</p>
-          <div className="grid gap-3">
-            {studyGoals.map((goal) => (
+        {step === 0 ? (
+          <div className="grid gap-4 sm:grid-cols-2">
+            {subjectCards.map((subject) => (
               <button
-                className={`rounded-[24px] border px-5 py-4 text-left transition ${
-                  studyGoal === goal.value
+                className={`rounded-[24px] border px-5 py-5 text-left transition ${
+                  subjectId === subject.id
                     ? "border-teal-500 bg-teal-50 shadow-sm"
                     : "border-black/10 bg-white hover:bg-slate-50"
                 }`}
-                key={goal.value}
-                onClick={() => setStudyGoal(goal.value)}
+                key={subject.id}
+                onClick={() => setSubjectId(subject.id)}
                 type="button"
               >
-                <p className="font-semibold text-slate-950">{goal.label}</p>
-                <p className="mt-1 text-sm text-slate-600">{goal.description}</p>
+                <p className="text-lg font-semibold text-slate-950">{subject.title}</p>
+                <p className="mt-2 text-sm text-slate-600">{subject.detail}</p>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <span className="reward-chip">Launch subject</span>
+                </div>
               </button>
             ))}
           </div>
-        </div>
+        ) : null}
 
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <button
-            className="button-primary"
-            onClick={() => {
-              sessionGateway.completeOnboarding({
-                preferredSubjectId: subjectId,
-                studyGoal,
-              });
-              router.push("/app");
-            }}
-            type="button"
-          >
-            Start learning
-          </button>
-          <button
-            className="button-secondary"
-            onClick={() => {
-              sessionGateway.completeOnboarding({
-                preferredSubjectId: "dbms",
-                studyGoal: "prepare-exams",
-              });
-              router.push("/app");
-            }}
-            type="button"
-          >
-            Skip with defaults
-          </button>
+        {step === 1 ? (
+          <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+            <div className="space-y-3">
+              <p className="text-sm font-semibold text-slate-800">Choose your current goal</p>
+              <div className="grid gap-3">
+                {studyGoals.map((goal) => (
+                  <button
+                    className={`rounded-[24px] border px-5 py-4 text-left transition ${
+                      studyGoal === goal.value
+                        ? "border-teal-500 bg-teal-50 shadow-sm"
+                        : "border-black/10 bg-white hover:bg-slate-50"
+                    }`}
+                    key={goal.value}
+                    onClick={() => setStudyGoal(goal.value)}
+                    type="button"
+                  >
+                    <p className="font-semibold text-slate-950">{goal.label}</p>
+                    <p className="mt-1 text-sm text-slate-600">{goal.description}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="surface-panel space-y-4 p-5">
+              <div>
+                <p className="eyebrow">Exam target</p>
+                <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-950">What are you studying for right now?</h2>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  This helps LearnX tune the study tone toward semester answers, viva clarity, or interview-style understanding.
+                </p>
+              </div>
+              <label className="space-y-2">
+                <span className="text-sm font-semibold text-slate-800">Exam goal</span>
+                <select
+                  className="field"
+                  onChange={(event) => setExamTarget(event.target.value as ExamTarget)}
+                  value={examTarget}
+                >
+                  {examTargets.map((target) => (
+                    <option key={target.value} value={target.value}>
+                      {target.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <div className="rounded-[22px] border border-black/10 bg-white/84 px-4 py-4 shadow-sm">
+                <p className="font-semibold text-slate-950">{selectedExamTarget.label}</p>
+                <p className="mt-2 text-sm leading-6 text-slate-600">{selectedExamTarget.description}</p>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        {step === 2 ? (
+          <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+            <div className="space-y-4">
+              <div className="surface-panel p-5">
+                <p className="eyebrow">Choose your launch style</p>
+                <div className="mt-4 grid gap-3">
+                  {launchModes.map((mode) => (
+                    <button
+                      className={`rounded-[22px] border px-4 py-4 text-left transition ${
+                        launchMode === mode.id
+                          ? "border-teal-500 bg-teal-50 shadow-sm"
+                          : "border-black/10 bg-white hover:bg-slate-50"
+                      }`}
+                      key={mode.id}
+                      onClick={() => setLaunchMode(mode.id)}
+                      type="button"
+                    >
+                      <p className="font-semibold text-slate-950">{mode.title}</p>
+                      <p className="mt-1 text-sm text-slate-600">{mode.detail}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="surface-panel p-5">
+              <p className="eyebrow">Day 1 preview</p>
+              <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-950">
+                {selectedSubject.title} + {selectedGoal.label}
+              </h2>
+              <p className="mt-3 text-sm leading-6 text-slate-600">
+                {selectedGoal.description} Current target: {selectedExamTarget.label}. Launch style: {selectedLaunchMode.title}.
+              </p>
+              <div className="mt-4 space-y-3">
+                <div className="rounded-2xl bg-white p-4 shadow-sm">
+                  <p className="text-sm font-semibold text-slate-900">Quest 1</p>
+                  <p className="mt-1 text-sm text-slate-600">Open one lesson and stay with it for one focused pass.</p>
+                </div>
+                <div className="rounded-2xl bg-white p-4 shadow-sm">
+                  <p className="text-sm font-semibold text-slate-900">Quest 2</p>
+                  <p className="mt-1 text-sm text-slate-600">Use the tutor once to remove one exact confusion.</p>
+                </div>
+                <div className="rounded-2xl bg-white p-4 shadow-sm">
+                  <p className="text-sm font-semibold text-slate-900">Quest 3</p>
+                  <p className="mt-1 text-sm text-slate-600">Finish one short drill and start your streak.</p>
+                </div>
+              </div>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <span className="reward-chip">+100 XP start</span>
+                <span className="reward-chip">First badge waiting</span>
+                <span className="reward-chip">{selectedExamTarget.label}</span>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        <div className="flex flex-col gap-3 sm:flex-row sm:justify-between">
+          <div className="flex gap-3">
+            {step > 0 ? (
+              <button className="button-secondary" onClick={() => setStep((current) => current - 1)} type="button">
+                Back
+              </button>
+            ) : null}
+            <button
+              className="button-secondary"
+              onClick={() => {
+                sessionGateway.completeOnboarding({
+                  preferredSubjectId: "dbms",
+                  studyGoal: "prepare-exams",
+                  examTarget: "semester-exam",
+                  launchMode: "lesson",
+                });
+                router.push("/app");
+              }}
+              type="button"
+            >
+              Skip with defaults
+            </button>
+          </div>
+
+          {step < 2 ? (
+            <button className="button-primary" onClick={() => setStep((current) => current + 1)} type="button">
+              Continue
+            </button>
+          ) : (
+            <button className="button-primary" onClick={completeOnboarding} type="button">
+              Launch LearnX
+            </button>
+          )}
         </div>
       </div>
     </section>

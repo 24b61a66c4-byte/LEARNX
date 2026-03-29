@@ -6,6 +6,8 @@ export type StudyGoal =
   | "prepare-exams"
   | "improve-problem-solving"
   | "revise-weak-topics";
+export type ExamTarget = "semester-exam" | "internal-assessment" | "lab-viva" | "interview-prep";
+export type LaunchMode = "lesson" | "coach" | "streak";
 
 export interface Subject {
   id: SubjectId;
@@ -53,13 +55,13 @@ export interface Question {
 export interface LessonBlock {
   id: string;
   kind:
-  | "summary"
-  | "deep-dive"
-  | "steps"
-  | "example"
-  | "exam"
-  | "mistake-watch"
-  | "formula";
+    | "summary"
+    | "deep-dive"
+    | "steps"
+    | "example"
+    | "exam"
+    | "mistake-watch"
+    | "formula";
   title: string;
   content: string[];
 }
@@ -83,6 +85,8 @@ export interface AppSession {
 export interface OnboardingProfile {
   preferredSubjectId: SubjectId;
   studyGoal: StudyGoal;
+  examTarget?: ExamTarget;
+  launchMode?: LaunchMode;
 }
 
 export interface ProgressTopicSummary {
@@ -93,11 +97,42 @@ export interface ProgressTopicSummary {
   attempts: number;
 }
 
+export interface RewardBadge {
+  id: string;
+  label: string;
+  description: string;
+}
+
+export interface RewardSnapshot {
+  xp: number;
+  level: number;
+  xpToNextLevel: number;
+  streakDays: number;
+  percentile: number;
+  leaderboardLabel: string;
+  nextBadgeLabel: string;
+  badges: RewardBadge[];
+}
+
 export interface ProgressSnapshot {
   completedAttempts: number;
   weakTopics: ProgressTopicSummary[];
   strongTopics: ProgressTopicSummary[];
   recentActivity: PracticeResult[];
+  rewards: RewardSnapshot;
+}
+
+export type StudyNoteSource = "manual" | "seed" | "lesson" | "tutor" | "practice";
+
+export interface StudyNote {
+  id: string;
+  subjectId: SubjectId;
+  topicId: string;
+  title: string;
+  content: string;
+  source: StudyNoteSource;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface PracticeSubmission {
@@ -121,6 +156,8 @@ export interface PracticeResult {
   scorePercent: number;
   correctCount: number;
   totalCount: number;
+  xpEarned: number;
+  badgeAwarded?: string | null;
   answers: PracticeAnswerResult[];
   completedAt: string;
 }
@@ -135,6 +172,9 @@ export interface DashboardView {
   resumeTopic: Topic | null;
   recommendation: RecommendationView | null;
   quickPracticeHref: string;
+  rewards: RewardSnapshot;
+  todayAttempts: number;
+  dailyGoalTarget: number;
 }
 
 export interface TutorMessage {
