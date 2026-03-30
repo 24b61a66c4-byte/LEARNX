@@ -4,5 +4,9 @@ import { getSubjects } from "@/lib/data/catalog";
 export default function SubjectsPage() {
   const subjects = getSubjects();
 
-  return <SubjectsPanel subjects={subjects} />;
+  return (
+    <section className="animate-fade-in">
+      <SubjectsPanel subjects={subjects} />
+    </section>
+  );
 }

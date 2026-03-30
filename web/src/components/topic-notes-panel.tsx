@@ -213,7 +213,7 @@ export function TopicNotesPanel({
   }
 
   return (
-    <section className="surface-card space-y-5 p-5" id="topic-notes">
+    <section className="surface-card scroll-mt-28 space-y-5 p-5" id="topic-notes">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="eyebrow">Notes lane</p>

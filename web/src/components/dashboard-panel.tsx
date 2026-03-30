@@ -3,222 +3,351 @@
 import Link from "next/link";
 
 import { QuestRail } from "@/components/quest-rail";
-import { ONBOARDING_STORAGE_KEY } from "@/lib/constants";
+import { ONBOARDING_STORAGE_KEY, TOPIC_NOTES_KEY } from "@/lib/constants";
 import { useClientSnapshot } from "@/lib/client-snapshot";
+import { getSubjectById, getTopicById, getTopicsBySubject } from "@/lib/data/catalog";
 import {
   catalogGateway,
   getServerDashboard,
   getServerProgressSnapshot,
   learnerStateGateway,
+  practiceGateway,
 } from "@/lib/gateways";
+import { buildSubjectMasteryView } from "@/lib/progress-views";
 import { readLocalStorage } from "@/lib/storage";
-import { DashboardView, OnboardingProfile, ProgressSnapshot } from "@/lib/types";
+import { OnboardingProfile, StudyNote, SubjectId } from "@/lib/types";
+
+function formatDateLabel(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "Recently";
+  }
+
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+  }).format(date);
+}
+
+function getNotebookStatus(count: number) {
+  if (count === 0) {
+    return "Empty";
+  }
+
+  if (count < 4) {
+    return "Growing";
+  }
+
+  return "Live";
+}
+
+function getRecentDrillLabel(subjectId: SubjectId, topicId?: string) {
+  if (topicId) {
+    return getTopicById(topicId)?.title ?? topicId;
+  }
+
+  const subject = getSubjectById(subjectId);
+  return `${subject?.name ?? subjectId.toUpperCase()} mixed drill`;
+}
+
+function getSubjectBadge(subjectId: SubjectId) {
+  return getSubjectById(subjectId)?.id.toUpperCase() ?? subjectId.toUpperCase();
+}
 
 export function DashboardPanel() {
   const workspaceState = useClientSnapshot(
     () => {
       const onboarding = readLocalStorage<OnboardingProfile | null>(ONBOARDING_STORAGE_KEY, null);
+      const notes = readLocalStorage<StudyNote[]>(TOPIC_NOTES_KEY, []);
+
       return {
         onboarding,
+        notes,
+        history: practiceGateway.getHistory(),
         dashboard: learnerStateGateway.getDashboard(onboarding?.preferredSubjectId),
         progress: learnerStateGateway.getProgressSnapshot(),
       };
     },
     () => ({
       onboarding: null as OnboardingProfile | null,
+      notes: [] as StudyNote[],
+      history: [],
       dashboard: getServerDashboard(),
       progress: getServerProgressSnapshot(),
     }),
   );
 
-  const onboarding = workspaceState.onboarding;
-  const dashboard: DashboardView = workspaceState.dashboard;
-  const progress: ProgressSnapshot = workspaceState.progress;
-
   const subjects = catalogGateway.getSubjects();
-  const activeSubject = subjects.find((subject) => subject.id === onboarding?.preferredSubjectId) ?? subjects[0];
-  const continueHref = dashboard.resumeTopic
-    ? `/app/learn/${dashboard.resumeTopic.subjectId}/${dashboard.resumeTopic.id}`
-    : "/app/subjects";
-  const tutorHref = dashboard.resumeTopic
-    ? `/app/ask?subjectId=${dashboard.resumeTopic.subjectId}&topicId=${dashboard.resumeTopic.id}`
+  const activeSubject = subjects.find((subject) => subject.id === workspaceState.onboarding?.preferredSubjectId) ?? subjects[0];
+  const recentNotes = [...workspaceState.notes]
+    .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))
+    .slice(0, 4);
+  const recentDrills = workspaceState.history.slice(0, 4);
+  const subjectTracks = subjects.map((subject) => {
+    const mastery = buildSubjectMasteryView(
+      subject.id,
+      getTopicsBySubject(subject.id),
+      workspaceState.history,
+    );
+
+    return {
+      subject,
+      mastery,
+      continueHref: mastery.continueTopic
+        ? `/app/learn/${subject.id}/${mastery.continueTopic.id}`
+        : `/app/subjects/${subject.id}`,
+    };
+  });
+  const activeTrack =
+    subjectTracks.find((track) => track.subject.id === activeSubject.id) ?? subjectTracks[0];
+  const continueTopic = activeTrack?.mastery.continueTopic ?? workspaceState.dashboard.resumeTopic;
+  const continueHref = activeTrack?.continueHref ?? "/app/subjects";
+  const continueTitle =
+    continueTopic?.title ??
+    workspaceState.dashboard.recommendation?.title ??
+    "Open your first study studio";
+  const tutorHref = continueTopic
+    ? `/app/ask?subjectId=${continueTopic.subjectId}&topicId=${continueTopic.id}`
     : `/app/ask?subjectId=${activeSubject.id}`;
-  const continueTitle = dashboard.resumeTopic?.title ?? dashboard.recommendation?.title ?? "SQL Basics";
-  const quickPrompts = [
-    `Explain ${continueTitle} like a short lecture`,
-    `Search the web for common mistakes in ${continueTitle}`,
-    `Turn ${continueTitle} into exam notes`,
-    `Quiz me on ${continueTitle}`,
-  ];
-  const notebookCards = [
+  const notesHref = continueTopic
+    ? `/app/learn/${continueTopic.subjectId}/${continueTopic.id}#topic-notes`
+    : continueHref;
+  const practiceHref = continueTopic
+    ? `/app/practice?subjectId=${continueTopic.subjectId}&topicId=${continueTopic.id}`
+    : workspaceState.dashboard.quickPracticeHref;
+  const todayRemaining = Math.max(
+    0,
+    workspaceState.dashboard.dailyGoalTarget - workspaceState.dashboard.todayAttempts,
+  );
+  const todaySegments = Array.from(
+    { length: workspaceState.dashboard.dailyGoalTarget },
+    (_, index) => index < workspaceState.dashboard.todayAttempts,
+  );
+  const notebookStatus = getNotebookStatus(workspaceState.notes.length);
+  const recoveryTopics = workspaceState.progress.weakTopics.slice(0, 3);
+  const strongTopics = workspaceState.progress.strongTopics.slice(0, 2);
+  const latestBadge =
+    workspaceState.dashboard.rewards.badges[workspaceState.dashboard.rewards.badges.length - 1]
+      ?.label ?? "First Drill waiting";
+  const focusCards = [
     {
-      title: `${continueTitle} note pack`,
-      detail: dashboard.resumeTopic?.summary ?? "Collect lecture-style explanations, quick notes, and one exam answer.",
-    },
-    {
-      title: progress.weakTopics[0]?.title ?? "Weak-topic cleanup",
+      label: "Resume studio",
+      title: continueTitle,
       detail:
-        progress.weakTopics[0]?.accuracy !== undefined
-          ? `Current accuracy ${progress.weakTopics[0].accuracy}%. Save one correction note after every drill.`
-          : "As soon as practice starts, weak topics show up here with note-ready corrections.",
-    },
-    {
-      title: "Lecture recap",
-      detail: `Keep one page of takeaways for ${activeSubject.name} instead of jumping across tabs.`,
-    },
-  ];
-  const workspaceFeed = [
-    {
-      lane: `${activeSubject.id.toUpperCase()} workspace`,
-      title: `${continueTitle} -> tutor -> notes -> drill`,
-      detail: "Open one topic in the center lane, let the tutor explain it, save one note, then close with a drill.",
+        activeTrack?.mastery.continueReason ??
+        workspaceState.dashboard.recommendation?.reason ??
+        "Pick one topic and keep the study loop alive.",
       href: continueHref,
+      cta: "Open lesson",
     },
     {
-      lane: "Search lane",
-      title: `Web-backed doubts on ${continueTitle}`,
-      detail: "Search-oriented prompts, examples, and misconceptions should sit beside the chat instead of outside the product.",
-      href: tutorHref,
+      label: "Tutor follow-up",
+      title: recoveryTopics[0]?.title
+        ? `Ask about ${recoveryTopics[0].title}`
+        : `Explain ${continueTitle}`,
+      detail: recoveryTopics[0]?.title
+        ? `Use the tutor to repair ${recoveryTopics[0].title} before the next drill.`
+        : "Turn the current topic into a short lecture, exam answer, or web-search plan.",
+      href: recoveryTopics[0]
+        ? `/app/ask?subjectId=${recoveryTopics[0].subjectId}&topicId=${recoveryTopics[0].topicId}`
+        : tutorHref,
+      cta: "Open tutor",
     },
     {
-      lane: "Note lane",
-      title: `One-page notes for ${continueTitle}`,
-      detail: "Collect definitions, examples, and exam lines in the same workspace where you ask and practice.",
-      href: continueHref,
-    },
-  ];
-  const studySignals = [
-    {
-      label: "Open studio",
-      value: continueTitle,
-      detail: dashboard.resumeTopic ? "Resume where you left off." : "Start with the first flagship topic.",
-    },
-    {
-      label: "Today",
-      value: `${dashboard.todayAttempts}/${dashboard.dailyGoalTarget} drills`,
-      detail: "Protect the study rhythm with one short run.",
-    },
-    {
-      label: "Notebook",
-      value: `${progress.completedAttempts + 3} live cards`,
-      detail: "Notes, weak-topic fixes, and lecture recaps.",
+      label: "Notebook move",
+      title: recentNotes[0]?.title ?? `${continueTitle} note card`,
+      detail: recentNotes[0]
+        ? `Latest update on ${formatDateLabel(recentNotes[0].updatedAt)}. Keep the notebook tied to the topic studio.`
+        : "Save one concept summary or correction card before leaving the topic.",
+      href: notesHref,
+      cta: "Open notes",
     },
   ];
   const questItems = [
     {
       id: "resume",
-      title: dashboard.resumeTopic ? `Open ${dashboard.resumeTopic.title}` : "Pick your first topic",
-      detail: "Walk into one focused study studio instead of bouncing between pages.",
+      title: continueTopic ? `Resume ${continueTopic.title}` : "Pick your first topic",
+      detail: "Keep one topic alive instead of reopening the workspace cold every time.",
       xp: 30,
       href: continueHref,
     },
     {
-      id: "tutor",
-      title: `Ask for help on ${continueTitle}`,
-      detail: "Use the copilot as part tutor, part search assistant, part note-maker.",
-      xp: 35,
-      href: tutorHref,
+      id: "note",
+      title: recentNotes[0] ? "Refresh your latest note" : "Save one note card",
+      detail: recentNotes[0]
+        ? "Review one saved note, tighten it, and keep it exam-ready."
+        : "Convert one explanation into a compact revision card.",
+      xp: 25,
+      href: notesHref,
     },
     {
       id: "practice",
-      title: "Close the loop with a drill",
-      detail: `Right now you are at ${dashboard.todayAttempts}/${dashboard.dailyGoalTarget} drills for today.`,
+      title: todayRemaining > 0 ? `${todayRemaining} drill left today` : "Add one extra drill",
+      detail: todayRemaining > 0
+        ? `Close the daily target with ${todayRemaining} more drill${todayRemaining === 1 ? "" : "s"}.`
+        : "You already hit the goal. One extra run can clean up a weak topic.",
       xp: 60,
-      href: dashboard.quickPracticeHref,
+      href: practiceHref,
     },
   ];
 
   return (
     <section className="space-y-6">
       <div className="surface-card overflow-hidden p-6">
-        <div className="rounded-[32px] bg-[linear-gradient(135deg,rgba(15,118,110,0.12),rgba(249,115,22,0.14),rgba(255,255,255,0.65))] p-6 sm:p-7">
-          <div className="grid gap-6 xl:grid-cols-[1.35fr_0.9fr]">
+        <div className={`rounded-[32px] bg-gradient-to-br ${activeSubject.accent} p-6 sm:p-7`}>
+          <div className="grid gap-6 xl:grid-cols-[1.18fr_0.82fr]">
             <div className="space-y-5">
               <div className="space-y-3">
-                <p className="eyebrow">Student workspace</p>
+                <p className="eyebrow">Today focus</p>
                 <h1 className="max-w-4xl text-4xl font-bold tracking-tight text-slate-950 sm:text-5xl">
-                  Ask, read, search, collect notes, and revise from one study screen.
+                  {continueTitle}
                 </h1>
                 <p className="max-w-3xl text-sm leading-7 text-slate-700 sm:text-base">
-                  LearnX should feel like your study OS, not an AI widget. Pick a topic, keep the lesson open, ask for
-                  help, pull in web-style context, and turn everything into note-ready revision.
+                  {activeTrack?.mastery.continueReason ??
+                    workspaceState.dashboard.recommendation?.reason ??
+                    "Open one topic, keep the tutor nearby, save one note, and close with a drill."}
                 </p>
               </div>
 
-              <div className="rounded-[28px] border border-white/45 bg-white/84 p-4 shadow-sm">
+              <div className="rounded-[28px] border border-white/45 bg-slate-950 px-5 py-5 text-white shadow-[0_22px_50px_rgba(15,23,42,0.16)]">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <p className="text-sm font-semibold text-slate-900">Workspace command</p>
-                    <p className="mt-1 text-xs uppercase tracking-[0.18em] text-slate-500">
-                      Chat + search + notes + tutor
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-300">
+                      Study queue
+                    </p>
+                    <p className="mt-2 text-xl font-bold tracking-tight">
+                      Lesson {"->"} tutor {"->"} notes {"->"} drill
                     </p>
                   </div>
                   <span className="reward-chip">{activeSubject.name}</span>
                 </div>
-                <div className="mt-4 rounded-[24px] border border-black/10 bg-slate-950 px-4 py-4 text-white shadow-[0_20px_50px_rgba(15,23,42,0.14)]">
-                  <p className="text-sm text-slate-300">Try the student-side flow you described:</p>
-                  <p className="mt-2 text-lg font-semibold tracking-tight text-white">
-                    “Open {continueTitle}, explain it like a YouTube lecture, search for common mistakes, and turn the
-                    answer into revision notes.”
-                  </p>
-                </div>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {quickPrompts.map((prompt) => (
-                    <span className="pill" key={prompt}>
-                      {prompt}
-                    </span>
+                <div className="mt-5 grid gap-3">
+                  {focusCards.map((card, index) => (
+                    <Link
+                      className={`rounded-[22px] border px-4 py-4 transition ${
+                        index === 0
+                          ? "border-white/12 bg-white/10 hover:bg-white/14"
+                          : "border-white/10 bg-white/6 hover:bg-white/10"
+                      }`}
+                      href={card.href}
+                      key={card.label}
+                    >
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-300">
+                        {card.label}
+                      </p>
+                      <p className="mt-2 text-lg font-semibold tracking-tight text-white">{card.title}</p>
+                      <p className="mt-2 text-sm leading-6 text-slate-300">{card.detail}</p>
+                      <p className="mt-3 text-sm font-semibold text-teal-200">{card.cta}</p>
+                    </Link>
                   ))}
                 </div>
-                <div className="mt-5 flex flex-wrap gap-3">
-                  <Link className="button-primary" href={continueHref}>
-                    Open study studio
-                  </Link>
-                  <Link className="button-secondary" href={tutorHref}>
-                    Open copilot chat
-                  </Link>
-                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-3">
+                <Link className="button-primary" href={continueHref}>
+                  Open study studio
+                </Link>
+                <Link className="button-secondary" href={tutorHref}>
+                  Ask the tutor
+                </Link>
+                <Link className="button-secondary" href={practiceHref}>
+                  Run a drill
+                </Link>
               </div>
             </div>
 
-            <div className="space-y-3">
-              {studySignals.map((signal) => (
-                <div className="rounded-[26px] border border-white/45 bg-white/80 p-5 shadow-sm" key={signal.label}>
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{signal.label}</p>
-                  <p className="mt-3 text-2xl font-bold tracking-tight text-slate-950">{signal.value}</p>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">{signal.detail}</p>
+            <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-1">
+              <div className="rounded-[26px] border border-white/45 bg-white/82 p-5 shadow-sm">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Today</p>
+                <p className="mt-3 text-3xl font-bold tracking-tight text-slate-950">
+                  {workspaceState.dashboard.todayAttempts}/{workspaceState.dashboard.dailyGoalTarget}
+                </p>
+                <div className="momentum-meter mt-4">
+                  {todaySegments.map((active, index) => (
+                    <span data-active={active} key={index} />
+                  ))}
                 </div>
-              ))}
+                <p className="mt-3 text-sm leading-6 text-slate-600">
+                  {todayRemaining > 0
+                    ? `${todayRemaining} more drill${todayRemaining === 1 ? "" : "s"} to hit the daily target.`
+                    : "Daily target complete. Add one more run if a weak topic still feels shaky."}
+                </p>
+              </div>
+
+              <div className="rounded-[26px] border border-white/45 bg-white/82 p-5 shadow-sm">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Level + XP</p>
+                <p className="mt-3 text-3xl font-bold tracking-tight text-slate-950">
+                  L{workspaceState.dashboard.rewards.level}
+                </p>
+                <p className="mt-2 text-sm font-semibold text-slate-800">
+                  {workspaceState.dashboard.rewards.xp} XP total
+                </p>
+                <p className="mt-3 text-sm leading-6 text-slate-600">
+                  {workspaceState.dashboard.rewards.xpToNextLevel} XP left to the next level.
+                </p>
+              </div>
+
+              <div className="rounded-[26px] border border-white/45 bg-white/82 p-5 shadow-sm">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Notebook</p>
+                <p className="mt-3 text-3xl font-bold tracking-tight text-slate-950">
+                  {workspaceState.notes.length}
+                </p>
+                <p className="mt-2 text-sm font-semibold text-slate-800">{notebookStatus}</p>
+                <p className="mt-3 text-sm leading-6 text-slate-600">
+                  {recentNotes[0]
+                    ? `Latest note updated ${formatDateLabel(recentNotes[0].updatedAt)}.`
+                    : "No notes yet. Save one explanation and the notebook becomes useful immediately."}
+                </p>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[0.9fr_1.2fr_0.9fr]">
+      <div className="grid gap-6 xl:grid-cols-[0.94fr_1.14fr_0.92fr]">
         <div className="space-y-6">
           <div className="surface-panel p-5">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="eyebrow">Subjects</p>
-                <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-950">Pick the live track you want to keep open</h2>
+                <p className="eyebrow">Subject tracks</p>
+                <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-950">
+                  Keep one flagship subject moving
+                </h2>
               </div>
-              <span className="reward-chip">2 live tracks</span>
+              <span className="reward-chip">{subjectTracks.length} tracks</span>
             </div>
+
             <div className="mt-4 space-y-3">
-              {subjects.map((subject) => (
+              {subjectTracks.map((track) => (
                 <Link
-                  className={`block rounded-[24px] border px-4 py-4 transition hover:-translate-y-0.5 ${subject.id === activeSubject.id
+                  className={`block rounded-[24px] border px-4 py-4 transition hover:-translate-y-0.5 ${
+                    track.subject.id === activeSubject.id
                       ? "border-teal-300 bg-teal-50"
-                      : "border-black/10 bg-white/80 hover:bg-white"
-                    }`}
-                  href={`/app/subjects/${subject.id}`}
-                  key={subject.id}
+                      : "border-black/10 bg-white/82 hover:bg-white"
+                  }`}
+                  href={`/app/subjects/${track.subject.id}`}
+                  key={track.subject.id}
                 >
-                  <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="font-semibold text-slate-950">{subject.name}</p>
-                      <p className="mt-1 text-sm leading-6 text-slate-600">{subject.description}</p>
+                      <p className="font-semibold text-slate-950">{track.subject.name}</p>
+                      <p className="mt-1 text-sm leading-6 text-slate-600">
+                        {track.mastery.continueReason}
+                      </p>
                     </div>
-                    <span className="pill">{subject.tags[0]}</span>
+                    <span className="pill">{track.mastery.masteryPercent}%</span>
+                  </div>
+                  <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-200">
+                    <div
+                      className="h-full rounded-full bg-[linear-gradient(90deg,rgba(15,118,110,0.9),rgba(245,158,11,0.88))]"
+                      style={{ width: `${Math.max(8, track.mastery.masteryPercent)}%` }}
+                    />
+                  </div>
+                  <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                    <span>
+                      {track.mastery.attemptedTopics}/{track.mastery.totalTopics} topics touched
+                    </span>
+                    <span>{track.mastery.continueTopic?.title ?? "Open subject hub"}</span>
                   </div>
                 </Link>
               ))}
@@ -226,15 +355,24 @@ export function DashboardPanel() {
           </div>
 
           <div className="surface-panel p-5">
-            <p className="eyebrow">Notebook</p>
-            <h3 className="mt-2 text-xl font-bold tracking-tight text-slate-950">Quick note-ready cards</h3>
-            <div className="mt-4 space-y-3">
-              {notebookCards.map((card) => (
-                <div className="rounded-[24px] border border-black/10 bg-white/84 p-4 shadow-sm" key={card.title}>
-                  <p className="font-semibold text-slate-950">{card.title}</p>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">{card.detail}</p>
-                </div>
-              ))}
+            <p className="eyebrow">Reward pulse</p>
+            <div className="mt-4 grid gap-3">
+              <div className="rounded-[22px] bg-white/84 px-4 py-4 shadow-sm">
+                <p className="text-sm text-slate-500">Latest badge</p>
+                <p className="mt-2 text-xl font-bold tracking-tight text-slate-950">{latestBadge}</p>
+              </div>
+              <div className="rounded-[22px] bg-white/84 px-4 py-4 shadow-sm">
+                <p className="text-sm text-slate-500">Streak</p>
+                <p className="mt-2 text-3xl font-bold tracking-tight text-slate-950">
+                  {workspaceState.dashboard.rewards.streakDays}d
+                </p>
+              </div>
+              <div className="rounded-[22px] bg-white/84 px-4 py-4 shadow-sm">
+                <p className="text-sm text-slate-500">Strong topics</p>
+                <p className="mt-2 text-xl font-bold tracking-tight text-slate-950">
+                  {strongTopics.length > 0 ? strongTopics.map((topic) => topic.title).join(", ") : "None yet"}
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -243,33 +381,103 @@ export function DashboardPanel() {
           <div className="surface-card p-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <p className="eyebrow">Lesson center</p>
+                <p className="eyebrow">Today queue</p>
                 <h2 className="mt-2 text-3xl font-bold tracking-tight text-slate-950">
-                  Your {activeSubject.id.toUpperCase()} workspace -&gt; drill
+                  Operate the study loop, not just the chat
                 </h2>
               </div>
-              <span className="reward-chip">Read + search + note + drill</span>
+              <span className="reward-chip">Utility view</span>
             </div>
-            <div className="mt-5 space-y-4">
-              {workspaceFeed.map((item, index) => (
+
+            <div className="mt-5 grid gap-4">
+              {focusCards.map((card, index) => (
                 <Link
-                  className={`block rounded-[28px] border border-black/10 px-5 py-5 shadow-sm transition hover:-translate-y-0.5 ${index === 0 ? "bg-slate-950 text-white hover:bg-slate-900" : "bg-white/82 hover:bg-white"}`}
-                  href={item.href}
-                  key={item.title}
+                  className={`block rounded-[28px] border border-black/10 px-5 py-5 shadow-sm transition hover:-translate-y-0.5 ${
+                    index === 0 ? "bg-slate-950 text-white hover:bg-slate-900" : "bg-white/84 hover:bg-white"
+                  }`}
+                  href={card.href}
+                  key={card.label}
                 >
-                  <p className={`text-xs font-semibold uppercase tracking-[0.18em] ${index === 0 ? "text-slate-300" : "text-slate-500"}`}>{item.lane}</p>
-                  <h3 className={`mt-2 text-xl font-bold tracking-tight ${index === 0 ? "text-white" : "text-slate-950"}`}>{item.title}</h3>
-                  <p className={`mt-2 text-sm leading-6 ${index === 0 ? "text-slate-200" : "text-slate-600"}`}>{item.detail}</p>
-                  {index === 0 ? (
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      <span className="pill border-white/10 bg-white/10 text-white">Lesson open</span>
-                      <span className="pill border-white/10 bg-white/10 text-white">Tutor ready</span>
-                      <span className="pill border-white/10 bg-white/10 text-white">Drill next</span>
-                    </div>
-                  ) : null}
+                  <p
+                    className={`text-xs font-semibold uppercase tracking-[0.18em] ${
+                      index === 0 ? "text-slate-300" : "text-slate-500"
+                    }`}
+                  >
+                    {card.label}
+                  </p>
+                  <h3
+                    className={`mt-2 text-2xl font-bold tracking-tight ${
+                      index === 0 ? "text-white" : "text-slate-950"
+                    }`}
+                  >
+                    {card.title}
+                  </h3>
+                  <p
+                    className={`mt-2 text-sm leading-6 ${
+                      index === 0 ? "text-slate-200" : "text-slate-600"
+                    }`}
+                  >
+                    {card.detail}
+                  </p>
+                  <p
+                    className={`mt-4 text-sm font-semibold ${
+                      index === 0 ? "text-teal-200" : "text-teal-700"
+                    }`}
+                  >
+                    {card.cta}
+                  </p>
                 </Link>
               ))}
             </div>
+          </div>
+
+          <div className="surface-panel p-6">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="eyebrow">Recent drill log</p>
+                <h3 className="mt-2 text-xl font-bold tracking-tight text-slate-950">
+                  Last practice runs
+                </h3>
+              </div>
+              <Link className="text-sm font-semibold text-teal-700" href="/app/progress">
+                Open progress
+              </Link>
+            </div>
+
+            {recentDrills.length === 0 ? (
+              <div className="mt-4 rounded-[24px] border border-dashed border-black/10 px-4 py-8 text-center text-sm text-slate-500">
+                Run one drill and the cockpit starts logging your real practice data here.
+              </div>
+            ) : (
+              <div className="mt-4 space-y-3">
+                {recentDrills.map((item) => (
+                  <Link
+                    className="block rounded-[22px] bg-white/84 px-4 py-4 shadow-sm transition hover:bg-white"
+                    href={
+                      item.topicId
+                        ? `/app/learn/${item.subjectId}/${item.topicId}#drill-dock`
+                        : `/app/practice?subjectId=${item.subjectId}`
+                    }
+                    key={`${item.completedAt}-${item.subjectId}-${item.topicId ?? "mixed"}`}
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <p className="font-semibold text-slate-950">
+                          {getRecentDrillLabel(item.subjectId, item.topicId)}
+                        </p>
+                        <p className="mt-1 text-sm text-slate-600">
+                          {getSubjectBadge(item.subjectId)} • {formatDateLabel(item.completedAt)}
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <span className="pill">{item.scorePercent}%</span>
+                        <span className="pill">+{item.xpEarned} XP</span>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
           </div>
 
           <QuestRail items={questItems} />
@@ -279,48 +487,81 @@ export function DashboardPanel() {
           <div className="surface-panel p-5">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="eyebrow">Tutor lane</p>
-                <h3 className="mt-2 text-xl font-bold tracking-tight text-slate-950">Keep the coach on the right, not as a separate app</h3>
+                <p className="eyebrow">Recovery deck</p>
+                <h3 className="mt-2 text-xl font-bold tracking-tight text-slate-950">
+                  Weak topics that need another loop
+                </h3>
               </div>
-              <span className="reward-chip">Live context</span>
+              <span className="reward-chip">{recoveryTopics.length} targets</span>
             </div>
-            <div className="mt-4 space-y-3">
-              <div className="rounded-[24px] bg-slate-950 px-4 py-4 text-sm leading-6 text-white">
-                Explain {continueTitle} like I am listening to a short lecture, then show me what I should search next.
+
+            {recoveryTopics.length === 0 ? (
+              <div className="mt-4 rounded-[24px] border border-dashed border-black/10 px-4 py-8 text-center text-sm text-slate-500">
+                Weak-topic targets will appear here after a few practice runs.
               </div>
-              <div className="rounded-[24px] bg-teal-50 px-4 py-4 text-sm leading-6 text-slate-800">
-                I will keep the lesson open, give you a lecture-style explanation, suggest web searches, and convert
-                the answer into note points after that.
+            ) : (
+              <div className="mt-4 space-y-3">
+                {recoveryTopics.map((topic) => (
+                  <div className="rounded-[24px] bg-white/84 px-4 py-4 shadow-sm" key={topic.topicId}>
+                    <p className="font-semibold text-slate-950">{topic.title}</p>
+                    <p className="mt-2 text-sm leading-6 text-slate-600">
+                      {topic.accuracy}% accuracy over {topic.attempts} attempts. Re-open the lesson, ask one tutor
+                      question, and close the loop with a drill.
+                    </p>
+                    <div className="mt-4 flex flex-wrap gap-3">
+                      <Link className="button-secondary" href={`/app/learn/${topic.subjectId}/${topic.topicId}`}>
+                        Open topic
+                      </Link>
+                      <Link
+                        className="button-secondary"
+                        href={`/app/ask?subjectId=${topic.subjectId}&topicId=${topic.topicId}`}
+                      >
+                        Ask tutor
+                      </Link>
+                    </div>
+                  </div>
+                ))}
               </div>
-            </div>
-            <div className="mt-4 grid gap-3">
-              <Link className="button-primary" href={tutorHref}>
-                Open tutor workspace
-              </Link>
-              <Link className="button-secondary" href={dashboard.quickPracticeHref}>
-                Move straight to drill
-              </Link>
-            </div>
+            )}
           </div>
 
           <div className="surface-panel p-5">
-            <p className="eyebrow">Study rhythm</p>
-            <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
-              <div className="rounded-[24px] bg-white/84 p-4 shadow-sm">
-                <p className="text-sm text-slate-500">Level</p>
-                <p className="mt-2 text-3xl font-bold text-slate-950">{dashboard.rewards.level}</p>
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="eyebrow">Notebook live</p>
+                <h3 className="mt-2 text-xl font-bold tracking-tight text-slate-950">
+                  Recent note activity
+                </h3>
               </div>
-              <div className="rounded-[24px] bg-white/84 p-4 shadow-sm">
-                <p className="text-sm text-slate-500">XP to next level</p>
-                <p className="mt-2 text-3xl font-bold text-slate-950">{dashboard.rewards.xpToNextLevel}</p>
-              </div>
-              <div className="rounded-[24px] bg-white/84 p-4 shadow-sm">
-                <p className="text-sm text-slate-500">Latest badge</p>
-                <p className="mt-2 text-lg font-bold tracking-tight text-slate-950">
-                  {dashboard.rewards.badges[dashboard.rewards.badges.length - 1]?.label ?? "First Drill waiting"}
-                </p>
-              </div>
+              <span className="reward-chip">{workspaceState.notes.length} cards</span>
             </div>
+
+            {recentNotes.length === 0 ? (
+              <div className="mt-4 rounded-[24px] border border-dashed border-black/10 px-4 py-8 text-center text-sm text-slate-500">
+                Notes saved from the lesson and ask studio will show up here.
+              </div>
+            ) : (
+              <div className="mt-4 space-y-3">
+                {recentNotes.map((note) => (
+                  <Link
+                    className="block rounded-[24px] bg-white/84 px-4 py-4 shadow-sm transition hover:bg-white"
+                    href={`/app/learn/${note.subjectId}/${note.topicId}#topic-notes`}
+                    key={note.id}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="font-semibold text-slate-950">{note.title}</p>
+                        <p className="mt-1 text-sm text-slate-600">
+                          {note.source.replace("-", " ")} • {formatDateLabel(note.updatedAt)}
+                        </p>
+                      </div>
+                      <span className="pill">{getSubjectBadge(note.subjectId)}</span>
+                    </div>
+                    <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-700">{note.content}</p>
+                  </Link>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>

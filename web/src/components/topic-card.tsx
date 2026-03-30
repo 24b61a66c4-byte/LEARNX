@@ -9,19 +9,19 @@ import { Topic } from "@/lib/types";
 import { getTopicsBySubject } from "@/lib/data/catalog";
 
 function topicStatusCopy(status: "untouched" | "recover" | "steady" | "strong") {
-  if (status === "strong") {
-    return "Strong topic";
-  }
-
-  if (status === "recover") {
-    return "Needs recovery";
-  }
-
-  if (status === "steady") {
-    return "In progress";
-  }
-
-  return "New topic";
+  const icons = {
+    strong: "⭐",
+    recover: "⚠️",
+    steady: "⏳",
+    untouched: "🆕"
+  };
+  const labels = {
+    strong: "Strong topic",
+    recover: "Recovery needed",
+    steady: "In progress",
+    untouched: "New topic"
+  };
+  return `${icons[status]} ${labels[status]}`;
 }
 
 export function TopicCard({ topic }: { topic: Topic }) {

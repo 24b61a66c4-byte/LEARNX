@@ -43,17 +43,39 @@ export function SubjectsPanel({ subjects }: { subjects: Subject[] }) {
     ? `/app/learn/${preferredSubject.id}/${continueTopic.id}`
     : `/app/subjects/${preferredSubject.id}`;
 
+  const topicViews = preferredMastery.topicViews;
+  const getStatusColor = (status: string) => {
+    if (status === "strong") return "bg-emerald-400";
+    if (status === "recover") return "bg-amber-400";
+    if (status === "steady") return "bg-blue-400";
+    return "bg-slate-300";
+  };
+
   return (
     <section className="space-y-6">
       <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-        <div className="surface-card overflow-hidden p-6">
+        <div className="surface-card overflow-hidden p-6 backdrop-blur-xl">
           <div className={`rounded-[28px] bg-gradient-to-br ${preferredSubject.accent} p-6`}>
-            <p className="eyebrow">Subjects</p>
-            <h1 className="mt-2 text-4xl font-bold tracking-tight text-slate-950">Start with one flagship subject</h1>
+            <p className="eyebrow">Study Tracks</p>
+            <h1 className="mt-2 text-4xl font-bold tracking-tight text-slate-950 bg-gradient-to-r bg-clip-text text-transparent from-slate-950 to-slate-800">Study Tracks Hub</h1>
             <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-700">
-              Keep the launch scope narrow and strong. LearnX starts with DBMS and EDC so the experience stays focused,
-              and now each subject shows where to continue instead of acting like a static catalog.
+              Follow structured learning paths with mastery tracking, recovery loops, and seamless studio transitions. Your preferred track leads.
             </p>
+          </div>
+          {/* Track Progress Path */}
+          <div className="mt-6 flex items-center justify-between animate-fade-in">
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-slate-600 mb-2">Track Progress</p>
+              <div className="flex items-center gap-2">
+                {topicViews.map((view, idx) => (
+                  <div key={idx} className="flex flex-col items-center gap-1">
+                    <div className={`w-6 h-6 rounded-full ${getStatusColor(view.status)} shadow-lg animate-pulse-slow`} />
+                    <div className="w-10 h-1 mx-[-10px] bg-gradient-to-r from-slate-200 to-slate-300" />
+                    {view.title.length > 15 ? `${view.title.slice(0, 15)}...` : view.title}
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
 

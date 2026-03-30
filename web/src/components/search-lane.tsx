@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 
 interface SearchLaneProps {
+  sectionId?: string;
   topicTitle: string;
   topicSummary: string;
   tags: string[];
@@ -22,6 +23,7 @@ function buildVideoHref(query: string) {
 }
 
 export function SearchLane({
+  sectionId,
   topicTitle,
   topicSummary,
   tags,
@@ -58,7 +60,7 @@ export function SearchLane({
   );
 
   return (
-    <section className="space-y-6">
+    <section className="scroll-mt-28 space-y-6" id={sectionId}>
       <div className="surface-panel p-5">
         <p className="eyebrow">Search lane</p>
         <h2 className="mt-2 text-xl font-bold tracking-tight text-slate-950">Search like a student, not like a random tab opener</h2>

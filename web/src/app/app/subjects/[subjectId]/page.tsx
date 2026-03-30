@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 
+import { SubjectStudyTrack } from "@/components/subject-study-track";
 import { TopicCard } from "@/components/topic-card";
 import { getExamContext, getSubjectById, getTopicsBySubject } from "@/lib/data/catalog";
 import { SubjectId } from "@/lib/types";
@@ -42,6 +43,8 @@ export default async function SubjectDetailPage({
           </div>
         </div>
       </div>
+
+      <SubjectStudyTrack subjectId={subjectId} topics={topicList} />
 
       <div className="grid gap-5">
         {topicList.map((topic) => (

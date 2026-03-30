@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import {
   DAILY_PRACTICE_TARGET,
   PRACTICE_HISTORY_KEY,
@@ -36,13 +37,11 @@ function calculateStreaks(history: PracticeResult[]): {
 } {
   const activityMap = new Map<string, number>();
 
-  // Build activity map from history
   history.forEach((result) => {
     const key = toDayKey(new Date(result.completedAt));
     activityMap.set(key, (activityMap.get(key) ?? 0) + 1);
   });
 
-  // Calculate streaks
   let currentStreak = 0;
   let longestStreak = 0;
   let tempStreak = 0;
@@ -51,7 +50,6 @@ function calculateStreaks(history: PracticeResult[]): {
   today.setHours(0, 0, 0, 0);
   const todayKey = toDayKey(today);
 
-  // Sort dates in ascending order
   const sortedDates = Array.from(activityMap.keys())
     .sort()
     .map((key) => new Date(`${key}T00:00:00`));
@@ -71,7 +69,6 @@ function calculateStreaks(history: PracticeResult[]): {
     lastDate = date;
   });
 
-  // Check if current streak extends to today or yesterday
   if (lastDate) {
     const lastDateKey = toDayKey(lastDate);
     const daysSinceLast = getDayDifference(lastDateKey, todayKey);
@@ -91,138 +88,176 @@ function getIntensity(attempts: number): StreakDay["intensity"] {
 }
 
 export function StreakCalendar() {
-  const history = readLocalStorage<PracticeResult[]>(PRACTICE_HISTORY_KEY, []);
+  const [history, setHistory] = useState<PracticeResult[]>([]);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    setHistory(readLocalStorage<PracticeResult[]>(PRACTICE_HISTORY_KEY, []));
+    setIsLoaded(true);
+  }, []);
+
   const { currentStreak, longestStreak, activityMap } = calculateStreaks(history);
 
   // Generate calendar grid for past 12 weeks
   const today = new Date();
-  const startDate = new Date(today);
-  startDate.setDate(startDate.getDate() - 84); // 12 weeks back
+  const dayOfWeekToday = today.getDay(); // 0 is Sunday, 6 is Saturday
+  
+  // We want to end the grid exactly at today, but aligned to full weeks if possible
+  // GitHub style: Rows are Sun-Sat OR Mon-Sun. Let's go Mon-Sun (1-0).
+  const endDate = new Date(today);
+  const startDate = new Date(endDate);
+  // Subtract 12 weeks (84 days) and adjust to previous Monday
+  startDate.setDate(endDate.getDate() - 83);
+  const startDay = startDate.getDay();
+  const diffToMonday = startDay === 0 ? 6 : startDay - 1;
+  startDate.setDate(startDate.getDate() - diffToMonday);
   startDate.setHours(0, 0, 0, 0);
 
-  const weeks: StreakDay[][] = [];
-  let currentWeek: StreakDay[] = [];
-
-  const currentDate = new Date(startDate);
-  while (currentDate <= today) {
-    const dayKey = toDayKey(currentDate);
-    const attempts = activityMap.get(dayKey) ?? 0;
-
-    currentWeek.push({
-      date: dayKey,
-      attempts,
-      intensity: getIntensity(attempts),
-    });
-
-    // Sunday = 0, so if it's Saturday (6) or we're at the last day, push the week
-    if (currentDate.getDay() === 6 || currentDate.getTime() === today.getTime()) {
-      weeks.push([...currentWeek]);
-      currentWeek = [];
+  const grid: StreakDay[][] = []; // grid[weekIdx][dayIdx]
+  const currentCursor = new Date(startDate);
+  
+  // Create 12 weeks of data
+  for (let w = 0; w < 13; w++) {
+    const week: StreakDay[] = [];
+    for (let d = 0; d < 7; d++) {
+      if (currentCursor > today) {
+        // Future days (placeholders)
+        week.push({ date: "", attempts: 0, intensity: "none" });
+      } else {
+        const dayKey = toDayKey(currentCursor);
+        const attempts = activityMap.get(dayKey) ?? 0;
+        week.push({
+          date: dayKey,
+          attempts,
+          intensity: getIntensity(attempts),
+        });
+      }
+      currentCursor.setDate(currentCursor.getDate() + 1);
     }
-
-    currentDate.setDate(currentDate.getDate() + 1);
+    grid.push(week);
   }
 
-  const dayLabels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-  const monthLabel =
-    startDate.getMonth() === today.getMonth()
-      ? today.toLocaleDateString("en-US", { month: "short", year: "numeric" })
-      : `${startDate.toLocaleDateString("en-US", { month: "short" })} - ${today.toLocaleDateString("en-US", { month: "short", year: "numeric" })}`;
+  const dayLabels = ["M", "", "W", "", "F", "", "S"];
+  const monthLabel = today.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+
+  if (!isLoaded) return <div className="h-64 animate-pulse rounded-2xl bg-slate-100" />;
 
   return (
     <div className="space-y-4">
+      {/* Animated Streak Cards */}
       <div className="grid gap-4 sm:grid-cols-2">
-        <div className="rounded-2xl bg-white px-4 py-4 shadow-sm">
-          <p className="text-sm text-slate-500">Current streak</p>
-          <p className="mt-2 text-3xl font-bold text-slate-950">{currentStreak}d</p>
+        <div className="group relative overflow-hidden rounded-3xl border border-teal-100 bg-white p-6 shadow-sm transition-all hover:shadow-md">
+          <div className="absolute -right-4 -top-4 text-6xl opacity-10 transition-transform group-hover:scale-110 group-hover:rotate-12">
+            {currentStreak > 0 ? "🔥" : "❄️"}
+          </div>
+          <p className="text-xs font-bold uppercase tracking-widest text-teal-600/70">Current Streak</p>
+          <div className="mt-3 flex items-baseline gap-2">
+            <span className="text-5xl font-black tracking-tighter text-slate-950">
+              {currentStreak}
+            </span>
+            <span className="text-lg font-bold text-slate-400">days</span>
+          </div>
+          {currentStreak > 0 && (
+            <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-orange-50 px-2.5 py-1 text-[10px] font-bold text-orange-600">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-orange-400 opacity-75"></span>
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-orange-500"></span>
+              </span>
+              ON FIRE
+            </div>
+          )}
         </div>
-        <div className="rounded-2xl bg-white px-4 py-4 shadow-sm">
-          <p className="text-sm text-slate-500">Longest streak</p>
-          <p className="mt-2 text-3xl font-bold text-slate-950">{longestStreak}d</p>
+
+        <div className="group relative overflow-hidden rounded-3xl border border-amber-100 bg-white p-6 shadow-sm transition-all hover:shadow-md">
+           <div className="absolute -right-4 -top-4 text-6xl opacity-10 transition-transform group-hover:scale-110 group-hover:-rotate-12">
+            🏆
+          </div>
+          <p className="text-xs font-bold uppercase tracking-widest text-amber-600/70">Longest Streak</p>
+          <div className="mt-3 flex items-baseline gap-2">
+            <span className="text-5xl font-black tracking-tighter text-slate-950">
+              {longestStreak}
+            </span>
+            <span className="text-lg font-bold text-slate-400">days</span>
+          </div>
+          <p className="mt-3 text-[10px] font-bold text-amber-700/60 uppercase">Personal Best</p>
         </div>
       </div>
 
-      <div className="surface-panel space-y-4 p-6">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="text-sm font-semibold text-slate-900">{monthLabel}</p>
-          <div className="flex items-center gap-3 text-xs">
-            <div className="flex items-center gap-1">
-              <div className="h-2.5 w-2.5 rounded bg-slate-200" />
-              <span className="text-slate-600">None</span>
+      {/* Heatmap Section */}
+      <div className="surface-panel p-6">
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h3 className="text-sm font-bold text-slate-900">{monthLabel} Activity</h3>
+            <p className="text-[10px] font-medium text-slate-500 uppercase tracking-tight">Consistency is the key to mastery</p>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-bold text-slate-400 uppercase">Less</span>
+            <div className="flex gap-1">
+              <div className="h-2.5 w-2.5 rounded-[2px] bg-slate-100" />
+              <div className="h-2.5 w-2.5 rounded-[2px] bg-teal-100" />
+              <div className="h-2.5 w-2.5 rounded-[2px] bg-teal-300" />
+              <div className="h-2.5 w-2.5 rounded-[2px] bg-teal-500" />
+              <div className="h-2.5 w-2.5 rounded-[2px] bg-amber-500" />
             </div>
-            <div className="flex items-center gap-1">
-              <div className="h-2.5 w-2.5 rounded bg-blue-200" />
-              <span className="text-slate-600">1-2</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="h-2.5 w-2.5 rounded bg-blue-400" />
-              <span className="text-slate-600">{3}-{DAILY_PRACTICE_TARGET - 1}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="h-2.5 w-2.5 rounded bg-blue-600" />
-              <span className="text-slate-600">{DAILY_PRACTICE_TARGET}+</span>
-            </div>
+            <span className="text-[10px] font-bold text-slate-400 uppercase">More</span>
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <div className="space-y-1">
-            {/* Day labels */}
-            <div className="flex gap-1 pl-8">
-              {dayLabels.map((label) => (
-                <div
-                  className="w-2.5 text-center text-[0.65rem] font-medium text-slate-500"
-                  key={label}
-                >
+        <div className="relative overflow-x-auto pb-2">
+          <div className="inline-flex gap-1.5 min-w-full">
+            {/* Days Column Labels */}
+            <div className="flex flex-col gap-1 pr-2 pt-1.5">
+              {dayLabels.map((label, i) => (
+                <div key={i} className="h-2.5 text-[8px] font-bold text-slate-400 text-right leading-[10px]">
                   {label}
                 </div>
               ))}
             </div>
 
-            {/* Calendar grid */}
-            <div className="flex flex-col gap-1">
-              {weeks.map((week, weekIndex) => (
-                <div className="flex gap-1" key={weekIndex}>
-                  {weekIndex === 0 && (
-                    <div className="w-8 flex-shrink-0" />
-                  )}
-                  {week.map((day) => {
+            {/* Grid Weeks */}
+            <div className="flex gap-1.5">
+              {grid.map((week, weekIdx) => (
+                <div key={weekIdx} className="flex flex-col gap-1">
+                  {week.map((day, dayIdx) => {
                     const bgColor =
                       day.intensity === "none"
                         ? "bg-slate-100"
                         : day.intensity === "light"
-                          ? "bg-blue-200"
+                          ? "bg-teal-100"
                           : day.intensity === "medium"
-                            ? "bg-blue-400"
-                            : "bg-blue-600";
+                            ? "bg-teal-400"
+                            : "bg-amber-500 shadow-[0_0_8px_-2px_rgba(245,158,11,0.5)]";
 
                     return (
                       <div
-                        className={`h-2.5 w-2.5 rounded ${bgColor} transition hover:ring-1 hover:ring-slate-400`}
-                        key={day.date}
-                        title={`${day.date}: ${day.attempts} attempt${day.attempts === 1 ? "" : "s"}`}
+                        key={day.date || `empty-${weekIdx}-${dayIdx}`}
+                        className={`
+                          h-2.5 w-2.5 rounded-[2px] transition-all duration-300 hover:scale-125 hover:z-10 cursor-pointer
+                          ${bgColor} 
+                          ${!day.date ? "opacity-20 pointer-events-none" : ""}
+                        `}
+                        title={day.date ? `${day.date}: ${day.attempts} drills` : ""}
                       />
                     );
                   })}
-                  {weeks.length === 1 && week.length < 7 && (
-                    <>
-                      {Array.from({
-                        length: 7 - week.length,
-                      }).map((_, i) => (
-                        <div className="h-2.5 w-2.5 opacity-0" key={`empty-${i}`} />
-                      ))}
-                    </>
-                  )}
                 </div>
               ))}
             </div>
           </div>
         </div>
 
-        <p className="text-xs text-slate-500">
-          Last 12 weeks of practice activity. Each square shows a day&apos;s drill count.
-        </p>
+        <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-4">
+           <p className="text-[10px] font-medium text-slate-400">
+            Current streak: <span className="font-bold text-teal-600">{currentStreak} days</span>
+          </p>
+          <div className="flex items-center gap-1.5">
+             <div className="h-1.5 w-1.5 rounded-full bg-teal-500 animate-pulse" />
+             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">Syncing Momentum</span>
+          </div>
+        </div>
       </div>
     </div>
   );
 }
+

@@ -108,7 +108,7 @@ export function PracticeWorkspace({
   ) : null;
 
   return (
-    <section className="surface-card space-y-5 p-5" id="drill-dock">
+    <section className="surface-card scroll-mt-28 space-y-5 p-5" id="drill-dock">
       <div className="space-y-2">
         <p className="eyebrow">Drill dock</p>
         <h3 className="text-2xl font-bold tracking-tight text-slate-950">

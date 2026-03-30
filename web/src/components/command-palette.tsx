@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { useRouter } from "next/navigation";
 
 import { catalogGateway } from "@/lib/gateways";
@@ -21,6 +21,7 @@ interface PaletteItem {
 export function CommandPalette({ open, onClose }: CommandPaletteProps) {
   const router = useRouter();
   const [query, setQuery] = useState("");
+  const [selectedIndex, setSelectedIndex] = useState(0);
   const subjects = useMemo(
     () =>
       catalogGateway.getSubjects().map((subject) => ({
@@ -55,6 +56,13 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
         href: "/app/progress",
         tag: "Action",
       },
+      {
+        id: "quick-profile",
+        label: "Open profile and exports",
+        sublabel: "Review your learner setup, streak, and printable progress report.",
+        href: "/app/profile",
+        tag: "Action",
+      },
     ],
     [],
   );
@@ -66,11 +74,53 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
       })),
     [query],
   );
+  const sections = useMemo(
+    () =>
+      query.trim()
+        ? results.length === 0
+          ? []
+          : [
+              {
+                heading: "Search results",
+                items: results,
+              },
+            ]
+        : [
+            {
+              heading: "Quick actions",
+              items: quickActions,
+            },
+            {
+              heading: "Subjects",
+              items: subjects,
+            },
+          ],
+    [query, quickActions, results, subjects],
+  );
+  const visibleItems = useMemo(
+    () => sections.flatMap((section) => section.items),
+    [sections],
+  );
 
   const handleClose = useCallback(() => {
     setQuery("");
+    setSelectedIndex(0);
     onClose();
   }, [onClose]);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    setSelectedIndex(0);
+  }, [open, query]);
+
+  useEffect(() => {
+    if (selectedIndex >= visibleItems.length) {
+      setSelectedIndex(Math.max(0, visibleItems.length - 1));
+    }
+  }, [selectedIndex, visibleItems.length]);
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -91,6 +141,34 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
     handleClose();
     router.push(href);
   }
+
+  function handleInputKeyDown(event: ReactKeyboardEvent<HTMLInputElement>) {
+    if (visibleItems.length === 0) {
+      return;
+    }
+
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      setSelectedIndex((current) => (current + 1) % visibleItems.length);
+      return;
+    }
+
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+      setSelectedIndex((current) => (current - 1 + visibleItems.length) % visibleItems.length);
+      return;
+    }
+
+    if (event.key === "Enter") {
+      event.preventDefault();
+      const target = visibleItems[selectedIndex];
+      if (target) {
+        openResult(target.href);
+      }
+    }
+  }
+
+  let itemOffset = 0;
 
   return (
     <div
@@ -120,6 +198,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
             className="field"
             id="command-palette-search"
             onChange={(event) => setQuery(event.target.value)}
+            onKeyDown={handleInputKeyDown}
             placeholder="Jump to DBMS, joins, rectifiers..."
             value={query}
           />
@@ -131,83 +210,97 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
                 No direct match yet. Try a subject name, topic title, or switch to a quick action below.
               </div>
             ) : (
-              <section className="space-y-2">
-                <p className="px-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-                  Search results
-                </p>
-                <ul className="space-y-2">
-                  {results.map((result) => (
-                    <li key={result.id}>
-                      <button
-                        className="flex w-full items-center justify-between rounded-2xl border border-black/10 bg-white/70 px-4 py-3 text-left transition hover:bg-white"
-                        onClick={() => openResult(result.href)}
-                        type="button"
-                      >
-                        <span className="flex flex-col gap-1">
-                          <span className="font-semibold text-slate-900">{result.label}</span>
-                          <span className="text-sm text-slate-500">{result.sublabel}</span>
-                        </span>
-                        <span className="reward-chip">{result.tag}</span>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </section>
+              sections.map((section) => {
+                const sectionOffset = itemOffset;
+                itemOffset += section.items.length;
+
+                return (
+                  <section className="space-y-2" key={section.heading}>
+                    <p className="px-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                      {section.heading}
+                    </p>
+                    <ul className="space-y-2">
+                      {section.items.map((item, index) => {
+                        const absoluteIndex = sectionOffset + index;
+                        const isActive = absoluteIndex === selectedIndex;
+
+                        return (
+                          <li key={item.id}>
+                            <button
+                              className={`flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-left transition ${
+                                isActive
+                                  ? "border-teal-300 bg-teal-50"
+                                  : "border-black/10 bg-white/70 hover:bg-white"
+                              }`}
+                              onClick={() => openResult(item.href)}
+                              onMouseEnter={() => setSelectedIndex(absoluteIndex)}
+                              type="button"
+                            >
+                              <span className="flex flex-col gap-1">
+                                <span className="font-semibold text-slate-900">{item.label}</span>
+                                <span className="text-sm text-slate-500">{item.sublabel}</span>
+                              </span>
+                              <span className="reward-chip">{item.tag}</span>
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </section>
+                );
+              })
             )
           ) : (
             <>
-              <section className="space-y-2">
-                <p className="px-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-                  Quick actions
-                </p>
-                <ul className="space-y-2">
-                  {quickActions.map((action) => (
-                    <li key={action.id}>
-                      <button
-                        className="flex w-full items-center justify-between rounded-2xl border border-black/10 bg-white/70 px-4 py-3 text-left transition hover:bg-white"
-                        onClick={() => openResult(action.href)}
-                        type="button"
-                      >
-                        <span className="flex flex-col gap-1">
-                          <span className="font-semibold text-slate-900">{action.label}</span>
-                          <span className="text-sm text-slate-500">{action.sublabel}</span>
-                        </span>
-                        <span className="reward-chip">{action.tag}</span>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </section>
+              {sections.map((section) => {
+                const sectionOffset = itemOffset;
+                itemOffset += section.items.length;
 
-              <section className="space-y-2">
-                <p className="px-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-                  Subjects
-                </p>
-                <ul className="space-y-2">
-                  {subjects.map((subject) => (
-                    <li key={subject.id}>
-                      <button
-                        className="flex w-full items-center justify-between rounded-2xl border border-black/10 bg-white/70 px-4 py-3 text-left transition hover:bg-white"
-                        onClick={() => openResult(subject.href)}
-                        type="button"
-                      >
-                        <span className="flex flex-col gap-1">
-                          <span className="font-semibold text-slate-900">{subject.label}</span>
-                          <span className="text-sm text-slate-500">{subject.sublabel}</span>
-                        </span>
-                        <span className="reward-chip">{subject.tag}</span>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </section>
+                return (
+                  <section className="space-y-2" key={section.heading}>
+                    <p className="px-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                      {section.heading}
+                    </p>
+                    <ul className="space-y-2">
+                      {section.items.map((item, index) => {
+                        const absoluteIndex = sectionOffset + index;
+                        const isActive = absoluteIndex === selectedIndex;
+
+                        return (
+                          <li key={item.id}>
+                            <button
+                              className={`flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-left transition ${
+                                isActive
+                                  ? "border-teal-300 bg-teal-50"
+                                  : "border-black/10 bg-white/70 hover:bg-white"
+                              }`}
+                              onClick={() => openResult(item.href)}
+                              onMouseEnter={() => setSelectedIndex(absoluteIndex)}
+                              type="button"
+                            >
+                              <span className="flex flex-col gap-1">
+                                <span className="font-semibold text-slate-900">{item.label}</span>
+                                <span className="text-sm text-slate-500">{item.sublabel}</span>
+                              </span>
+                              <span className="reward-chip">{item.tag}</span>
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </section>
+                );
+              })}
             </>
           )}
         </div>
         <div className="border-t border-black/10 px-4 py-3 text-xs text-slate-500 sm:px-6">
           <div className="flex flex-wrap items-center gap-2">
             <span className="command-kbd">Enter</span>
-            <span>open highlighted idea with one click or tap</span>
+            <span>open highlighted result</span>
+            <span className="command-kbd">↑</span>
+            <span className="command-kbd">↓</span>
+            <span>move through results</span>
             <span className="command-kbd">Ctrl</span>
             <span className="command-kbd">K</span>
             <span>reopen anytime</span>

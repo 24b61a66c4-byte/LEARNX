@@ -19,12 +19,14 @@ import { readLocalStorage } from "@/lib/storage";
 import { AppSession, DashboardView, OnboardingProfile } from "@/lib/types";
 
 const navItems = [
-  { href: "/app", label: "Home" },
-  { href: "/app/subjects", label: "Subjects" },
-  { href: "/app/ask", label: "Ask AI" },
-  { href: "/app/practice", label: "Practice" },
-  { href: "/app/progress", label: "Progress" },
+  { href: "/app", label: "Home", shortLabel: "HM" },
+  { href: "/app/subjects", label: "Subjects", shortLabel: "SB" },
+  { href: "/app/ask", label: "Ask AI", shortLabel: "AI" },
+  { href: "/app/practice", label: "Practice", shortLabel: "PR" },
+  { href: "/app/progress", label: "Progress", shortLabel: "PG" },
 ];
+
+const SIDEBAR_COLLAPSED_STORAGE_KEY = "learnx-shell-sidebar-collapsed";
 
 function getShellState(): {
   session: AppSession;
@@ -66,22 +68,46 @@ function formatExamTarget(target?: OnboardingProfile["examTarget"]) {
 function NavLink({
   href,
   label,
+  shortLabel,
   active,
   compact = false,
+  collapsed = false,
+  onNavigate,
 }: {
   href: string;
   label: string;
+  shortLabel?: string;
   active: boolean;
   compact?: boolean;
+  collapsed?: boolean;
+  onNavigate?: () => void;
 }) {
+  const compactMode = compact || collapsed;
   return (
     <Link
       aria-current={active ? "page" : undefined}
-      className={`inline-flex items-center rounded-full text-sm font-semibold transition ${compact ? "justify-center px-2 py-2 text-[0.72rem]" : "px-4 py-2.5"
-        } ${active ? "bg-slate-950 text-white shadow-md" : "text-slate-600 hover:bg-white/80"}`}
+      className={`group relative inline-flex items-center gap-2.5 rounded-2xl border text-sm font-semibold transition ${compactMode
+        ? "justify-center px-2.5 py-2.5"
+        : "w-full px-3.5 py-2.5"
+        } ${active
+          ? "border-teal-700/20 bg-slate-950 text-white shadow-[0_8px_24px_rgba(15,23,42,0.18)]"
+          : "border-transparent text-slate-600 hover:border-black/10 hover:bg-white/80 hover:text-slate-900"
+        }`}
       href={href}
+      onClick={onNavigate}
+      title={compactMode ? label : undefined}
     >
-      {label}
+      <span
+        aria-hidden="true"
+        className={`inline-flex h-7 w-7 items-center justify-center rounded-full text-[0.65rem] font-bold tracking-[0.1em] transition ${active
+          ? "bg-white/15 text-white"
+          : "bg-slate-200/70 text-slate-700 group-hover:bg-slate-300/70"
+          }`}
+      >
+        {shortLabel ?? label.slice(0, 2).toUpperCase()}
+      </span>
+      {compactMode ? null : <span className={active ? "bg-slate-950 text-white" : undefined}>{label}</span>}
+      {active && !compactMode ? <span className="nav-active-rail" /> : null}
     </Link>
   );
 }
@@ -91,6 +117,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   const router = useRouter();
   const { signOut, user } = useAuth();
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const shellState = useClientSnapshot(getShellState, getServerShellState);
 
   useEffect(() => {
@@ -99,11 +127,38 @@ export function AppShell({ children }: { children: ReactNode }) {
         event.preventDefault();
         setPaletteOpen((current) => !current);
       }
+
+      if (event.key === "Escape") {
+        setMobileNavOpen(false);
+      }
     }
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const stored = window.localStorage.getItem(SIDEBAR_COLLAPSED_STORAGE_KEY);
+    if (stored === "1") {
+      setSidebarCollapsed(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    window.localStorage.setItem(SIDEBAR_COLLAPSED_STORAGE_KEY, sidebarCollapsed ? "1" : "0");
+  }, [sidebarCollapsed]);
+
+  useEffect(() => {
+    setMobileNavOpen(false);
+  }, [pathname]);
 
   const { dashboard, onboarding, session } = shellState;
   const todaySegments = Array.from({ length: dashboard.dailyGoalTarget }, (_, index) => index < dashboard.todayAttempts);
@@ -137,17 +192,34 @@ export function AppShell({ children }: { children: ReactNode }) {
       detail: "Track XP, badges, and momentum in one place.",
     },
   ];
+  const profileHref = "/app/profile";
+  const activeNavLabel = navItems.find((item) => isActivePath(pathname, item.href))?.label ?? "Workspace";
+
+  const desktopSidebarWidthClass = sidebarCollapsed ? "w-24" : "w-72";
+
+  async function handleSignOut() {
+    await signOut();
+    router.push("/login");
+  }
 
   return (
     <>
       {paletteOpen ? <CommandPalette onClose={() => setPaletteOpen(false)} open={paletteOpen} /> : null}
       <div className="mx-auto flex min-h-[calc(100vh-77px)] w-full max-w-7xl gap-6 px-4 py-6 sm:px-6 lg:px-8">
-        <aside className="surface-card sticky top-6 hidden h-[calc(100vh-7rem)] w-72 shrink-0 flex-col justify-between px-5 py-6 lg:flex">
+        <aside className={`surface-card sticky top-6 hidden h-[calc(100vh-7rem)] shrink-0 flex-col justify-between px-4 py-5 transition-[width,padding] duration-300 lg:flex ${desktopSidebarWidthClass}`}>
           <div className="space-y-6">
-            <div className="flex items-center gap-3">
+            <div className={`flex items-center gap-3 ${sidebarCollapsed ? "justify-center" : "justify-between"}`}>
               <LearnxLogo />
+              <button
+                aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+                className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-black/10 bg-white/85 text-slate-700 transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-slate-950 focus:ring-offset-2"
+                onClick={() => setSidebarCollapsed((current) => !current)}
+                type="button"
+              >
+                {sidebarCollapsed ? ">" : "<"}
+              </button>
             </div>
-            <div className="surface-panel space-y-4 px-4 py-4">
+            <div className={`surface-panel space-y-4 px-4 py-4 ${sidebarCollapsed ? "hidden" : "block"}`}>
               <div>
                 <p className="eyebrow">Today cadence</p>
                 <p className="mt-2 text-lg font-bold tracking-tight text-slate-950">
@@ -180,16 +252,21 @@ export function AppShell({ children }: { children: ReactNode }) {
               <p className="text-sm font-medium text-slate-700">{dashboard.rewards.nextBadgeLabel}</p>
             </div>
             <div className="space-y-2">
+              <p className={`px-1 text-[0.68rem] font-semibold uppercase tracking-[0.2em] text-slate-500 ${sidebarCollapsed ? "text-center" : ""}`}>
+                Nav
+              </p>
               {navItems.map((item) => (
                 <NavLink
                   active={isActivePath(pathname, item.href)}
+                  collapsed={sidebarCollapsed}
                   href={item.href}
                   key={item.href}
                   label={item.label}
+                  shortLabel={item.shortLabel}
                 />
               ))}
             </div>
-            <div className="space-y-3">
+            <div className={`space-y-3 ${sidebarCollapsed ? "hidden" : "block"}`}>
               <p className="eyebrow">Quick launch</p>
               <div className="space-y-3">
                 {quickActions.map((action) => (
@@ -205,22 +282,29 @@ export function AppShell({ children }: { children: ReactNode }) {
               </div>
             </div>
           </div>
-          <div className="space-y-3 rounded-[24px] bg-slate-950 px-5 py-5 text-white">
+          <div className={`space-y-3 rounded-[24px] bg-slate-950 px-5 py-5 text-white ${sidebarCollapsed ? "px-3" : ""}`}>
             <p className="text-xs uppercase tracking-[0.22em] text-teal-200">Logged in</p>
             <div>
-              <p className="font-semibold">{displayName}</p>
-              <p className="text-sm text-slate-300">{email}</p>
+              <p className="font-semibold">{sidebarCollapsed ? firstName : displayName}</p>
+              {sidebarCollapsed ? null : <p className="text-sm text-slate-300">{email}</p>}
             </div>
+            {sidebarCollapsed ? null : (
+              <Link
+                className="button-secondary w-full bg-white/10 text-white hover:bg-white/15"
+                href={profileHref}
+              >
+                Open profile
+              </Link>
+            )}
             <button
               aria-label="Sign out of LearnX and return to login"
               className="button-secondary w-full bg-white/10 text-white hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-slate-950"
-              onClick={async () => {
-                await signOut();
-                router.push("/login");
+              onClick={() => {
+                void handleSignOut();
               }}
               type="button"
             >
-              Sign out
+              {sidebarCollapsed ? "Out" : "Sign out"}
             </button>
           </div>
         </aside>
@@ -287,21 +371,70 @@ export function AppShell({ children }: { children: ReactNode }) {
             <Link className="button-secondary" href={dashboard.quickPracticeHref}>
               Quick drill
             </Link>
-            <Link className="button-secondary" href="/app/progress">
-              Rewards
-            </Link>
-          </div>
-          <div>
-            <div>
-              <p className="eyebrow">Study cockpit</p>
-              <h2 className="mt-2 text-lg font-bold tracking-tight text-slate-950 sm:hidden">
-                Keep one study flow open
-              </h2>
-            </div>
+            <button
+              aria-expanded={mobileNavOpen}
+              aria-label="Open mobile navigation menu and account actions"
+              className="button-secondary"
+              onClick={() => setMobileNavOpen((current) => !current)}
+              type="button"
+            >
+              Menu
+            </button>
           </div>
           {children}
         </div>
       </div>
+
+      {mobileNavOpen ? (
+        <div className="fixed inset-0 z-50 bg-slate-950/25 backdrop-blur-[2px] lg:hidden" onClick={() => setMobileNavOpen(false)}>
+          <div className="absolute inset-x-3 bottom-20 rounded-[28px] border border-black/10 bg-white/95 p-3 shadow-[0_20px_45px_rgba(15,23,42,0.22)]" onClick={(event) => event.stopPropagation()}>
+            <div className="rounded-[24px] bg-slate-950 px-4 py-4 text-white">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-[0.68rem] font-semibold uppercase tracking-[0.2em] text-teal-200">
+                    {activeNavLabel}
+                  </p>
+                  <p className="mt-2 text-lg font-semibold tracking-tight">{displayName}</p>
+                  <p className="mt-1 text-sm text-slate-300">{focusLine}</p>
+                </div>
+                <span className="reward-chip">{dashboard.rewards.level}</span>
+              </div>
+              <div className="mt-4 flex gap-2">
+                <Link
+                  className="button-secondary flex-1 bg-white/10 text-white hover:bg-white/15"
+                  href={profileHref}
+                  onClick={() => setMobileNavOpen(false)}
+                >
+                  Profile
+                </Link>
+                <button
+                  className="button-secondary flex-1 bg-white/10 text-white hover:bg-white/15"
+                  onClick={() => {
+                    setMobileNavOpen(false);
+                    void handleSignOut();
+                  }}
+                  type="button"
+                >
+                  Sign out
+                </button>
+              </div>
+            </div>
+            <p className="px-2 pb-2 pt-4 text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-slate-500">Navigate</p>
+            <div className="grid grid-cols-1 gap-2">
+              {navItems.map((item) => (
+                <NavLink
+                  active={isActivePath(pathname, item.href)}
+                  href={item.href}
+                  key={`mobile-${item.href}`}
+                  label={item.label}
+                  onNavigate={() => setMobileNavOpen(false)}
+                  shortLabel={item.shortLabel}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <nav className="fixed inset-x-4 bottom-4 z-40 rounded-full border border-black/10 bg-white/92 p-2 shadow-[0_18px_40px_rgba(15,23,42,0.18)] backdrop-blur lg:hidden">
         <div className="grid grid-cols-5 gap-1">
@@ -312,6 +445,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               href={item.href}
               key={item.href}
               label={item.label}
+              shortLabel={item.shortLabel}
             />
           ))}
         </div>

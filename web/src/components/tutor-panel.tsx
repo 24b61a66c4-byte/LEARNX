@@ -38,6 +38,7 @@ interface TutorPanelProps {
   initialPrompt?: string;
   showFloatingActions?: boolean;
   showSupportLanes?: boolean;
+  sectionId?: string;
 }
 
 export function TutorPanel({
@@ -46,6 +47,7 @@ export function TutorPanel({
   initialPrompt = "",
   showFloatingActions = true,
   showSupportLanes = true,
+  sectionId,
 }: TutorPanelProps) {
   const subjects = catalogGateway.getSubjects();
   const [subjectId, setSubjectId] = useState<SubjectId>(defaultSubjectId);
@@ -180,7 +182,7 @@ export function TutorPanel({
   }
 
   return (
-    <section className="space-y-5">
+    <section className="scroll-mt-28 space-y-5" id={sectionId}>
       <div className="surface-card p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
