@@ -50,10 +50,6 @@ public record LearnxConfig(
         long timeoutSeconds = parseLong(source.get(REQUEST_TIMEOUT_ENV), 20L);
         int maxSearchResults = Math.max(1, (int) parseLong(source.get(SEARCH_LIMIT_ENV), 5L));
 
-        if ("prod".equals(environment) && (frontendUrl == null || frontendUrl.isBlank())) {
-            throw new IllegalStateException(FRONTEND_URL_ENV + " is required when LEARNX_ENV=prod");
-        }
-
         return new LearnxConfig(
                 environment,
                 frontendUrl,

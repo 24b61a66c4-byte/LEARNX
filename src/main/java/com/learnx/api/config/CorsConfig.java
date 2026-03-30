@@ -17,7 +17,7 @@ public class CorsConfig {
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(@NonNull CorsRegistry registry) {
-                String[] origins = config.isProduction()
+                String[] origins = config.isProduction() && config.frontendUrl() != null
                         ? new String[] { config.frontendUrl() }
                         : new String[] { "*" };
 
