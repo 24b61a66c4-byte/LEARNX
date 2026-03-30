@@ -1,9 +1,10 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import { User } from "@supabase/supabase-js";
-import { supabase, getSessionUser } from "@/lib/supabase";
+import { type User } from "@supabase/supabase-js";
+
 import { syncSessionFromAuthUser } from "@/lib/backend-sync";
+import { getSessionUser, getSupabaseClient, hasSupabaseEnv } from "@/lib/supabase";
 
 interface AuthContextType {
   user: User | null;
@@ -15,14 +16,32 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => hasSupabaseEnv());
 
   useEffect(() => {
+    if (!hasSupabaseEnv()) {
+      return;
+    }
+
+    const supabase = getSupabaseClient();
+    let isActive = true;
+
     const checkSession = async () => {
-      const user = await getSessionUser();
-      await syncSessionFromAuthUser(user ?? null);
-      setUser(user ?? null);
-      setLoading(false);
+      try {
+        const currentUser = await getSessionUser();
+        await syncSessionFromAuthUser(currentUser ?? null);
+
+        if (!isActive) {
+          return;
+        }
+
+        setUser(currentUser ?? null);
+        setLoading(false);
+      } catch {
+        if (isActive) {
+          setLoading(false);
+        }
+      }
     };
 
     void checkSession();
@@ -31,18 +50,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       void syncSessionFromAuthUser(session?.user ?? null).finally(() => {
+        if (!isActive) {
+          return;
+        }
+
         setUser(session?.user ?? null);
         setLoading(false);
       });
     });
 
     return () => {
+      isActive = false;
       subscription.unsubscribe();
     };
   }, []);
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    if (hasSupabaseEnv()) {
+      await getSupabaseClient().auth.signOut();
+    }
+
     await syncSessionFromAuthUser(null);
     setUser(null);
   };

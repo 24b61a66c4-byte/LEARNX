@@ -6,7 +6,13 @@ import { useRouter } from "next/navigation";
 
 import { syncSessionFromAuthUser } from "@/lib/backend-sync";
 import { sessionGateway } from "@/lib/gateways";
-import { signUpWithEmail, signInWithEmail, supabase } from "@/lib/supabase";
+import {
+  getSupabaseClient,
+  getSupabaseConfigError,
+  hasSupabaseEnv,
+  signInWithEmail,
+  signUpWithEmail,
+} from "@/lib/supabase";
 
 interface AuthFormProps {
   mode: "login" | "signup";
@@ -45,6 +51,12 @@ export function AuthForm({ mode }: AuthFormProps) {
     setSubmitting(true);
     setErrorMessage("");
 
+    if (!hasSupabaseEnv()) {
+      setErrorMessage(getSupabaseConfigError());
+      setSubmitting(false);
+      return;
+    }
+
     try {
       if (mode === "login") {
         const { data, error } = await signInWithEmail(email.trim(), password);
@@ -65,7 +77,7 @@ export function AuthForm({ mode }: AuthFormProps) {
           return;
         }
         if (data.user) {
-          await supabase.auth.updateUser({
+          await getSupabaseClient().auth.updateUser({
             data: { display_name: displayName.trim() || email.split("@")[0] },
           });
           sessionGateway.signUp({
@@ -75,7 +87,7 @@ export function AuthForm({ mode }: AuthFormProps) {
         }
         router.push("/app/onboarding");
       }
-    } catch (err) {
+    } catch {
       setErrorMessage("An unexpected error occurred. Please try again.");
       setSubmitting(false);
     }

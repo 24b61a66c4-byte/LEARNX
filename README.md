@@ -28,11 +28,15 @@ LearnX is a production-oriented learning platform with:
 
 ```bash
 cp .env.example .env.local
+cp web/.env.example web/.env.local
 ```
 
 Set at least:
 
 - `LEARNX_ENV=dev`
+- `NEXT_PUBLIC_API_URL=http://localhost:8080/api/v1`
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (or `NEXT_PUBLIC_SUPABASE_ANON_KEY`)
 - `LEARNX_GEMINI_API_KEY` (optional)
 - `LEARNX_TAVILY_API_KEY` (optional)
 
@@ -59,7 +63,7 @@ docker compose --env-file .env.local up --build
 
 ## Configuration
 
-Copy `.env.example` to `.env.local` and fill in your keys.
+Copy `.env.example` to `.env.local`, copy `web/.env.example` to `web/.env.local`, and fill in your keys. For Vercel deployments, add the `NEXT_PUBLIC_*` keys in the project environment settings for both Preview and Production.
 
 | Variable | Required | Default | Description |
 |---|---|---|---|

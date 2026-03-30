@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import {
   DAILY_PRACTICE_TARGET,
   PRACTICE_HISTORY_KEY,
 } from "@/lib/constants";
+import { useClientSnapshot } from "@/lib/client-snapshot";
 import { readLocalStorage } from "@/lib/storage";
 import { PracticeResult } from "@/lib/types";
 
@@ -88,20 +88,16 @@ function getIntensity(attempts: number): StreakDay["intensity"] {
 }
 
 export function StreakCalendar() {
-  const [history, setHistory] = useState<PracticeResult[]>([]);
-  const [isLoaded, setIsLoaded] = useState(false);
-
-  useEffect(() => {
-    setHistory(readLocalStorage<PracticeResult[]>(PRACTICE_HISTORY_KEY, []));
-    setIsLoaded(true);
-  }, []);
+  const history = useClientSnapshot(
+    () => readLocalStorage<PracticeResult[]>(PRACTICE_HISTORY_KEY, []),
+    () => [],
+  );
 
   const { currentStreak, longestStreak, activityMap } = calculateStreaks(history);
 
   // Generate calendar grid for past 12 weeks
   const today = new Date();
-  const dayOfWeekToday = today.getDay(); // 0 is Sunday, 6 is Saturday
-  
+
   // We want to end the grid exactly at today, but aligned to full weeks if possible
   // GitHub style: Rows are Sun-Sat OR Mon-Sun. Let's go Mon-Sun (1-0).
   const endDate = new Date(today);
@@ -139,8 +135,6 @@ export function StreakCalendar() {
 
   const dayLabels = ["M", "", "W", "", "F", "", "S"];
   const monthLabel = today.toLocaleDateString("en-US", { month: "long", year: "numeric" });
-
-  if (!isLoaded) return <div className="h-64 animate-pulse rounded-2xl bg-slate-100" />;
 
   return (
     <div className="space-y-4">

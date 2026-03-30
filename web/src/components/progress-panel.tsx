@@ -97,7 +97,7 @@ export function ProgressPanel() {
             <div className="space-y-4 text-center sm:text-left">
               <p className="eyebrow">Momentum pulse</p>
               <h2 className="text-3xl font-black tracking-tight text-slate-950">
-                You're in the <span className="text-teal-600">{snapshot.rewards.leaderboardLabel}</span>
+                You are in the <span className="text-teal-600">{snapshot.rewards.leaderboardLabel}</span>
               </h2>
               <p className="max-w-md text-sm leading-relaxed text-slate-600">
                 Consistency is high this week. {snapshot.rewards.nextBadgeLabel}. Keep the streak alive!

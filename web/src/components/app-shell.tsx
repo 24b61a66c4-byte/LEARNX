@@ -117,9 +117,16 @@ export function AppShell({ children }: { children: ReactNode }) {
   const router = useRouter();
   const { signOut, user } = useAuth();
   const [paletteOpen, setPaletteOpen] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    if (typeof window === "undefined") {
+      return false;
+    }
+
+    return window.localStorage.getItem(SIDEBAR_COLLAPSED_STORAGE_KEY) === "1";
+  });
+  const [mobileNavRoute, setMobileNavRoute] = useState<string | null>(null);
   const shellState = useClientSnapshot(getShellState, getServerShellState);
+  const mobileNavOpen = mobileNavRoute === pathname;
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -129,7 +136,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       }
 
       if (event.key === "Escape") {
-        setMobileNavOpen(false);
+        setMobileNavRoute(null);
       }
     }
 
@@ -142,23 +149,8 @@ export function AppShell({ children }: { children: ReactNode }) {
       return;
     }
 
-    const stored = window.localStorage.getItem(SIDEBAR_COLLAPSED_STORAGE_KEY);
-    if (stored === "1") {
-      setSidebarCollapsed(true);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
     window.localStorage.setItem(SIDEBAR_COLLAPSED_STORAGE_KEY, sidebarCollapsed ? "1" : "0");
   }, [sidebarCollapsed]);
-
-  useEffect(() => {
-    setMobileNavOpen(false);
-  }, [pathname]);
 
   const { dashboard, onboarding, session } = shellState;
   const todaySegments = Array.from({ length: dashboard.dailyGoalTarget }, (_, index) => index < dashboard.todayAttempts);
@@ -375,7 +367,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               aria-expanded={mobileNavOpen}
               aria-label="Open mobile navigation menu and account actions"
               className="button-secondary"
-              onClick={() => setMobileNavOpen((current) => !current)}
+              onClick={() => setMobileNavRoute((current) => (current === pathname ? null : pathname))}
               type="button"
             >
               Menu
@@ -386,7 +378,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </div>
 
       {mobileNavOpen ? (
-        <div className="fixed inset-0 z-50 bg-slate-950/25 backdrop-blur-[2px] lg:hidden" onClick={() => setMobileNavOpen(false)}>
+        <div className="fixed inset-0 z-50 bg-slate-950/25 backdrop-blur-[2px] lg:hidden" onClick={() => setMobileNavRoute(null)}>
           <div className="absolute inset-x-3 bottom-20 rounded-[28px] border border-black/10 bg-white/95 p-3 shadow-[0_20px_45px_rgba(15,23,42,0.22)]" onClick={(event) => event.stopPropagation()}>
             <div className="rounded-[24px] bg-slate-950 px-4 py-4 text-white">
               <div className="flex items-start justify-between gap-3">
@@ -403,14 +395,14 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <Link
                   className="button-secondary flex-1 bg-white/10 text-white hover:bg-white/15"
                   href={profileHref}
-                  onClick={() => setMobileNavOpen(false)}
+                  onClick={() => setMobileNavRoute(null)}
                 >
                   Profile
                 </Link>
                 <button
                   className="button-secondary flex-1 bg-white/10 text-white hover:bg-white/15"
                   onClick={() => {
-                    setMobileNavOpen(false);
+                    setMobileNavRoute(null);
                     void handleSignOut();
                   }}
                   type="button"
@@ -427,7 +419,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   href={item.href}
                   key={`mobile-${item.href}`}
                   label={item.label}
-                  onNavigate={() => setMobileNavOpen(false)}
+                  onNavigate={() => setMobileNavRoute(null)}
                   shortLabel={item.shortLabel}
                 />
               ))}

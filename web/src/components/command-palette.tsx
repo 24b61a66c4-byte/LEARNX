@@ -101,26 +101,14 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
     () => sections.flatMap((section) => section.items),
     [sections],
   );
+  const activeIndex =
+    visibleItems.length === 0 ? 0 : Math.min(selectedIndex, visibleItems.length - 1);
 
   const handleClose = useCallback(() => {
     setQuery("");
     setSelectedIndex(0);
     onClose();
   }, [onClose]);
-
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-
-    setSelectedIndex(0);
-  }, [open, query]);
-
-  useEffect(() => {
-    if (selectedIndex >= visibleItems.length) {
-      setSelectedIndex(Math.max(0, visibleItems.length - 1));
-    }
-  }, [selectedIndex, visibleItems.length]);
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -161,7 +149,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
 
     if (event.key === "Enter") {
       event.preventDefault();
-      const target = visibleItems[selectedIndex];
+      const target = visibleItems[activeIndex];
       if (target) {
         openResult(target.href);
       }
@@ -197,7 +185,10 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
             autoFocus
             className="field"
             id="command-palette-search"
-            onChange={(event) => setQuery(event.target.value)}
+            onChange={(event) => {
+              setQuery(event.target.value);
+              setSelectedIndex(0);
+            }}
             onKeyDown={handleInputKeyDown}
             placeholder="Jump to DBMS, joins, rectifiers..."
             value={query}
@@ -222,7 +213,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
                     <ul className="space-y-2">
                       {section.items.map((item, index) => {
                         const absoluteIndex = sectionOffset + index;
-                        const isActive = absoluteIndex === selectedIndex;
+                        const isActive = absoluteIndex === activeIndex;
 
                         return (
                           <li key={item.id}>
@@ -264,7 +255,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
                     <ul className="space-y-2">
                       {section.items.map((item, index) => {
                         const absoluteIndex = sectionOffset + index;
-                        const isActive = absoluteIndex === selectedIndex;
+                        const isActive = absoluteIndex === activeIndex;
 
                         return (
                           <li key={item.id}>

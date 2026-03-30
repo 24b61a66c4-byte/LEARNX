@@ -15,6 +15,7 @@ This folder contains the new LearnX web frontend.
 
 ```bash
 npm install
+cp .env.example .env.local
 npm run dev
 npm run build
 npm run lint
@@ -22,6 +23,7 @@ npm run lint
 
 ## Notes
 
-- Node.js `20.9+` is required.
+- Node.js `20.x`, `22.x`, or `24.x` is supported.
+- `web/.env.local` must include `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_SUPABASE_URL`, and either `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` or `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
 - The gateway layer is mocked for now so the UI can be built before backend APIs exist.
 - Protected app routes are gated with a minimal cookie contract plus local browser state for this frontend slice.

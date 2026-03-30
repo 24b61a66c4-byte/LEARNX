@@ -28,6 +28,7 @@ import {
   setCookie,
   writeLocalStorage,
 } from "@/lib/storage";
+import { getTutorApiUrl } from "@/lib/runtime-config";
 import {
   AppSession,
   DashboardView,
@@ -544,27 +545,24 @@ export const tutorGateway: TutorGateway = {
 
     await wait(200);
 
-    const onboardingProfile = getOnboardingProfile();
     const learnerId = readLocalStorage<{ profile: { email: string } | null } | null>(SESSION_STORAGE_KEY, null)?.profile?.email ?? "guest";
+    const tutorApiUrl = getTutorApiUrl();
 
     // Attempt real backend call first
     try {
-      const res = await fetch(
-        (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080") + "/api/tutor",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            learnerId,
-            subjectId,
-            topicId: topicId ?? "",
-            examContextId: "",
-            userQuestion: sanitized,
-            maxResources: 3,
-          }),
-          signal: AbortSignal.timeout(12000),
-        }
-      );
+      const res = await fetch(tutorApiUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          learnerId,
+          subjectId,
+          topicId: topicId ?? "",
+          examContextId: "",
+          userQuestion: sanitized,
+          maxResources: 3,
+        }),
+        signal: AbortSignal.timeout(12000),
+      });
 
       if (res.ok) {
         const data = await res.json() as {
@@ -591,8 +589,18 @@ export const tutorGateway: TutorGateway = {
           },
         };
       }
-    } catch {
-      // Fall through to local mock if backend is unreachable
+
+      if (process.env.NODE_ENV === "production") {
+        throw new Error(`Tutor service returned ${res.status}.`);
+      }
+    } catch (error) {
+      if (process.env.NODE_ENV === "production") {
+        throw error instanceof Error
+          ? error
+          : new Error("Tutor service is currently unavailable.");
+      }
+
+      // Fall through to local mock if backend is unreachable in development
     }
 
     // Local fallback mock
