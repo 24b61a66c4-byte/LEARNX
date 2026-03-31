@@ -1,19 +1,19 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f4ecde;
-  --background-strong: #ece1d0;
-  --surface: rgba(255, 255, 255, 0.72);
-  --surface-strong: rgba(255, 253, 249, 0.9);
-  --ink: #172033;
-  --muted: #5e6778;
+  --background: #f6f1e8;
+  --background-strong: #ebe2d4;
+  --surface: rgba(255, 255, 255, 0.8);
+  --surface-strong: rgba(255, 255, 255, 0.94);
+  --ink: #101828;
+  --muted: #5b6472;
   --teal: #0f766e;
-  --teal-soft: #c7f4ee;
-  --amber: #d97706;
-  --amber-soft: #fef3c7;
-  --rose-soft: #ffe3db;
-  --glass-border: rgba(255, 255, 255, 0.35);
-  --depth: 0 16px 40px rgba(15, 23, 42, 0.08);
+  --teal-soft: #d5f1ed;
+  --amber: #b45309;
+  --amber-soft: #fde9cb;
+  --rose-soft: #f8e1dc;
+  --glass-border: rgba(15, 23, 42, 0.08);
+  --depth: 0 20px 60px rgba(15, 23, 42, 0.08);
 }
 
 * {
@@ -22,17 +22,20 @@
 
 html {
   scroll-behavior: smooth;
+  color-scheme: light;
 }
 
 body {
   min-height: 100vh;
   background:
-    radial-gradient(circle at top left, rgba(13, 148, 136, 0.1), transparent 28%),
-    radial-gradient(circle at 85% 18%, rgba(244, 114, 182, 0.08), transparent 18%),
-    radial-gradient(circle at bottom right, rgba(245, 158, 11, 0.1), transparent 25%),
-    var(--background);
+    radial-gradient(circle at top left, rgba(15, 118, 110, 0.12), transparent 28%),
+    radial-gradient(circle at 84% 14%, rgba(180, 83, 9, 0.1), transparent 18%),
+    radial-gradient(circle at bottom right, rgba(15, 23, 42, 0.06), transparent 24%),
+    linear-gradient(180deg, #faf7f0 0%, #f4ede2 48%, #efe5d8 100%);
   color: var(--ink);
   font-family: var(--font-body), sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 h1,
@@ -42,6 +45,7 @@ h4,
 h5,
 h6 {
   font-family: var(--font-display), sans-serif;
+  text-wrap: balance;
 }
 
 ::selection {
@@ -71,23 +75,23 @@ select {
 
 :focus-visible {
   outline: 2px solid rgba(15, 118, 110, 0.8);
-  outline-offset: 2px;
+  outline-offset: 3px;
 }
 
 .surface-card {
-  @apply rounded-[28px] border bg-white/75 backdrop-blur-xl;
+  @apply rounded-[32px] border bg-white/80 backdrop-blur-md;
   border-color: var(--glass-border);
   box-shadow: var(--depth);
 }
 
 .surface-panel {
-  @apply rounded-[24px] border bg-[var(--surface-strong)] backdrop-blur-lg;
-  border-color: rgba(255, 255, 255, 0.32);
-  box-shadow: 0 10px 32px rgba(15, 23, 42, 0.06);
+  @apply rounded-[26px] border bg-[var(--surface-strong)] backdrop-blur-sm;
+  border-color: rgba(15, 23, 42, 0.07);
+  box-shadow: 0 14px 36px rgba(15, 23, 42, 0.06);
 }
 
 .eyebrow {
-  @apply text-xs font-semibold uppercase tracking-[0.24em] text-teal-700;
+  @apply text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-slate-500;
 }
 
 .muted {
@@ -95,18 +99,18 @@ select {
 }
 
 .pill {
-  @apply inline-flex items-center gap-2 rounded-full border border-black/10 bg-white/75 px-3 py-1 text-sm font-medium shadow-sm;
+  @apply inline-flex items-center gap-2 rounded-full border border-black/10 bg-white/80 px-3 py-1 text-sm font-medium text-slate-700 shadow-sm;
 }
 
 .reward-chip {
-  @apply inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-semibold text-slate-900;
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.18), rgba(15, 118, 110, 0.16));
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+  @apply inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-semibold text-white;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.92), rgba(15, 118, 110, 0.92));
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.12);
 }
 
 .shell-stat-card {
-  @apply rounded-[22px] border bg-white/82 px-4 py-4;
-  border-color: rgba(15, 23, 42, 0.08);
+  @apply rounded-[22px] border bg-white/88 px-4 py-4;
+  border-color: rgba(15, 23, 42, 0.07);
   box-shadow: 0 10px 28px rgba(15, 23, 42, 0.05);
 }
 
@@ -124,26 +128,26 @@ select {
 }
 
 .button-primary {
-  @apply inline-flex items-center justify-center rounded-full bg-teal-700 px-5 py-3 font-semibold text-white shadow-[0_14px_30px_rgba(15,118,110,0.25)] transition hover:bg-teal-800;
+  @apply inline-flex items-center justify-center rounded-2xl bg-slate-950 px-5 py-3 font-semibold text-white shadow-[0_14px_30px_rgba(15,23,42,0.16)] transition hover:bg-slate-800;
 }
 
 .button-secondary {
-  @apply inline-flex items-center justify-center rounded-full border border-black/10 bg-white/80 px-5 py-3 font-semibold text-slate-900 transition hover:bg-white;
+  @apply inline-flex items-center justify-center rounded-2xl border border-black/10 bg-white/86 px-5 py-3 font-semibold text-slate-900 transition hover:border-slate-300 hover:bg-white;
 }
 
 .field {
-  @apply w-full rounded-2xl border border-black/10 bg-white px-4 py-3 text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-teal-400 focus:outline-none focus:ring-4 focus:ring-teal-100;
+  @apply w-full rounded-2xl border border-black/10 bg-white/92 px-4 py-3 text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-teal-500 focus:outline-none focus:ring-4 focus:ring-teal-100;
 }
 
 .command-kbd {
-  @apply inline-flex items-center justify-center rounded-lg border border-black/10 bg-white/80 px-2 py-1 text-[0.7rem] font-semibold text-slate-700;
+  @apply inline-flex items-center justify-center rounded-lg border border-black/10 bg-white/86 px-2 py-1 text-[0.7rem] font-semibold text-slate-700 shadow-sm;
   box-shadow: 0 6px 16px rgba(15, 23, 42, 0.05);
 }
 
 .nav-active-rail {
   @apply absolute right-2 top-1/2 h-8 w-1 -translate-y-1/2 rounded-full;
-  background: linear-gradient(180deg, rgba(45, 212, 191, 0.95), rgba(245, 158, 11, 0.9));
-  box-shadow: 0 0 18px rgba(45, 212, 191, 0.35);
+  background: linear-gradient(180deg, rgba(45, 212, 191, 0.92), rgba(245, 158, 11, 0.88));
+  box-shadow: 0 0 18px rgba(45, 212, 191, 0.28);
 }
 
 .safe-bottom {
@@ -164,7 +168,7 @@ select {
 @keyframes fade-in {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(12px);
   }
 
   to {
@@ -209,7 +213,7 @@ select {
 }
 
 .animate-fade-in {
-  animation: fade-in 0.8s ease-out;
+  animation: fade-in 0.7s ease-out;
 }
 
 .animate-pulse-slow {

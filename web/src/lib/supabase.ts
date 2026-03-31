@@ -59,6 +59,23 @@ export async function getSessionUser() {
   return user;
 }
 
+export async function getAuthenticatedRequestHeaders() {
+  if (typeof window === "undefined" || !hasSupabaseEnv()) {
+    return {};
+  }
+
+  const { data: { session } } = await getSupabaseClient().auth.getSession();
+  const accessToken = session?.access_token?.trim();
+
+  if (!accessToken) {
+    return {};
+  }
+
+  return {
+    Authorization: `Bearer ${accessToken}`,
+  };
+}
+
 export async function signUpWithEmail(email: string, password: string) {
   const { data, error } = await getSupabaseClient().auth.signUp({
     email,

@@ -66,9 +66,11 @@ export function AuthForm({ mode }: AuthFormProps) {
           return;
         }
         if (data.user) {
-          await syncSessionFromAuthUser(data.user);
+          const session = await syncSessionFromAuthUser(data.user);
+          router.push(session?.onboarded ? "/app" : "/app/onboarding");
+          return;
         }
-        router.push("/app");
+        router.push("/app/onboarding");
       } else {
         const { data, error } = await signUpWithEmail(email.trim(), password);
         if (error) {

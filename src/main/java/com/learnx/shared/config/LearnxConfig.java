@@ -13,6 +13,8 @@ public record LearnxConfig(
         boolean debugPromptLogging,
         int maxQuestionLength,
         String geminiApiKey,
+        String youtubeApiKey,
+        String pexelsApiKey,
         String braveApiKey,
         String tavilyApiKey,
         String geminiModel,
@@ -24,6 +26,11 @@ public record LearnxConfig(
     public static final String DEBUG_PROMPTS_ENV = "LEARNX_DEBUG_PROMPTS";
     public static final String MAX_QUESTION_LENGTH_ENV = "LEARNX_MAX_QUESTION_LENGTH";
     public static final String GEMINI_API_KEY_ENV = "LEARNX_GEMINI_API_KEY";
+    public static final String GOOGLE_API_KEY_ENV = "LEARNX_GOOGLE_API_KEY";
+    public static final String GOOGLE_API_KEY_2_ENV = "LEARNX_GOOGLE_API_KEY_2";
+    public static final String GOOGLE_API_KEY_3_ENV = "LEARNX_GOOGLE_API_KEY_3";
+    public static final String YOUTUBE_API_KEY_ENV = "LEARNX_YOUTUBE_API_KEY";
+    public static final String PEXELS_API_KEY_ENV = "LEARNX_PEXELS_API_KEY";
     public static final String BRAVE_API_KEY_ENV = "LEARNX_BRAVE_API_KEY";
     public static final String TAVILY_API_KEY_ENV = "LEARNX_TAVILY_API_KEY";
     public static final String GEMINI_MODEL_ENV = "LEARNX_GEMINI_MODEL";
@@ -55,7 +62,9 @@ public record LearnxConfig(
                 frontendUrl,
                 debugPromptLogging,
                 maxQuestionLength,
-                normalize(source.get(GEMINI_API_KEY_ENV)),
+                resolveGeminiApiKey(source),
+                resolveYouTubeApiKey(source),
+                normalize(source.get(PEXELS_API_KEY_ENV)),
                 normalize(source.get(BRAVE_API_KEY_ENV)),
                 normalize(source.get(TAVILY_API_KEY_ENV)),
                 geminiModel,
@@ -75,6 +84,14 @@ public record LearnxConfig(
         return tavilyApiKey != null;
     }
 
+    public boolean hasYoutubeApiKey() {
+        return youtubeApiKey != null;
+    }
+
+    public boolean hasPexelsApiKey() {
+        return pexelsApiKey != null;
+    }
+
     public boolean isProduction() {
         return "prod".equals(environment);
     }
@@ -84,6 +101,44 @@ public record LearnxConfig(
             return null;
         }
         return value.trim();
+    }
+
+    private static String resolveGeminiApiKey(Map<String, String> source) {
+        String explicitGeminiKey = normalize(source.get(GEMINI_API_KEY_ENV));
+        if (explicitGeminiKey != null) {
+            return explicitGeminiKey;
+        }
+
+        String googleApiKey = normalize(source.get(GOOGLE_API_KEY_ENV));
+        if (googleApiKey != null) {
+            return googleApiKey;
+        }
+
+        String googleApiKey2 = normalize(source.get(GOOGLE_API_KEY_2_ENV));
+        if (googleApiKey2 != null) {
+            return googleApiKey2;
+        }
+
+        return normalize(source.get(GOOGLE_API_KEY_3_ENV));
+    }
+
+    private static String resolveYouTubeApiKey(Map<String, String> source) {
+        String explicitYoutubeKey = normalize(source.get(YOUTUBE_API_KEY_ENV));
+        if (explicitYoutubeKey != null) {
+            return explicitYoutubeKey;
+        }
+
+        String googleApiKey = normalize(source.get(GOOGLE_API_KEY_ENV));
+        if (googleApiKey != null) {
+            return googleApiKey;
+        }
+
+        String googleApiKey2 = normalize(source.get(GOOGLE_API_KEY_2_ENV));
+        if (googleApiKey2 != null) {
+            return googleApiKey2;
+        }
+
+        return normalize(source.get(GOOGLE_API_KEY_3_ENV));
     }
 
     private static long parseLong(String value, long defaultValue) {

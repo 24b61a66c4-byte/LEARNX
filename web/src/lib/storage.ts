@@ -1,3 +1,13 @@
+export const STORAGE_EVENT_NAME = "learnx-storage-change";
+
+function notifyStorageChange() {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.dispatchEvent(new Event(STORAGE_EVENT_NAME));
+}
+
 export function readLocalStorage<T>(key: string, fallback: T): T {
   if (typeof window === "undefined") {
     return fallback;
@@ -17,6 +27,7 @@ export function writeLocalStorage<T>(key: string, value: T) {
   }
 
   window.localStorage.setItem(key, JSON.stringify(value));
+  notifyStorageChange();
 }
 
 export function clearLocalStorage(key: string) {
@@ -25,6 +36,7 @@ export function clearLocalStorage(key: string) {
   }
 
   window.localStorage.removeItem(key);
+  notifyStorageChange();
 }
 
 export function setCookie(name: string, value: string, maxAgeSeconds = 60 * 60 * 24 * 30) {

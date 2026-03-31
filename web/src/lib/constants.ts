@@ -24,13 +24,13 @@ export const EXAM_WORD_HINTS = {
 
 export const SUBJECT_SAMPLE_PROMPTS: Record<string, string[]> = {
     dbms: [
-        "Explain normalization with a simple everyday analogy.",
-        "Give me a 5-mark answer on ACID properties.",
-        "Quiz me on joins with two short questions.",
+        "Walk me through the math step by step.",
+        "Give me a short exam-style answer.",
+        "Quiz me with two quick questions.",
     ],
     edc: [
-        "Explain full-wave rectifier with key formulas.",
-        "Give a 10-mark style answer for transistor biasing.",
-        "Quiz me on filters with one conceptual and one numerical question.",
+        "Explain the science with a real-life example.",
+        "Give me a compact revision answer.",
+        "Quiz me on the core idea and one common mistake.",
     ],
 };

@@ -49,110 +49,116 @@ export function SubjectStudyTrack({ subjectId, topics }: SubjectStudyTrackProps)
   const strongTopics = topicViews.filter((topic) => topic.status === "strong").slice(0, 3);
 
   return (
-    <div className="surface-card overflow-hidden p-6">
-      <div className="space-y-5">
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <p className="eyebrow">Study track</p>
-            <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-950">
-              Keep this subject moving with one clear next step
-            </h2>
-          </div>
-          <div className="text-right">
-            <p className="text-3xl font-bold tracking-tight text-slate-950">{masteryPercent}%</p>
-            <p className="text-sm text-slate-500">
-              {attemptedTopics}/{totalTopics} topics touched
-            </p>
-          </div>
+    <section className="surface-card space-y-5 p-6">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p className="eyebrow">Study track</p>
+          <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
+            Keep this subject moving with one clear next step
+          </h2>
+          <p className="mt-2 text-sm leading-6 text-slate-600">{continueReason}</p>
         </div>
-
-        <div className="h-2 overflow-hidden rounded-full bg-slate-200">
-          <div
-            className="h-full rounded-full bg-[linear-gradient(90deg,rgba(15,118,110,0.9),rgba(245,158,11,0.88))] transition-all duration-300"
-            style={{ width: `${Math.max(8, masteryPercent)}%` }}
-          />
-        </div>
-
-        {continueTopic ? (
-          <div className="surface-panel p-4">
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <div>
-                <p className="text-sm font-semibold text-slate-900">{continueTopic.title}</p>
-                <p className="mt-1 text-sm leading-6 text-slate-600">{continueReason}</p>
-              </div>
-              <Link className="button-secondary" href={`/app/learn/${subjectId}/${continueTopic.id}`}>
-                Continue topic
-              </Link>
-            </div>
-          </div>
-        ) : null}
-
-        <div className="grid gap-4 lg:grid-cols-2">
-          <div className="surface-panel p-4">
-            <div className="flex items-center justify-between gap-3">
-              <p className="font-semibold text-rose-600">Growth priority</p>
-              <span className="reward-chip">{weakCount}</span>
-            </div>
-
-            {weakTopics.length > 0 ? (
-              <div className="mt-4 space-y-2">
-                {weakTopics.map((topic) => (
-                  <div className="flex items-center justify-between gap-3 rounded-[18px] bg-white/84 px-3 py-3 shadow-sm" key={topic.topicId}>
-                    <div>
-                      <p className="text-sm font-semibold text-slate-900">{topic.title}</p>
-                      <p className="mt-1 text-xs uppercase tracking-[0.18em] text-slate-500">
-                        {topic.accuracy ?? 0}% accuracy
-                      </p>
-                    </div>
-                    <span className={`rounded-full px-2 py-1 text-xs font-bold ${getTopicBadgeClasses(topic.status)}`}>
-                      Recover
-                    </span>
-                  </div>
-                ))}
-                <Link className="mt-3 inline-flex text-sm font-semibold text-rose-600 hover:underline" href={`/app/practice?subjectId=${subjectId}`}>
-                  Drill weak topics
-                </Link>
-              </div>
-            ) : (
-              <p className="mt-4 text-sm leading-6 text-slate-600">
-                No weak-topic cluster yet. Run a few drills and LearnX will surface the recovery targets here.
-              </p>
-            )}
-          </div>
-
-          <div className="surface-panel p-4">
-            <div className="flex items-center justify-between gap-3">
-              <p className="font-semibold text-emerald-600">Confidence anchors</p>
-              <span className="reward-chip">{strongCount}</span>
-            </div>
-
-            {strongTopics.length > 0 ? (
-              <div className="mt-4 space-y-2">
-                {strongTopics.map((topic) => (
-                  <div className="flex items-center justify-between gap-3 rounded-[18px] bg-white/84 px-3 py-3 shadow-sm" key={topic.topicId}>
-                    <div>
-                      <p className="text-sm font-semibold text-slate-900">{topic.title}</p>
-                      <p className="mt-1 text-xs uppercase tracking-[0.18em] text-slate-500">
-                        {topic.accuracy ?? 0}% accuracy
-                      </p>
-                    </div>
-                    <span className={`rounded-full px-2 py-1 text-xs font-bold ${getTopicBadgeClasses(topic.status)}`}>
-                      Strong
-                    </span>
-                  </div>
-                ))}
-                <Link className="mt-3 inline-flex text-sm font-semibold text-emerald-600 hover:underline" href="/app/profile">
-                  View full progress
-                </Link>
-              </div>
-            ) : (
-              <p className="mt-4 text-sm leading-6 text-slate-600">
-                Strong-topic anchors appear after a few solid runs and help show what is ready for revision speedwork.
-              </p>
-            )}
-          </div>
+        <div className="rounded-[24px] border border-black/10 bg-slate-950 px-4 py-3 text-white shadow-[0_20px_40px_rgba(15,23,42,0.12)]">
+          <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Mastery</p>
+          <p className="mt-2 text-4xl font-semibold tracking-tight">{masteryPercent}%</p>
+          <p className="mt-1 text-sm text-slate-300">
+            {attemptedTopics}/{totalTopics} topics touched
+          </p>
         </div>
       </div>
-    </div>
+
+      <div className="h-2 overflow-hidden rounded-full bg-slate-200">
+        <div
+          className="h-full rounded-full bg-gradient-to-r from-teal-700 via-teal-500 to-amber-500 transition-[width] duration-300"
+          style={{ width: `${Math.max(8, masteryPercent)}%` }}
+        />
+      </div>
+
+      {continueTopic ? (
+        <div className="surface-panel p-4">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <p className="text-sm font-semibold text-slate-900">{continueTopic.title}</p>
+              <p className="mt-1 text-sm leading-6 text-slate-600">{continueReason}</p>
+            </div>
+            <Link className="button-secondary" href={`/app/learn/${subjectId}/${continueTopic.id}`}>
+              Continue topic
+            </Link>
+          </div>
+        </div>
+      ) : null}
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <div className="surface-panel p-4">
+          <div className="flex items-center justify-between gap-3">
+            <p className="font-semibold text-rose-700">Growth priority</p>
+            <span className="reward-chip">{weakCount}</span>
+          </div>
+
+          {weakTopics.length > 0 ? (
+            <div className="mt-4 space-y-2">
+              {weakTopics.map((topic) => (
+                <div
+                  className="flex items-center justify-between gap-3 rounded-[18px] border border-black/10 bg-white/84 px-3 py-3 shadow-sm"
+                  key={topic.topicId}
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-slate-900">{topic.title}</p>
+                    <p className="mt-1 text-xs uppercase tracking-[0.18em] text-slate-500">
+                      {topic.accuracy ?? 0}% accuracy
+                    </p>
+                  </div>
+                  <span className={`rounded-full px-2 py-1 text-xs font-bold ${getTopicBadgeClasses(topic.status)}`}>
+                    Recover
+                  </span>
+                </div>
+              ))}
+              <Link className="mt-3 inline-flex text-sm font-semibold text-rose-700 hover:underline" href={`/app/practice?subjectId=${subjectId}`}>
+                Drill weak topics
+              </Link>
+            </div>
+          ) : (
+            <p className="mt-4 text-sm leading-6 text-slate-600">
+              No weak-topic cluster yet. Run a few drills and LearnX will surface the recovery targets here.
+            </p>
+          )}
+        </div>
+
+        <div className="surface-panel p-4">
+          <div className="flex items-center justify-between gap-3">
+            <p className="font-semibold text-emerald-700">Confidence anchors</p>
+            <span className="reward-chip">{strongCount}</span>
+          </div>
+
+          {strongTopics.length > 0 ? (
+            <div className="mt-4 space-y-2">
+              {strongTopics.map((topic) => (
+                <div
+                  className="flex items-center justify-between gap-3 rounded-[18px] border border-black/10 bg-white/84 px-3 py-3 shadow-sm"
+                  key={topic.topicId}
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-slate-900">{topic.title}</p>
+                    <p className="mt-1 text-xs uppercase tracking-[0.18em] text-slate-500">
+                      {topic.accuracy ?? 0}% accuracy
+                    </p>
+                  </div>
+                  <span className={`rounded-full px-2 py-1 text-xs font-bold ${getTopicBadgeClasses(topic.status)}`}>
+                    Strong
+                  </span>
+                </div>
+              ))}
+              <Link className="mt-3 inline-flex text-sm font-semibold text-emerald-700 hover:underline" href="/app/profile">
+                View full progress
+              </Link>
+            </div>
+          ) : (
+            <p className="mt-4 text-sm leading-6 text-slate-600">
+              Strong-topic anchors appear after a few solid runs and help show what is ready for revision speedwork.
+            </p>
+          )}
+        </div>
+      </div>
+    </section>
   );
 }

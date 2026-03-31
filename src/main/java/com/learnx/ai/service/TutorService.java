@@ -24,6 +24,8 @@ import java.util.Deque;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.regex.Pattern;
@@ -48,6 +50,8 @@ public class TutorService {
     private final int maxQuestionLength;
     private final boolean debugPromptLogging;
     private final ConcurrentMap<String, Deque<String>> conversationHistory = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, CachedSearchEntry> searchCache = new ConcurrentHashMap<>();
+    private static final Duration SEARCH_CACHE_TTL = Duration.ofMinutes(5);
 
     public TutorService(
             CatalogService catalogService,
@@ -77,7 +81,7 @@ public class TutorService {
         String historyKey = learnerProfile.getLearnerId() + ":" + subject.id();
         String conversationContext = getConversationContext(historyKey);
 
-        List<SearchResult> searchResults = searchProvider.search(new SearchQuery(
+        List<SearchResult> searchResults = getCachedSearchResults(new SearchQuery(
                 buildSearchQuery(subject, topic, examContext, request),
                 subject.id(),
                 topic.id(),
@@ -155,6 +159,39 @@ public class TutorService {
         });
     }
 
+    private List<SearchResult> getCachedSearchResults(SearchQuery query) {
+        String cacheKey = query.subjectId() + "|" + query.topicId() + "|" + query.query() + "|" + query.maxResults();
+        Instant now = Instant.now();
+        CachedSearchEntry cached = searchCache.get(cacheKey);
+
+        if (cached != null && now.isBefore(cached.expiresAt())) {
+            return cached.results();
+        }
+
+        List<SearchResult> freshResults = searchProvider.search(query);
+        searchCache.put(cacheKey, new CachedSearchEntry(freshResults, now.plus(SEARCH_CACHE_TTL)));
+        return freshResults;
+    }
+
+    public void seedConversationHistory(String historyKey, List<String> userMessages) {
+        if (userMessages == null || userMessages.isEmpty()) {
+            return;
+        }
+
+        conversationHistory.computeIfAbsent(historyKey, ignored -> {
+            Deque<String> messages = new ArrayDeque<>();
+            userMessages.stream()
+                    .filter(message -> message != null && !message.isBlank())
+                    .map(String::trim)
+                    .forEach(messages::addLast);
+
+            while (messages.size() > 5) {
+                messages.removeFirst();
+            }
+            return messages;
+        });
+    }
+
     private String getConversationContext(String historyKey) {
         Deque<String> history = conversationHistory.get(historyKey);
         if (history == null || history.isEmpty()) {
@@ -192,5 +229,8 @@ public class TutorService {
 
     private String round(double value) {
         return String.format(Locale.ROOT, "%.2f", value);
+    }
+
+    private record CachedSearchEntry(List<SearchResult> results, Instant expiresAt) {
     }
 }

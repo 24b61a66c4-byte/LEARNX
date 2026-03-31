@@ -14,6 +14,7 @@ import type {
   StudyNote,
   StudyNoteSource,
 } from "@/lib/types";
+import { normalizeOnboardingProfile } from "@/lib/profile-preferences";
 
 type ServerLearnerProfile = {
   age?: number;
@@ -101,7 +102,7 @@ function mapServerProfile(profile: ServerLearnerProfile): OnboardingProfile | nu
     return null;
   }
 
-  return {
+  return normalizeOnboardingProfile({
     preferredSubjectId: profile.preferredSubjectId as OnboardingProfile["preferredSubjectId"],
     studyGoal: profile.studyGoal as OnboardingProfile["studyGoal"],
     examTarget: profile.examTarget as OnboardingProfile["examTarget"],
@@ -113,7 +114,7 @@ function mapServerProfile(profile: ServerLearnerProfile): OnboardingProfile | nu
     enableVoiceInput: profile.enableVoiceInput,
     enableQuizMode: profile.enableQuizMode,
     accessibilityFeatures: profile.accessibilityFeatures as OnboardingProfile["accessibilityFeatures"],
-  };
+  });
 }
 
 function mapServerResult(result: ServerQuizResult): PracticeResult {
@@ -195,20 +196,21 @@ export async function syncOnboardingProfile(profile: OnboardingProfile) {
   }
 
   const { profileApi } = await import("@/lib/api");
+  const normalized = normalizeOnboardingProfile(profile);
   return profileApi.completeOnboarding(user.id, {
     userId: user.id,
     displayName: getDisplayName(user),
-    age: profile.age,
-    cognitiveGroup: profile.cognitiveGroup,
-    preferredSubjectId: profile.preferredSubjectId,
-    studyGoal: profile.studyGoal,
-    examTarget: profile.examTarget,
-    launchMode: profile.launchMode,
-    interests: profile.interests,
-    enableVisualDiagrams: profile.enableVisualDiagrams,
-    enableVoiceInput: profile.enableVoiceInput,
-    enableQuizMode: profile.enableQuizMode,
-    accessibilityFeatures: profile.accessibilityFeatures,
+    age: normalized.age,
+    cognitiveGroup: normalized.cognitiveGroup,
+    preferredSubjectId: normalized.preferredSubjectId,
+    studyGoal: normalized.studyGoal,
+    examTarget: normalized.examTarget,
+    launchMode: normalized.launchMode,
+    interests: normalized.interests,
+    enableVisualDiagrams: normalized.enableVisualDiagrams,
+    enableVoiceInput: normalized.enableVoiceInput,
+    enableQuizMode: normalized.enableQuizMode,
+    accessibilityFeatures: normalized.accessibilityFeatures,
   });
 }
 

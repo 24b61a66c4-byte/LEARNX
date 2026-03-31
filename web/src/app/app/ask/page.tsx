@@ -59,6 +59,7 @@ export default async function AskPage({
         <TutorPanel
           defaultSubjectId={subjectId}
           initialPrompt={prompt}
+          showSupportLanes={false}
           key={`${subjectId}-general-${prompt}`}
         />
       </section>

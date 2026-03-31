@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 
 import { syncPracticeResult } from "@/lib/backend-sync";
 import { catalogGateway, practiceGateway } from "@/lib/gateways";
+import { getSubjectById } from "@/lib/data/catalog";
 import { SubjectId } from "@/lib/types";
 
 interface PracticeWorkspaceProps {
@@ -30,10 +31,11 @@ export function PracticeWorkspace({
   const hasQuestions = questions.length > 0;
   const answeredCount = questions.filter((question) => Boolean(answers[question.id]?.trim())).length;
   const selectedTopic = topicOptions.find((topic) => topic.id === topicId);
+  const subjectName = getSubjectById(subjectId)?.name ?? "this subject";
   const weakAnswers = result?.answers.filter((answer) => !answer.correct) ?? [];
   const weakPrompt =
     weakAnswers.length > 0
-      ? `Explain why I missed these points in ${selectedTopic?.title ?? subjectId.toUpperCase()}: ${weakAnswers
+      ? `Explain why I missed these points in ${selectedTopic?.title ?? subjectName}: ${weakAnswers
         .map((answer) => answer.prompt)
         .join(" | ")}`
       : "";
@@ -137,7 +139,7 @@ export function PracticeWorkspace({
         {usingMixedFallback ? (
           <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm leading-6 text-amber-900">
             No seeded drill exists for <strong>{selectedTopic?.title ?? "this topic"}</strong> yet, so LearnX switched
-            you to a mixed {subjectId.toUpperCase()} drill instead of leaving the study flow empty.
+            you to a mixed {subjectName} drill instead of leaving the study flow empty.
           </div>
         ) : null}
       </div>

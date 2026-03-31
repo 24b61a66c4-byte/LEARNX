@@ -40,8 +40,21 @@ public class GeminiAiProvider implements AiProvider {
     @Override
     public TutorResponse generate(TutorPrompt prompt) {
         try {
-            String json = chatModel.chat(prompt.toPromptText());
-            return parseJsonResponse(json, prompt);
+            String response = chatModel.chat(prompt.toPromptText());
+            try {
+                return parseJsonResponse(response, prompt);
+            } catch (Exception parseException) {
+                String explanation = response == null || response.isBlank()
+                        ? prompt.topicSummary()
+                        : response.trim();
+                return new TutorResponse(
+                        explanation,
+                        "1. Definition\n2. Core explanation\n3. Example\n4. Conclusion",
+                        List.of("Summarize the key idea", "Add one practical example", "Revise with short recall"),
+                        prompt.searchResults(),
+                        false,
+                        new AiResponseMeta(explanation, "gemini", "explain", 0));
+            }
         } catch (Exception exception) {
             throw new IllegalStateException("Gemini generation failed", exception);
         }

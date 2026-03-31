@@ -1,14 +1,16 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { LEVEL_XP_STEP, ONBOARDING_STORAGE_KEY } from "@/lib/constants";
+import { LEVEL_XP_STEP } from "@/lib/constants";
 import { useAuth } from "@/lib/auth-context";
 import { useClientSnapshot } from "@/lib/client-snapshot";
+import { getSubjectById } from "@/lib/data/catalog";
 import { getServerDashboard, learnerStateGateway, sessionGateway } from "@/lib/gateways";
-import { readLocalStorage } from "@/lib/storage";
 import { ExportProgress } from "@/components/export-progress";
 import { StreakCalendar } from "@/components/streak-calendar";
-import { OnboardingProfile } from "@/lib/types";
+import { persistOnboardingProfile } from "@/lib/profile-updates";
+import { getCognitiveGroup, getRecommendedSubjectId, getStoredOnboardingProfile } from "@/lib/profile-preferences";
+import { AccessibilityFeature, OnboardingProfile } from "@/lib/types";
 
 function XPRingCompact({ xp, level }: { xp: number; level: number }) {
   const radius = 24;
@@ -60,10 +62,8 @@ export default function ProfilePage() {
   const { onboarding, session, dashboard } = useClientSnapshot(
     () => ({
       session: sessionGateway.getSession(),
-      onboarding: readLocalStorage<OnboardingProfile | null>(ONBOARDING_STORAGE_KEY, null),
-      dashboard: learnerStateGateway.getDashboard(
-        readLocalStorage<OnboardingProfile | null>(ONBOARDING_STORAGE_KEY, null)?.preferredSubjectId,
-      ),
+      onboarding: getStoredOnboardingProfile(),
+      dashboard: learnerStateGateway.getDashboard(getStoredOnboardingProfile()?.preferredSubjectId),
     }),
     () => ({
       session: sessionGateway.getSession(),
@@ -71,7 +71,6 @@ export default function ProfilePage() {
       dashboard: getServerDashboard(),
     }),
   );
-
   const displayName =
     (typeof user?.user_metadata?.display_name === "string" ? user.user_metadata.display_name : null) ??
     (typeof user?.user_metadata?.name === "string" ? user.user_metadata.name : null) ??
@@ -79,10 +78,51 @@ export default function ProfilePage() {
     "LearnX Student";
   const email = user?.email ?? session.profile?.email ?? "preview session";
   const initials = displayName.split(" ").map((name) => name[0]).join("").slice(0, 2).toUpperCase();
-  const examTarget = onboarding?.examTarget?.replaceAll("-", " ") ?? "semester exam";
-  const launchMode = onboarding?.launchMode?.replaceAll("-", " ") ?? "lesson";
+  const profile = onboarding;
+  const examTarget = profile?.examTarget?.replaceAll("-", " ") ?? "semester exam";
+  const launchMode = profile?.launchMode?.replaceAll("-", " ") ?? "lesson";
   const pacePercent = Math.max(2, 100 - dashboard.rewards.percentile);
-  const preferredSubjectLabel = (onboarding?.preferredSubjectId ?? "dbms").toUpperCase();
+  const preferredSubjectLabel = getSubjectById(profile?.preferredSubjectId ?? "dbms")?.name ?? "Selected track";
+  const ageValue = profile?.age ?? "";
+  const ageGroupLabel = profile?.age ? getCognitiveGroup(profile.age) : "teens";
+
+  async function persistProfile(nextProfile: OnboardingProfile) {
+    await persistOnboardingProfile(nextProfile);
+  }
+
+  function updateAge(nextAge: number | "") {
+    if (!profile) {
+      return;
+    }
+
+    const hasAge = nextAge !== "";
+    const nextProfile: OnboardingProfile = {
+      ...profile,
+      age: hasAge ? nextAge : undefined,
+      cognitiveGroup: hasAge ? getCognitiveGroup(nextAge) : undefined,
+      preferredSubjectId: hasAge
+        ? getRecommendedSubjectId(nextAge, getCognitiveGroup(nextAge), profile.interests)
+        : profile.preferredSubjectId,
+    };
+
+    void persistProfile(nextProfile);
+  }
+
+  function toggleAccessibility(feature: AccessibilityFeature) {
+    if (!profile) {
+      return;
+    }
+
+    const current = profile.accessibilityFeatures ?? [];
+    const nextFeatures = current.includes(feature)
+      ? current.filter((item) => item !== feature)
+      : [...current, feature];
+
+    void persistProfile({
+      ...profile,
+      accessibilityFeatures: nextFeatures,
+    });
+  }
 
   return (
     <div className="mx-auto max-w-4xl space-y-10 pb-10">
@@ -101,6 +141,12 @@ export default function ProfilePage() {
             <p className="mt-2 font-medium text-slate-400">{email}</p>
             
             <div className="mt-6 flex flex-wrap justify-center gap-2 sm:justify-start">
+              <span className="rounded-full bg-white/10 px-4 py-1.5 text-[10px] font-black uppercase tracking-widest text-white ring-1 ring-white/10">
+                Age: {ageValue || "set it in settings"}
+              </span>
+              <span className="rounded-full bg-white/10 px-4 py-1.5 text-[10px] font-black uppercase tracking-widest text-teal-300 ring-1 ring-white/10">
+                Group: {profile?.age ? ageGroupLabel.toUpperCase() : "TEENS"}
+              </span>
               <span className="rounded-full bg-white/10 px-4 py-1.5 text-[10px] font-black uppercase tracking-widest text-teal-300 ring-1 ring-white/10">
                 Target: {examTarget}
               </span>
@@ -113,6 +159,103 @@ export default function ProfilePage() {
             </div>
           </div>
         </div>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-[1fr_0.92fr]">
+        <section className="surface-card p-6">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="eyebrow">Settings</p>
+              <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">Account and accessibility</h2>
+            </div>
+            <span className="reward-chip">Auto-save</span>
+          </div>
+
+          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+            <label className="space-y-2">
+              <span className="text-sm font-semibold text-slate-800">Age</span>
+              <input
+                aria-label="Update age"
+                className="field"
+                min="5"
+                max="100"
+                onChange={(event) => updateAge(event.target.value === "" ? "" : parseInt(event.target.value))}
+                placeholder="Enter age"
+                type="number"
+                value={ageValue}
+              />
+              <p className="text-xs text-slate-500">Age updates the learning group and default subject.</p>
+            </label>
+
+            <div className="surface-panel space-y-3 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Current path</p>
+              <p className="text-sm font-semibold text-slate-950">{preferredSubjectLabel}</p>
+              <p className="text-sm leading-6 text-slate-600">{onboarding?.studyGoal?.replaceAll("-", " ") ?? "Steady study"}</p>
+            </div>
+          </div>
+
+          <div className="mt-6 grid gap-3">
+            <div>
+              <p className="eyebrow">Accessibility</p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                These live in settings so the onboarding flow stays light. The study features themselves stay in the sidebar.
+              </p>
+            </div>
+
+            {(["high-contrast", "large-text", "screen-reader"] as AccessibilityFeature[]).map((feature) => {
+              const enabled = profile?.accessibilityFeatures?.includes(feature) ?? false;
+              return (
+                <label
+                  className={`flex items-center justify-between gap-4 rounded-[22px] border px-4 py-4 transition ${
+                    enabled ? "border-teal-300 bg-teal-50" : "border-black/10 bg-white/84"
+                  }`}
+                  key={feature}
+                >
+                  <div>
+                    <p className="font-semibold text-slate-950 capitalize">{feature.replace("-", " ")}</p>
+                    <p className="mt-1 text-sm text-slate-600">
+                      {feature === "high-contrast"
+                        ? "Use a sharper contrast palette."
+                        : feature === "large-text"
+                          ? "Increase the reading size."
+                          : "Optimize for assistive reading tools."}
+                    </p>
+                  </div>
+                  <input
+                    aria-label={`Toggle ${feature}`}
+                    checked={enabled}
+                    onChange={() => toggleAccessibility(feature)}
+                    type="checkbox"
+                  />
+                </label>
+              );
+            })}
+          </div>
+        </section>
+
+        <aside className="surface-panel p-6">
+          <p className="eyebrow">Profile summary</p>
+          <div className="mt-4 space-y-3">
+            <div className="rounded-[24px] border border-black/10 bg-white/84 px-4 py-4 shadow-sm">
+              <p className="text-sm text-slate-500">Display name</p>
+              <p className="mt-1 font-semibold text-slate-950">{displayName}</p>
+            </div>
+            <div className="rounded-[24px] border border-black/10 bg-white/84 px-4 py-4 shadow-sm">
+              <p className="text-sm text-slate-500">Email</p>
+              <p className="mt-1 font-semibold text-slate-950">{email}</p>
+            </div>
+            <div className="rounded-[24px] border border-black/10 bg-white/84 px-4 py-4 shadow-sm">
+              <p className="text-sm text-slate-500">Age group</p>
+              <p className="mt-1 font-semibold text-slate-950">{profile?.age ? ageGroupLabel : "Set in settings"}</p>
+            </div>
+            <div className="rounded-[24px] border border-black/10 bg-white/84 px-4 py-4 shadow-sm">
+              <p className="text-sm text-slate-500">Sidebar features</p>
+              <p className="mt-1 text-sm leading-6 text-slate-600">
+                Visual diagrams, voice mode, and adaptive quiz are kept in the sidebar so they stay one click away.
+              </p>
+            </div>
+          </div>
+        </aside>
       </div>
 
       {/* Stats Quickbar */}

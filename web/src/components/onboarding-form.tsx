@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 
 import { syncOnboardingProfile } from "@/lib/backend-sync";
 import { sessionGateway } from "@/lib/gateways";
-import { AccessibilityFeature, CognitiveGroup, ExamTarget, LaunchMode, StudyGoal, SubjectId } from "@/lib/types";
+import { getCognitiveGroup, getRecommendedSubjectId } from "@/lib/profile-preferences";
+import { CognitiveGroup, ExamTarget, LaunchMode, StudyGoal, SubjectId } from "@/lib/types";
 
 const studyGoals: { value: StudyGoal; label: string; description: string }[] = [
   {
@@ -71,33 +72,42 @@ const examTargets: { value: ExamTarget; label: string; description: string }[] =
   },
 ];
 
-const subjectCards = [
-  { id: "dbms" as const, title: "DBMS", detail: "SQL, joins, normalization" },
-  { id: "edc" as const, title: "EDC", detail: "Diodes, rectifiers, transistor basics" },
-];
+const subjectCardsByAge: Record<CognitiveGroup, { id: SubjectId; title: string; detail: string }[]> = {
+  kids: [
+    { id: "dbms", title: "Math starter", detail: "Numbers, patterns, and short wins" },
+    { id: "edc", title: "Science starter", detail: "Simple examples and everyday cause-and-effect" },
+  ],
+  tweens: [
+    { id: "dbms", title: "Math focus", detail: "Clear concepts, quick revision, and easy recall" },
+    { id: "edc", title: "Science focus", detail: "Learn by doing with guided examples" },
+  ],
+  teens: [
+    { id: "dbms", title: "Math exam prep", detail: "Focus on answers, revision, and topic repair" },
+    { id: "edc", title: "Science repair", detail: "Fix weak spots with short, focused study" },
+  ],
+  adults: [
+    { id: "dbms", title: "Focused revision", detail: "Fast recall, clear notes, and practical output" },
+    { id: "edc", title: "Practical study", detail: "Keep the flow short, structured, and useful" },
+  ],
+};
 
-const interestOptions = ["Programming", "Mathematics", "Physics", "Chemistry", "History", "Biology"];
+const interestOptions = ["Reading", "Mathematics", "Science", "Languages", "Creativity", "Coding"];
 
-function getCognitiveGroup(age: number): CognitiveGroup {
-  if (age >= 5 && age <= 8) return "kids";
-  if (age >= 9 && age <= 12) return "tweens";
-  if (age >= 13 && age <= 17) return "teens";
-  return "adults";
-}
+const ageSuggestions: Record<CognitiveGroup, string[]> = {
+  kids: ["Visual examples", "Short sessions", "Simple words"],
+  tweens: ["Guided practice", "Quick wins", "Fun examples"],
+  teens: ["Exam prep", "Topic repair", "Fast revision"],
+  adults: ["Focused study", "Recall drills", "Clear notes"],
+};
 
 export function OnboardingForm() {
   const router = useRouter();
   const [step, setStep] = useState(0);
-  const [subjectId, setSubjectId] = useState<SubjectId>("dbms");
   const [studyGoal, setStudyGoal] = useState<StudyGoal>("prepare-exams");
   const [examTarget, setExamTarget] = useState<ExamTarget>("semester-exam");
   const [launchMode, setLaunchMode] = useState<LaunchMode>(launchModes[0].id);
-  const [age, setAge] = useState<number | "">(16);
+  const [age, setAge] = useState<number | "">("");
   const [interests, setInterests] = useState<string[]>([]);
-  const [enableVisualDiagrams, setEnableVisualDiagrams] = useState(true);
-  const [enableVoiceInput, setEnableVoiceInput] = useState(true);
-  const [enableQuizMode, setEnableQuizMode] = useState(true);
-  const [accessibilityFeatures, setAccessibilityFeatures] = useState<AccessibilityFeature[]>([]);
 
   const selectedGoal = useMemo(
     () => studyGoals.find((goal) => goal.value === studyGoal) ?? studyGoals[0],
@@ -107,16 +117,24 @@ export function OnboardingForm() {
     () => examTargets.find((target) => target.value === examTarget) ?? examTargets[0],
     [examTarget],
   );
+
+  const cognitiveGroup = age !== "" ? getCognitiveGroup(age) : "teens";
+  const recommendedSubjectId = useMemo(
+    () => getRecommendedSubjectId(age === "" ? undefined : age, age === "" ? "teens" : cognitiveGroup, interests),
+    [age, cognitiveGroup, interests],
+  );
+  const [subjectId, setSubjectId] = useState<SubjectId>(recommendedSubjectId);
+  const [subjectManuallySelected, setSubjectManuallySelected] = useState(false);
+  const effectiveSubjectId = subjectManuallySelected ? subjectId : recommendedSubjectId;
+  const subjectCards = subjectCardsByAge[cognitiveGroup];
   const selectedSubject = useMemo(
-    () => subjectCards.find((subject) => subject.id === subjectId) ?? subjectCards[0],
-    [subjectId],
+    () => subjectCards.find((subject) => subject.id === effectiveSubjectId) ?? subjectCards[0],
+    [effectiveSubjectId, subjectCards],
   );
   const selectedLaunchMode = useMemo(
     () => launchModes.find((mode) => mode.id === launchMode) ?? launchModes[0],
     [launchMode],
   );
-
-  const cognitiveGroup = age !== "" ? getCognitiveGroup(age) : "teens";
 
   function toggleInterest(interest: string) {
     setInterests((current) =>
@@ -124,25 +142,19 @@ export function OnboardingForm() {
     );
   }
 
-  function toggleAccessibilityFeature(feature: AccessibilityFeature) {
-    setAccessibilityFeatures((current) =>
-      current.includes(feature) ? current.filter((f) => f !== feature) : [...current, feature],
-    );
-  }
-
   function buildOnboardingProfile(overrides?: Partial<Parameters<typeof sessionGateway.completeOnboarding>[0]>) {
     return {
-      preferredSubjectId: subjectId,
+      preferredSubjectId: effectiveSubjectId,
       studyGoal,
       examTarget,
       launchMode,
       age: age !== "" ? age : undefined,
-      cognitiveGroup,
+      cognitiveGroup: age !== "" ? cognitiveGroup : undefined,
       interests: interests.length > 0 ? interests : undefined,
-      enableVisualDiagrams,
-      enableVoiceInput,
-      enableQuizMode,
-      accessibilityFeatures: accessibilityFeatures.length > 0 ? accessibilityFeatures : undefined,
+      enableVisualDiagrams: false,
+      enableVoiceInput: false,
+      enableQuizMode: false,
+      accessibilityFeatures: undefined,
       ...overrides,
     };
   }
@@ -154,34 +166,28 @@ export function OnboardingForm() {
     router.push("/app");
   }
 
-  const stepLabels = ["Your profile", "Pick subject", "Goal + target", "Study style", "Features"];
+  const ageHint = age !== "" ? ageSuggestions[cognitiveGroup] : ["Tell us your age first", "We will tune the next step", "Then pick a starter track"];
+  const progressPercent = Math.round(((step + 1) / 4) * 100);
 
   return (
     <section className="mx-auto max-w-4xl space-y-6">
       <div className="surface-card space-y-6 px-6 py-8 sm:px-8">
         <div className="space-y-2">
-          <p className="eyebrow">Adaptive Onboarding</p>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-950">Start your personalized learning journey</h1>
+          <p className="eyebrow">Profile setup</p>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-950">Complete your profile</h1>
           <p className="muted text-sm">
-            LearnX adapts to your age, interests, and learning preferences. Answer a few quick questions and we&apos;ll customize your experience.
+            Answer a few quick questions so LearnX can keep the workspace simple and focused.
           </p>
         </div>
 
-        <div className="hidden grid-cols-5 gap-2 sm:grid">
-          {stepLabels.map((label, index) => (
-            <div
-              className={`rounded-xl border px-3 py-3 text-center text-xs font-semibold ${
-                index === step
-                  ? "border-teal-500 bg-teal-50 text-teal-900"
-                  : index < step
-                    ? "border-teal-200 bg-white text-slate-600"
-                    : "border-black/10 bg-white/80 text-slate-500"
-              }`}
-              key={label}
-            >
-              <p className="uppercase tracking-[0.1em]">{label}</p>
-            </div>
-          ))}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between gap-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+            <span>Step {step + 1} of 4</span>
+            <span>{progressPercent}% complete</span>
+          </div>
+          <div className="h-2 overflow-hidden rounded-full bg-slate-200">
+            <div className="h-full rounded-full bg-[linear-gradient(90deg,rgba(15,118,110,0.9),rgba(245,158,11,0.88))]" style={{ width: `${progressPercent}%` }} />
+          </div>
         </div>
 
         {/* Step 0: Age & Interests */}
@@ -200,12 +206,26 @@ export function OnboardingForm() {
                   type="number"
                   value={age}
                 />
+                <p className="text-xs text-slate-500">
+                  Age helps LearnX set the right subject, examples, and study pace.
+                </p>
                 {age !== "" && (
                   <p className="text-xs text-slate-600">
-                    📚 Learning group: <strong>{getCognitiveGroup(age).toUpperCase()}</strong>
+                    Learning group: <strong>{getCognitiveGroup(age).toUpperCase()}</strong>
                   </p>
                 )}
               </label>
+            </div>
+
+            <div className="space-y-3">
+              <p className="text-sm font-semibold text-slate-800">Suggested starting topics</p>
+              <div className="flex flex-wrap gap-2">
+                {ageHint.map((item) => (
+                  <span className="pill" key={item}>
+                    {item}
+                  </span>
+                ))}
+              </div>
             </div>
 
             <div className="space-y-3">
@@ -234,54 +254,52 @@ export function OnboardingForm() {
 
         {/* Step 1: Subject Selection */}
         {step === 1 ? (
-          <div className="grid gap-4 sm:grid-cols-2">
-            {subjectCards.map((subject) => (
-              <button
-                aria-label={`Select subject: ${subject.title} - ${subject.detail}`}
-                aria-pressed={subjectId === subject.id}
-                className={`rounded-[24px] border px-5 py-5 text-left transition ${
-                  subjectId === subject.id
-                    ? "border-teal-500 bg-teal-50 shadow-sm"
-                    : "border-black/10 bg-white hover:bg-slate-50"
-                }`}
-                key={subject.id}
-                onClick={() => setSubjectId(subject.id)}
-                type="button"
-              >
-                <p className="text-lg font-semibold text-slate-950">{subject.title}</p>
-                <p className="mt-2 text-sm text-slate-600">{subject.detail}</p>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <span className="reward-chip">Launch subject</span>
-                </div>
-              </button>
-            ))}
-          </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {subjectCards.map((subject) => (
+                  <button
+                    aria-label={`Select subject: ${subject.title} - ${subject.detail}`}
+                    aria-pressed={effectiveSubjectId === subject.id}
+                    className={`rounded-[24px] border px-5 py-5 text-left transition ${
+                      effectiveSubjectId === subject.id
+                        ? "border-teal-500 bg-teal-50 shadow-sm"
+                        : "border-black/10 bg-white hover:bg-slate-50"
+                    }`}
+                    key={subject.id}
+                    onClick={() => {
+                      setSubjectManuallySelected(true);
+                      setSubjectId(subject.id);
+                    }}
+                    type="button"
+                  >
+                    <p className="text-lg font-semibold text-slate-950">{subject.title}</p>
+                    <p className="mt-2 text-sm text-slate-600">{subject.detail}</p>
+                  </button>
+                ))}
+              </div>
         ) : null}
 
         {/* Step 2: Goal & Exam Target */}
         {step === 2 ? (
-          <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-            <div className="space-y-3">
-              <p className="text-sm font-semibold text-slate-800">Choose your current goal</p>
-              <div className="grid gap-3">
-                {studyGoals.map((goal) => (
-                  <button
-                    aria-label={`Select goal: ${goal.label} - ${goal.description}`}
-                    aria-pressed={studyGoal === goal.value}
-                    className={`rounded-[24px] border px-5 py-4 text-left transition ${
-                      studyGoal === goal.value
-                        ? "border-teal-500 bg-teal-50 shadow-sm"
-                        : "border-black/10 bg-white hover:bg-slate-50"
-                    }`}
-                    key={goal.value}
-                    onClick={() => setStudyGoal(goal.value)}
-                    type="button"
-                  >
-                    <p className="font-semibold text-slate-950">{goal.label}</p>
-                    <p className="mt-1 text-sm text-slate-600">{goal.description}</p>
-                  </button>
-                ))}
-              </div>
+          <div className="space-y-4">
+            <p className="text-sm font-semibold text-slate-800">Choose your current goal</p>
+            <div className="grid gap-3">
+              {studyGoals.map((goal) => (
+                <button
+                  aria-label={`Select goal: ${goal.label} - ${goal.description}`}
+                  aria-pressed={studyGoal === goal.value}
+                  className={`rounded-[24px] border px-5 py-4 text-left transition ${
+                    studyGoal === goal.value
+                      ? "border-teal-500 bg-teal-50 shadow-sm"
+                      : "border-black/10 bg-white hover:bg-slate-50"
+                  }`}
+                  key={goal.value}
+                  onClick={() => setStudyGoal(goal.value)}
+                  type="button"
+                >
+                  <p className="font-semibold text-slate-950">{goal.label}</p>
+                  <p className="mt-1 text-sm text-slate-600">{goal.description}</p>
+                </button>
+              ))}
             </div>
 
             <div className="surface-panel space-y-4 p-5">
@@ -317,29 +335,27 @@ export function OnboardingForm() {
 
         {/* Step 3: Launch Style */}
         {step === 3 ? (
-          <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-            <div className="space-y-4">
-              <div className="surface-panel p-5">
-                <p className="eyebrow">Choose your learning style</p>
-                <div className="mt-4 grid gap-3">
-                  {launchModes.map((mode) => (
-                    <button
-                      aria-label={`Select launch mode: ${mode.title} - ${mode.detail}`}
-                      aria-pressed={launchMode === mode.id}
-                      className={`rounded-[22px] border px-4 py-4 text-left transition ${
-                        launchMode === mode.id
-                          ? "border-teal-500 bg-teal-50 shadow-sm"
-                          : "border-black/10 bg-white hover:bg-slate-50"
-                      }`}
-                      key={mode.id}
-                      onClick={() => setLaunchMode(mode.id)}
-                      type="button"
-                    >
-                      <p className="font-semibold text-slate-950">{mode.title}</p>
-                      <p className="mt-1 text-sm text-slate-600">{mode.detail}</p>
-                    </button>
-                  ))}
-                </div>
+          <div className="space-y-4">
+            <div className="surface-panel p-5">
+              <p className="eyebrow">Choose your learning style</p>
+              <div className="mt-4 grid gap-3">
+                {launchModes.map((mode) => (
+                  <button
+                    aria-label={`Select launch mode: ${mode.title} - ${mode.detail}`}
+                    aria-pressed={launchMode === mode.id}
+                    className={`rounded-[22px] border px-4 py-4 text-left transition ${
+                      launchMode === mode.id
+                        ? "border-teal-500 bg-teal-50 shadow-sm"
+                        : "border-black/10 bg-white hover:bg-slate-50"
+                    }`}
+                    key={mode.id}
+                    onClick={() => setLaunchMode(mode.id)}
+                    type="button"
+                  >
+                    <p className="font-semibold text-slate-950">{mode.title}</p>
+                    <p className="mt-1 text-sm text-slate-600">{mode.detail}</p>
+                  </button>
+                ))}
               </div>
             </div>
 
@@ -348,93 +364,16 @@ export function OnboardingForm() {
               <h2 className="mt-2 text-xl font-bold tracking-tight text-slate-950">
                 {selectedSubject.title} • {cognitiveGroup.toUpperCase()}
               </h2>
-              <p className="mt-3 text-sm leading-6 text-slate-600">
-                {selectedGoal.description}
-              </p>
+              <p className="mt-3 text-sm leading-6 text-slate-600">{selectedGoal.description}</p>
               <div className="mt-4 space-y-2">
                 <p className="text-xs font-semibold uppercase tracking-[0.1em] text-slate-500">Quick start:</p>
                 <p className="text-sm text-slate-700">
-                  Learn at your pace with explanations adapted to {cognitiveGroup}. Toggle voice, diagrams, and quizzes next.
+                  Learn at your pace with explanations adapted to {cognitiveGroup}. Visual diagrams, voice mode, and quizzes live in the sidebar and settings after you finish.
+                </p>
+                <p className="text-sm text-slate-700">
+                  Launch style: <span className="font-semibold text-slate-950">{selectedLaunchMode.title}</span>.
                 </p>
               </div>
-            </div>
-          </div>
-        ) : null}
-
-        {/* Step 4: Features & Accessibility */}
-        {step === 4 ? (
-          <div className="space-y-6">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="surface-panel space-y-3 p-5">
-                <p className="font-semibold text-slate-950">✨ Learning Features</p>
-                <label className="flex items-center gap-3">
-                  <input
-                    aria-label="Enable visual diagrams for complex topics"
-                    checked={enableVisualDiagrams}
-                    onChange={(e) => setEnableVisualDiagrams(e.target.checked)}
-                    type="checkbox"
-                  />
-                  <span className="text-sm text-slate-700">Visual Diagrams (Mermaid)</span>
-                </label>
-                <label className="flex items-center gap-3">
-                  <input
-                    aria-label="Enable voice-based interaction"
-                    checked={enableVoiceInput}
-                    onChange={(e) => setEnableVoiceInput(e.target.checked)}
-                    type="checkbox"
-                  />
-                  <span className="text-sm text-slate-700">Voice Mode (Deepgram)</span>
-                </label>
-                <label className="flex items-center gap-3">
-                  <input
-                    aria-label="Enable adaptive quiz generation after topics"
-                    checked={enableQuizMode}
-                    onChange={(e) => setEnableQuizMode(e.target.checked)}
-                    type="checkbox"
-                  />
-                  <span className="text-sm text-slate-700">Adaptive Quiz Module</span>
-                </label>
-                <p className="text-xs text-slate-600 pt-2">These can be toggled anytime in settings.</p>
-              </div>
-
-              <div className="surface-panel space-y-3 p-5">
-                <p className="font-semibold text-slate-950">♿ Accessibility</p>
-                <div className="space-y-2">
-                  {(["high-contrast", "large-text", "screen-reader", "voice-mode"] as AccessibilityFeature[]).map(
-                    (feature) => (
-                      <label className="flex items-center gap-3" key={feature}>
-                        <input
-                          aria-label={`Enable ${feature} accessibility feature`}
-                          checked={accessibilityFeatures.includes(feature)}
-                          onChange={() => toggleAccessibilityFeature(feature)}
-                          type="checkbox"
-                        />
-                        <span className="text-sm text-slate-700 capitalize">{feature.replace("-", " ")}</span>
-                      </label>
-                    ),
-                  )}
-                </div>
-                <p className="text-xs text-slate-600 pt-2">Fully WCAG 2.1 accessible.</p>
-              </div>
-            </div>
-
-            <div className="rounded-[24px] border border-teal-200 bg-teal-50 p-5">
-              <p className="font-semibold text-slate-950">🎯 Your LearnX Profile</p>
-              <ul className="mt-3 space-y-1 text-sm text-slate-700">
-                <li>
-                  <strong>Age Group:</strong> {cognitiveGroup.charAt(0).toUpperCase() + cognitiveGroup.slice(1)}
-                </li>
-                <li>
-                  <strong>Subject:</strong> {selectedSubject.title}
-                </li>
-                <li>
-                  <strong>Goal:</strong> {selectedGoal.label}
-                </li>
-                <li>
-                  <strong>Learning Mode:</strong> {selectedLaunchMode.title}
-                </li>
-                {interests.length > 0 && <li><strong>Interests:</strong> {interests.join(", ")}</li>}
-              </ul>
             </div>
           </div>
         ) : null}
@@ -453,34 +392,18 @@ export function OnboardingForm() {
             ) : null}
             <button
               className="button-secondary"
-              onClick={() => {
-                const profile = buildOnboardingProfile({
-                  preferredSubjectId: "dbms",
-                  studyGoal: "prepare-exams",
-                  examTarget: "semester-exam",
-                  launchMode: "lesson",
-                  age: 16,
-                  cognitiveGroup: "teens",
-                  interests: undefined,
-                  enableVisualDiagrams: true,
-                  enableVoiceInput: true,
-                  enableQuizMode: true,
-                  accessibilityFeatures: undefined,
-                });
-                sessionGateway.completeOnboarding(profile);
-                void syncOnboardingProfile(profile).catch(() => undefined);
-                router.push("/app");
-              }}
+              onClick={completeOnboarding}
               type="button"
             >
               Skip & Start
             </button>
           </div>
 
-          {step < 4 ? (
+          {step < 3 ? (
             <button
               aria-label={`Continue to step ${step + 2}`}
-              className="button-primary"
+              className="button-primary disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={step === 0 && age === ""}
               onClick={() => setStep((current) => current + 1)}
               type="button"
             >
@@ -488,7 +411,7 @@ export function OnboardingForm() {
             </button>
           ) : (
             <button aria-label="Complete onboarding and launch LearnX" className="button-primary" onClick={completeOnboarding} type="button">
-              🚀 Launch LearnX
+              Start LearnX
             </button>
           )}
         </div>

@@ -9,19 +9,13 @@ import { Topic } from "@/lib/types";
 import { getTopicsBySubject } from "@/lib/data/catalog";
 
 function topicStatusCopy(status: "untouched" | "recover" | "steady" | "strong") {
-  const icons = {
-    strong: "⭐",
-    recover: "⚠️",
-    steady: "⏳",
-    untouched: "🆕"
-  };
   const labels = {
     strong: "Strong topic",
     recover: "Recovery needed",
     steady: "In progress",
     untouched: "New topic"
   };
-  return `${icons[status]} ${labels[status]}`;
+  return labels[status];
 }
 
 export function TopicCard({ topic }: { topic: Topic }) {
@@ -40,13 +34,13 @@ export function TopicCard({ topic }: { topic: Topic }) {
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="eyebrow">Topic</p>
-          <h3 className="mt-2 text-xl font-bold tracking-tight text-slate-950">{topic.title}</h3>
+          <h3 className="mt-2 text-xl font-semibold tracking-tight text-slate-950">{topic.title}</h3>
         </div>
         <span className="pill">{Math.round(topic.examImportance * 100)}% exam weight</span>
       </div>
       <p className="mt-4 text-sm leading-6 text-slate-600">{topic.summary}</p>
 
-      <div className="mt-4 rounded-[22px] border border-black/10 bg-white/82 px-4 py-4 shadow-sm">
+      <div className="mt-4 rounded-[24px] border border-black/10 bg-white/84 p-4 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm font-semibold text-slate-900">{topicStatusCopy(topicView?.status ?? "untouched")}</p>
           <span className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
@@ -55,7 +49,7 @@ export function TopicCard({ topic }: { topic: Topic }) {
         </div>
         <div className="mt-4 h-3 overflow-hidden rounded-full bg-slate-200">
           <div
-            className="h-full rounded-full bg-[linear-gradient(90deg,rgba(15,118,110,0.9),rgba(245,158,11,0.88))]"
+            className="h-full rounded-full bg-gradient-to-r from-teal-700 via-teal-500 to-amber-500 transition-[width] duration-300"
             style={{ width: `${Math.max(8, topicView?.accuracy ?? 8)}%` }}
           />
         </div>

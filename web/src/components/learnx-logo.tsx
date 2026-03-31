@@ -1,13 +1,32 @@
-export function LearnxLogo() {
-  return (
-    <>
-      <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#0f766e,#f59e0b)] text-lg font-bold text-white shadow-[0_12px_24px_rgba(15,118,110,0.24)]">
-        LX
-      </span>
-      <span className="flex flex-col">
-        <span className="text-lg font-bold tracking-tight text-slate-950">LearnX</span>
-        <span className="text-xs uppercase tracking-[0.22em] text-slate-500">LearnBot Pro</span>
-      </span>
-    </>
-  );
+import Image from "next/image";
+import { forwardRef } from "react";
+
+interface LearnxLogoProps {
+  className?: string;
 }
+
+export const LearnxLogo = forwardRef<HTMLDivElement, LearnxLogoProps>(({ className }, ref) => {
+  return (
+    <div ref={ref} className={`inline-flex items-center gap-3 ${className || ''}`}>
+      <Image
+        alt="LearnX"
+        className="h-12 w-12 rounded-xl shadow-lg"
+        height={48}
+        priority
+        src="/logo.svg"
+        width={48}
+        unoptimized
+      />
+      <span className="flex flex-col leading-none">
+        <span className="bg-gradient-to-r from-orange-500 to-teal-600 bg-clip-text text-xl font-bold tracking-tight text-transparent">
+          LearnX
+        </span>
+        <span className="text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-teal-700">
+          AI Study Hub
+        </span>
+      </span>
+    </div>
+  );
+});
+
+LearnxLogo.displayName = 'LearnxLogo';

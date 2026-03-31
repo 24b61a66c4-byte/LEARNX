@@ -40,6 +40,8 @@ Set at least:
 - `LEARNX_GEMINI_API_KEY` (optional)
 - `LEARNX_TAVILY_API_KEY` (optional)
 
+When a user is signed in, the frontend automatically forwards the current Supabase access token to backend API requests, so UI code does not need to manage `Authorization` headers manually.
+
 ### 2. Run Backend Tests
 
 ```bash
@@ -65,13 +67,21 @@ docker compose --env-file .env.local up --build
 
 Copy `.env.example` to `.env.local`, copy `web/.env.example` to `web/.env.local`, and fill in your keys. For Vercel deployments, add the `NEXT_PUBLIC_*` keys in the project environment settings for both Preview and Production.
 
+For authenticated backend routes, configure one of `LEARNX_JWT_ISSUER_URI`, `LEARNX_JWT_JWK_SET_URI`, or `LEARNX_JWT_SECRET`, and make sure `LEARNX_ALLOWED_ORIGINS` includes the frontend origin you are serving from.
+
 | Variable | Required | Default | Description |
 |---|---|---|---|
 | `LEARNX_GEMINI_API_KEY` | For AI tutoring | — | [Get one](https://aistudio.google.com/app/apikey) |
+| `LEARNX_GOOGLE_API_KEY` / `_2` / `_3` | Optional alias | — | Fallback aliases used for Gemini/YouTube key resolution |
 | `LEARNX_TAVILY_API_KEY` | For search grounding | — | [Get one](https://app.tavily.com/home/api-keys) |
+| `LEARNX_BRAVE_API_KEY` | Optional | — | Brave web search provider |
+| `LEARNX_YOUTUBE_API_KEY` | Optional | — | YouTube Data API for study videos |
+| `LEARNX_PEXELS_API_KEY` | Optional | — | Pexels videos API for free stock learning visuals |
 | `LEARNX_GEMINI_MODEL` | No | `gemini-2.5-flash` | Gemini model identifier |
 | `LEARNX_REQUEST_TIMEOUT_SECONDS` | No | `20` | API timeout |
 | `LEARNX_SEARCH_MAX_RESULTS` | No | `5` | Max Tavily results |
+
+The tutor search stack now also includes free providers with no API key required: Wikipedia and arXiv.
 
 ## Contributing
 

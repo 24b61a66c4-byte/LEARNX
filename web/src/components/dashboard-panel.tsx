@@ -3,7 +3,7 @@
 import Link from "next/link";
 
 import { QuestRail } from "@/components/quest-rail";
-import { ONBOARDING_STORAGE_KEY, TOPIC_NOTES_KEY } from "@/lib/constants";
+import { TOPIC_NOTES_KEY } from "@/lib/constants";
 import { useClientSnapshot } from "@/lib/client-snapshot";
 import { getSubjectById, getTopicById, getTopicsBySubject } from "@/lib/data/catalog";
 import {
@@ -16,6 +16,7 @@ import {
 import { buildSubjectMasteryView } from "@/lib/progress-views";
 import { readLocalStorage } from "@/lib/storage";
 import { OnboardingProfile, StudyNote, SubjectId } from "@/lib/types";
+import { getStoredOnboardingProfile } from "@/lib/profile-preferences";
 
 function formatDateLabel(value: string) {
   const date = new Date(value);
@@ -47,17 +48,17 @@ function getRecentDrillLabel(subjectId: SubjectId, topicId?: string) {
   }
 
   const subject = getSubjectById(subjectId);
-  return `${subject?.name ?? subjectId.toUpperCase()} mixed drill`;
+  return `${subject?.name ?? "Subject"} mixed drill`;
 }
 
 function getSubjectBadge(subjectId: SubjectId) {
-  return getSubjectById(subjectId)?.id.toUpperCase() ?? subjectId.toUpperCase();
+  return getSubjectById(subjectId)?.name ?? "Subject";
 }
 
 export function DashboardPanel() {
   const workspaceState = useClientSnapshot(
     () => {
-      const onboarding = readLocalStorage<OnboardingProfile | null>(ONBOARDING_STORAGE_KEY, null);
+      const onboarding = getStoredOnboardingProfile();
       const notes = readLocalStorage<StudyNote[]>(TOPIC_NOTES_KEY, []);
 
       return {
@@ -78,7 +79,9 @@ export function DashboardPanel() {
   );
 
   const subjects = catalogGateway.getSubjects();
-  const activeSubject = subjects.find((subject) => subject.id === workspaceState.onboarding?.preferredSubjectId) ?? subjects[0];
+  const activeSubject = subjects.find((subject) => subject.id === workspaceState.onboarding?.preferredSubjectId)
+    ?? subjects.find((subject) => subject.id === "dbms")
+    ?? subjects[0];
   const recentNotes = [...workspaceState.notes]
     .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))
     .slice(0, 4);
@@ -131,36 +134,44 @@ export function DashboardPanel() {
       ?.label ?? "First Drill waiting";
   const focusCards = [
     {
-      label: "Resume studio",
+      label: "Chat",
       title: continueTitle,
       detail:
         activeTrack?.mastery.continueReason ??
         workspaceState.dashboard.recommendation?.reason ??
-        "Pick one topic and keep the study loop alive.",
+        "Ask the tutor and keep the study loop moving.",
       href: continueHref,
-      cta: "Open lesson",
+      cta: "Open chat",
     },
     {
-      label: "Tutor follow-up",
+      label: "Watch",
       title: recoveryTopics[0]?.title
-        ? `Ask about ${recoveryTopics[0].title}`
-        : `Explain ${continueTitle}`,
+        ? `Watch a recap of ${recoveryTopics[0].title}`
+        : `See a quick recap of ${continueTitle}`,
       detail: recoveryTopics[0]?.title
-        ? `Use the tutor to repair ${recoveryTopics[0].title} before the next drill.`
-        : "Turn the current topic into a short lecture, exam answer, or web-search plan.",
-      href: recoveryTopics[0]
-        ? `/app/ask?subjectId=${recoveryTopics[0].subjectId}&topicId=${recoveryTopics[0].topicId}`
-        : tutorHref,
-      cta: "Open tutor",
+        ? `Jump into search and recap lanes for ${recoveryTopics[0].title}.`
+        : "Open the assistant lane for a quick recap, search, and examples.",
+      href: tutorHref,
+      cta: "Open watch",
     },
     {
-      label: "Notebook move",
+      label: "Notes",
       title: recentNotes[0]?.title ?? `${continueTitle} note card`,
       detail: recentNotes[0]
         ? `Latest update on ${formatDateLabel(recentNotes[0].updatedAt)}. Keep the notebook tied to the topic studio.`
         : "Save one concept summary or correction card before leaving the topic.",
       href: notesHref,
       cta: "Open notes",
+    },
+    {
+      label: "Quiz",
+      title: todayRemaining > 0 ? `${todayRemaining} drill left today` : "Run one more quiz",
+      detail:
+        todayRemaining > 0
+          ? `Close the daily target with ${todayRemaining} quick drill${todayRemaining === 1 ? "" : "s"}.`
+          : "Use the quiz lane to lock in recall before you move on.",
+      href: practiceHref,
+      cta: "Open quiz",
     },
   ];
   const questItems = [
@@ -193,13 +204,13 @@ export function DashboardPanel() {
 
   return (
     <section className="space-y-6">
-      <div className="surface-card overflow-hidden p-6">
-        <div className={`rounded-[32px] bg-gradient-to-br ${activeSubject.accent} p-6 sm:p-7`}>
-          <div className="grid gap-6 xl:grid-cols-[1.18fr_0.82fr]">
-            <div className="space-y-5">
+      <div className="surface-card overflow-hidden p-5">
+        <div className={`rounded-[32px] bg-gradient-to-br ${activeSubject.accent} p-5 sm:p-6`}>
+          <div className="grid gap-5 xl:grid-cols-[1.18fr_0.82fr]">
+            <div className="space-y-4">
               <div className="space-y-3">
                 <p className="eyebrow">Today focus</p>
-                <h1 className="max-w-4xl text-4xl font-bold tracking-tight text-slate-950 sm:text-5xl">
+                <h1 className="max-w-4xl text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
                   {continueTitle}
                 </h1>
                 <p className="max-w-3xl text-sm leading-7 text-slate-700 sm:text-base">
@@ -209,19 +220,19 @@ export function DashboardPanel() {
                 </p>
               </div>
 
-              <div className="rounded-[28px] border border-white/45 bg-slate-950 px-5 py-5 text-white shadow-[0_22px_50px_rgba(15,23,42,0.16)]">
+              <div className="rounded-[28px] border border-white/45 bg-slate-950 px-4 py-4 text-white shadow-[0_22px_50px_rgba(15,23,42,0.16)]">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-300">
-                      Study queue
+                      Study lanes
                     </p>
-                    <p className="mt-2 text-xl font-bold tracking-tight">
-                      Lesson {"->"} tutor {"->"} notes {"->"} drill
+                    <p className="mt-2 text-lg font-bold tracking-tight">
+                      Chat {"->"} watch {"->"} notes {"->"} quiz
                     </p>
                   </div>
                   <span className="reward-chip">{activeSubject.name}</span>
                 </div>
-                <div className="mt-5 grid gap-3">
+                <div className="mt-5 grid gap-3 sm:grid-cols-2">
                   {focusCards.map((card, index) => (
                     <Link
                       className={`rounded-[22px] border px-4 py-4 transition ${
@@ -247,11 +258,11 @@ export function DashboardPanel() {
                 <Link className="button-primary" href={continueHref}>
                   Open study studio
                 </Link>
-                <Link className="button-secondary" href={tutorHref}>
-                  Ask the tutor
-                </Link>
                 <Link className="button-secondary" href={practiceHref}>
                   Run a drill
+                </Link>
+                <Link className="button-secondary" href="/app/subjects">
+                  Search topics
                 </Link>
               </div>
             </div>

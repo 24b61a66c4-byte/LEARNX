@@ -5,8 +5,12 @@ import com.learnx.ai.provider.FallbackAiProvider;
 import com.learnx.ai.provider.GeminiAiProvider;
 import com.learnx.ai.search.BraveSearchProvider;
 import com.learnx.ai.search.CompositeSearchProvider;
+import com.learnx.ai.search.PexelsVideoSearchProvider;
 import com.learnx.ai.search.SearchProvider;
 import com.learnx.ai.search.TavilySearchProvider;
+import com.learnx.ai.search.WikipediaSearchProvider;
+import com.learnx.ai.search.YouTubeSearchProvider;
+import com.learnx.ai.search.ArxivSearchProvider;
 import com.learnx.ai.service.TutorService;
 import com.learnx.core.service.AnalyticsService;
 import com.learnx.core.service.CatalogService;
@@ -43,6 +47,16 @@ public class LearnxEngineFactory {
                 if (config.hasTavilyApiKey()) {
                         searchProviders.add(new TavilySearchProvider(config.tavilyApiKey(), config.requestTimeout(),
                                         config.maxSearchResults()));
+                }
+                searchProviders.add(new WikipediaSearchProvider(config.requestTimeout(), config.maxSearchResults()));
+                searchProviders.add(new ArxivSearchProvider(config.requestTimeout(), config.maxSearchResults()));
+                if (config.hasYoutubeApiKey()) {
+                        searchProviders.add(new YouTubeSearchProvider(config.youtubeApiKey(), config.requestTimeout(),
+                                        config.maxSearchResults()));
+                }
+                if (config.hasPexelsApiKey()) {
+                        searchProviders.add(new PexelsVideoSearchProvider(config.pexelsApiKey(),
+                                        config.requestTimeout(), config.maxSearchResults()));
                 }
                 SearchProvider searchProvider = new CompositeSearchProvider(searchProviders, config.requestTimeout());
 

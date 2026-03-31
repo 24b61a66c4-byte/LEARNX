@@ -42,8 +42,7 @@ public class LearnxEngine {
             RecommendationEngine recommendationEngine,
             TutorService tutorService,
             LearnerStore learnerStore,
-            QuizHistoryStore quizHistoryStore
-    ) {
+            QuizHistoryStore quizHistoryStore) {
         this.catalogService = catalogService;
         this.quizEngine = quizEngine;
         this.progressService = progressService;
@@ -59,7 +58,8 @@ public class LearnxEngine {
     }
 
     public LearnerProfile initializeLearnerProfile(String learnerId, String displayName) {
-        LearnerProfile learnerProfile = new LearnerProfile(learnerId, displayName, 15); // Default age to 15 (Teens) if not provided.
+        LearnerProfile learnerProfile = new LearnerProfile(learnerId, displayName, 15); // Default age to 15 (Teens) if
+                                                                                        // not provided.
         learnerStore.save(learnerProfile);
         return learnerProfile;
     }
@@ -101,9 +101,14 @@ public class LearnxEngine {
 
     public TutorResponse answerDoubt(TutorRequest request) {
         LearnerProfile learnerProfile = learnerStore.findById(request.learnerId())
-                .orElseThrow(() -> new IllegalArgumentException("Unknown learnerId: " + request.learnerId()));
+                .orElseGet(() -> initializeLearnerProfile(request.learnerId(), request.learnerId()));
         PerformanceSnapshot snapshot = analyticsService.buildSnapshot(learnerProfile, request.subjectId());
         return tutorService.answerQuestion(request, learnerProfile, snapshot);
+    }
+
+    public void seedTutorConversation(String learnerId, String subjectId, List<String> recentMessages) {
+        String historyKey = learnerId + ":" + subjectId;
+        tutorService.seedConversationHistory(historyKey, recentMessages);
     }
 
     public List<QuizEvaluation> getQuizHistory(String learnerId) {

@@ -29,6 +29,8 @@ import {
   writeLocalStorage,
 } from "@/lib/storage";
 import { getTutorApiUrl } from "@/lib/runtime-config";
+import { getAuthenticatedRequestHeaders } from "@/lib/supabase";
+import { getStoredOnboardingProfile, getRecommendedSubjectId, normalizeOnboardingProfile } from "@/lib/profile-preferences";
 import {
   AppSession,
   DashboardView,
@@ -118,6 +120,19 @@ function wait(ms: number) {
   });
 }
 
+async function buildAuthenticatedJsonHeaders() {
+  const headers = new Headers({
+    "Content-Type": "application/json",
+  });
+
+  const authHeaders = await getAuthenticatedRequestHeaders();
+  for (const [name, value] of Object.entries(authHeaders)) {
+    headers.set(name, value);
+  }
+
+  return headers;
+}
+
 function createClientId(prefix: string) {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
     return `${prefix}-${crypto.randomUUID()}`;
@@ -154,8 +169,13 @@ function getDayDifference(leftKey: string, rightKey: string) {
   return Math.round((left.getTime() - right.getTime()) / (1000 * 60 * 60 * 24));
 }
 
-function getOnboardingProfile(): OnboardingProfile | null {
-  return readLocalStorage<OnboardingProfile | null>(ONBOARDING_STORAGE_KEY, null);
+function getPreferredSubjectId(preferredSubjectId?: SubjectId) {
+  if (preferredSubjectId) {
+    return preferredSubjectId;
+  }
+
+  const onboarding = getStoredOnboardingProfile();
+  return getRecommendedSubjectId(onboarding?.age, onboarding?.cognitiveGroup, onboarding?.interests);
 }
 
 function getHistory() {
@@ -400,7 +420,7 @@ export function getServerProgressSnapshot(): ProgressSnapshot {
 }
 
 export function getServerDashboard(preferredSubjectId?: SubjectId): DashboardView {
-  const targetSubject = preferredSubjectId ?? "dbms";
+  const targetSubject = getPreferredSubjectId(preferredSubjectId);
   const topics = getTopicsBySubject(targetSubject);
   const fallbackTopic = topics[0] ?? getTopicsBySubject("dbms")[0] ?? null;
   const rewards = getServerProgressSnapshot().rewards;
@@ -426,14 +446,14 @@ export const sessionGateway: SessionGateway = {
     return readLocalStorage<AppSession>(SESSION_STORAGE_KEY, defaultSession);
   },
   signIn(profile) {
-    return persistSession(profile, Boolean(getOnboardingProfile()));
+    return persistSession(profile, Boolean(getStoredOnboardingProfile()));
   },
   signUp(profile) {
     clearLocalStorage(ONBOARDING_STORAGE_KEY);
     return persistSession(profile, false);
   },
   completeOnboarding(profile) {
-    writeLocalStorage(ONBOARDING_STORAGE_KEY, profile);
+    writeLocalStorage(ONBOARDING_STORAGE_KEY, normalizeOnboardingProfile(profile));
     const currentSession = readLocalStorage<AppSession>(SESSION_STORAGE_KEY, defaultSession);
 
     return persistSession(
@@ -472,7 +492,7 @@ export const learnerStateGateway: LearnerStateGateway = {
   },
   getRecommendation(preferredSubjectId) {
     const history = getHistory();
-    const targetSubject = preferredSubjectId ?? getOnboardingProfile()?.preferredSubjectId ?? "dbms";
+    const targetSubject = getPreferredSubjectId(preferredSubjectId);
     const candidateTopics = getTopicsBySubject(targetSubject);
 
     const ranked = candidateTopics
@@ -547,19 +567,25 @@ export const tutorGateway: TutorGateway = {
 
     const learnerId = readLocalStorage<{ profile: { email: string } | null } | null>(SESSION_STORAGE_KEY, null)?.profile?.email ?? "guest";
     const tutorApiUrl = getTutorApiUrl();
+    const fallbackTopicId = topicId || getTopicsBySubject(subjectId)[0]?.id;
+
+    if (!fallbackTopicId) {
+      throw new Error("validation: No topic available for this subject.");
+    }
 
     // Attempt real backend call first
     try {
+      const headers = await buildAuthenticatedJsonHeaders();
       const res = await fetch(tutorApiUrl, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({
           learnerId,
           subjectId,
-          topicId: topicId ?? "",
+          topicId: fallbackTopicId,
           examContextId: "",
           userQuestion: sanitized,
-          maxResources: 3,
+          maxResources: 6,
         }),
         signal: AbortSignal.timeout(12000),
       });

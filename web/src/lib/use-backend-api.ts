@@ -8,6 +8,7 @@ import {
   type ProgressPayload,
   type StudyNotePayload,
 } from "@/lib/api";
+import { getRecommendedSubjectId, normalizeOnboardingProfile } from "@/lib/profile-preferences";
 import { OnboardingProfile, PracticeResult, StudyNote } from "@/lib/types";
 
 type NoteInput = Pick<StudyNote, "subjectId" | "topicId" | "title" | "content" | "source">;
@@ -50,20 +51,21 @@ export function useBackendApi() {
 
       async completeOnboarding(profile: OnboardingProfile) {
         if (!user?.id) throw new Error("User not authenticated");
+        const normalized = normalizeOnboardingProfile(profile);
         return profileApi.completeOnboarding(user.id, {
           userId: user.id,
           displayName,
-          age: profile.age,
-          cognitiveGroup: profile.cognitiveGroup,
-          preferredSubjectId: profile.preferredSubjectId || "dbms",
-          studyGoal: profile.studyGoal,
-          examTarget: profile.examTarget,
-          launchMode: profile.launchMode,
-          interests: profile.interests || [],
-          enableVisualDiagrams: profile.enableVisualDiagrams ?? true,
-          enableVoiceInput: profile.enableVoiceInput ?? true,
-          enableQuizMode: profile.enableQuizMode ?? true,
-          accessibilityFeatures: profile.accessibilityFeatures || [],
+          age: normalized.age,
+          cognitiveGroup: normalized.cognitiveGroup,
+          preferredSubjectId: normalized.preferredSubjectId || getRecommendedSubjectId(normalized.age, normalized.cognitiveGroup, normalized.interests),
+          studyGoal: normalized.studyGoal,
+          examTarget: normalized.examTarget,
+          launchMode: normalized.launchMode,
+          interests: normalized.interests || [],
+          enableVisualDiagrams: normalized.enableVisualDiagrams ?? false,
+          enableVoiceInput: normalized.enableVoiceInput ?? false,
+          enableQuizMode: normalized.enableQuizMode ?? false,
+          accessibilityFeatures: normalized.accessibilityFeatures || [],
         });
       },
 

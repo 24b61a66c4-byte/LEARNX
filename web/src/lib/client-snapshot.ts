@@ -3,8 +3,20 @@
 import { useRef } from "react";
 import { useSyncExternalStore } from "react";
 
-function subscribe() {
-  return () => {};
+import { STORAGE_EVENT_NAME } from "@/lib/storage";
+
+function subscribe(onStoreChange: () => void) {
+  if (typeof window === "undefined") {
+    return () => {};
+  }
+
+  window.addEventListener("storage", onStoreChange);
+  window.addEventListener(STORAGE_EVENT_NAME, onStoreChange);
+
+  return () => {
+    window.removeEventListener("storage", onStoreChange);
+    window.removeEventListener(STORAGE_EVENT_NAME, onStoreChange);
+  };
 }
 
 export function useClientSnapshot<T>(getSnapshot: () => T, getServerSnapshot: () => T) {

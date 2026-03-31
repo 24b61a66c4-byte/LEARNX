@@ -2,7 +2,7 @@
 
 ## Overview
 
-This guide explains how the LearnX frontend integrates with the Spring Boot backend API via Supabase authentication.
+This guide explains how the LearnX frontend integrates with the Spring Boot backend API via Supabase authentication. The shared frontend API client automatically forwards the current Supabase access token on authenticated backend requests.
 
 ## Architecture
 
@@ -49,11 +49,22 @@ spring.datasource.username=postgres
 spring.datasource.password=your-supabase-password
 ```
 
+JWT validation is configured separately from the database connection:
+
+```properties
+LEARNX_JWT_ISSUER_URI=https://your-project.supabase.co/auth/v1
+LEARNX_JWT_JWK_SET_URI=
+LEARNX_JWT_SECRET=
+LEARNX_ALLOWED_ORIGINS=http://localhost:3000,https://your-frontend-domain.com
+```
+
+Set exactly one of `LEARNX_JWT_ISSUER_URI`, `LEARNX_JWT_JWK_SET_URI`, or `LEARNX_JWT_SECRET` depending on how you want Spring Security to validate access tokens.
+
 ## API Client Usage
 
 ### Basic Setup
 
-The frontend provides an `api.ts` client library for backend API calls:
+The frontend provides an `api.ts` client library for backend API calls. It resolves the backend base URL and injects the current Supabase bearer token when the user is signed in:
 
 ```typescript
 import { profileApi, quizApi, notesApi, progressApi } from "@/lib/api";
@@ -61,7 +72,7 @@ import { profileApi, quizApi, notesApi, progressApi } from "@/lib/api";
 
 ### With Authentication
 
-Use the `useBackendApi()` hook to automatically include the authenticated user ID:
+Use the `useBackendApi()` hook to automatically include the authenticated user ID. You do not need to add `Authorization` headers by hand in UI code:
 
 ```typescript
 import { useBackendApi } from "@/lib/use-backend-api";
@@ -208,7 +219,7 @@ All endpoints are prefixed with `/api/v1`.
 
 ## Gateway Pattern
 
-The `gateways.ts` file uses a pattern of local-first persistence with optional backend sync:
+The `gateways.ts` file uses a pattern of local-first persistence with optional backend sync. Authenticated backend calls go through the shared API client, while local browser state keeps the UI usable when the backend is unavailable:
 
 ```typescript
 export const practiceGateway = {
@@ -307,6 +318,8 @@ try {
 - Check JWT token expiration
 - Verify RLS policies allow user access
 - Ensure userId matches auth.users(id)
+- Confirm the browser has a valid Supabase session and the backend JWT config matches the same Supabase project or signing secret
+- Remember that the frontend already forwards the bearer token on backend requests
 
 ### 404 Not Found
 - Verify API endpoint spelling
@@ -325,7 +338,7 @@ try {
 
 ## Security Notes
 
-- All API calls require Supabase JWT token (passed via Authorization header)
+- All authenticated backend API calls automatically include the current Supabase JWT in the `Authorization` header
 - RLS policies enforce user-scoped data access
 - Backend validates all inputs before database operations
 - Session tokens expire after defined period (check application.properties)

@@ -1,4 +1,5 @@
 import { getApiBaseUrl } from "@/lib/runtime-config";
+import { getAuthenticatedRequestHeaders } from "@/lib/supabase";
 
 export interface ApiResponse<T> {
   success: boolean;
@@ -57,12 +58,19 @@ export interface ProgressPayload {
 
 async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const url = `${getApiBaseUrl()}${endpoint}`;
+  const headers = new Headers(options?.headers);
+  headers.set("Content-Type", "application/json");
+
+  const authHeaders = await getAuthenticatedRequestHeaders();
+  for (const [name, value] of Object.entries(authHeaders)) {
+    if (!headers.has(name)) {
+      headers.set(name, value);
+    }
+  }
+
   const response = await fetch(url, {
     ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...options?.headers,
-    },
+    headers,
   });
 
   if (!response.ok) {

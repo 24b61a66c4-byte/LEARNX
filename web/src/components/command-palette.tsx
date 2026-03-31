@@ -190,7 +190,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
               setSelectedIndex(0);
             }}
             onKeyDown={handleInputKeyDown}
-            placeholder="Jump to DBMS, joins, rectifiers..."
+            placeholder="Search subjects, topics, or recent work..."
             value={query}
           />
         </div>
