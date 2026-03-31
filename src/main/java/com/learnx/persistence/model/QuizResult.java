@@ -1,6 +1,11 @@
 package com.learnx.persistence.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -11,21 +16,32 @@ public class QuizResult {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotNull(message = "User ID is required")
     @Column(nullable = false)
     private UUID userId;
 
+    @NotBlank(message = "Subject ID is required")
+    @Size(max = 50, message = "Subject ID must not exceed 50 characters")
     @Column(nullable = false, length = 50)
     private String subjectId;
 
+    @Size(max = 255, message = "Topic ID must not exceed 255 characters")
     @Column(length = 255)
     private String topicId;
 
+    @NotNull(message = "Total questions count is required")
+    @Min(value = 1, message = "Total questions must be at least 1")
     @Column(nullable = false)
     private Integer totalQuestions;
 
+    @NotNull(message = "Correct count is required")
+    @Min(value = 0, message = "Correct count must not be negative")
     @Column(nullable = false)
     private Integer correctCount;
 
+    @NotNull(message = "Score percent is required")
+    @Min(value = 0, message = "Score percent must not be negative")
+    @Max(value = 100, message = "Score percent must not exceed 100")
     @Column(nullable = false)
     private Double scorePercent;
 

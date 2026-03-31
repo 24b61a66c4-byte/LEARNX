@@ -2,6 +2,9 @@ package com.learnx.api.controller;
 
 import com.learnx.persistence.model.LearnerProfile;
 import com.learnx.persistence.service.LearnerProfileService;
+import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -10,8 +13,10 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/profiles")
-@CrossOrigin(origins = "*")
 public class ProfileController {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ProfileController.class);
+
     private final LearnerProfileService profileService;
 
     @Autowired
@@ -32,26 +37,30 @@ public class ProfileController {
     }
 
     @PostMapping
-    public ResponseEntity<?> saveProfile(@RequestBody LearnerProfile profile) {
+    public ResponseEntity<?> saveProfile(@Valid @RequestBody LearnerProfile profile) {
         try {
             LearnerProfile saved = profileService.saveProfile(profile);
             return ResponseEntity.ok(saved);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Error saving profile: " + e.getMessage());
+            LOGGER.error("Error saving profile for userId={}", profile.getUserId(), e);
+            return ResponseEntity.badRequest().body("Error saving profile");
         }
     }
 
     @PostMapping("/onboarding")
     public ResponseEntity<?> completeOnboarding(
             @RequestParam String userId,
-            @RequestBody LearnerProfile profile) {
+            @Valid @RequestBody LearnerProfile profile) {
         try {
             UUID parsedUserId = UUID.fromString(userId);
             profile.setUserId(parsedUserId);
             LearnerProfile saved = profileService.saveProfile(profile);
             return ResponseEntity.ok(saved);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body("Invalid user ID format");
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Error completing onboarding: " + e.getMessage());
+            LOGGER.error("Error completing onboarding for userId={}", userId, e);
+            return ResponseEntity.badRequest().body("Error completing onboarding");
         }
     }
 
@@ -61,7 +70,10 @@ public class ProfileController {
             UUID parsedUserId = UUID.fromString(userId);
             profileService.deleteProfile(parsedUserId);
             return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body("Invalid user ID format");
         } catch (Exception e) {
+            LOGGER.error("Error deleting profile for userId={}", userId, e);
             return ResponseEntity.badRequest().body("Error deleting profile");
         }
     }

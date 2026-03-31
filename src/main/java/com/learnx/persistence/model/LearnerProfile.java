@@ -1,6 +1,9 @@
 package com.learnx.persistence.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -12,9 +15,12 @@ public class LearnerProfile {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotNull(message = "User ID is required")
     @Column(nullable = false)
     private UUID userId;
 
+    @NotBlank(message = "Display name is required")
+    @Size(max = 255, message = "Display name must not exceed 255 characters")
     @Column(nullable = false, length = 255)
     private String displayName;
 
