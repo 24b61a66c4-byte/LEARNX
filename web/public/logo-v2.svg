@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="LearnX">
+  <defs>
+    <linearGradient id="learnx-gradient-v2" x1="8" y1="8" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0F766E" />
+      <stop offset="1" stop-color="#D97706" />
+    </linearGradient>
+  </defs>
+  <rect x="2" y="2" width="44" height="44" rx="14" fill="url(#learnx-gradient-v2)" />
+  <circle cx="16" cy="18" r="2" fill="#FFFFFF" opacity="0.9" />
+  <path d="M14 14h5v17h11v5H14V14Z" fill="#FFFFFF" />
+  <path d="M24.4 14h5.8l4.1 7 4.1-7H44l-6.8 11.2L44 43h-5.6l-4.2-7.2L30 43h-5.7l6.9-12.3L24.4 14Z" fill="#FFFFFF" opacity="0.95" />
+</svg>

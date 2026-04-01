@@ -7,6 +7,8 @@ const withPWA = nextPwa({
     disable: process.env.NODE_ENV === "development",
 });
 
-const nextConfig: NextConfig = withPWA({});
+const nextConfig: NextConfig = withPWA({
+    devIndicators: false,
+});
 
 export default nextConfig;

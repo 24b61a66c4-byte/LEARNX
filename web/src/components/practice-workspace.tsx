@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 import { syncPracticeResult } from "@/lib/backend-sync";
 import { catalogGateway, practiceGateway } from "@/lib/gateways";
 import { getSubjectById } from "@/lib/data/catalog";
+import { getPublicAskHref, getPublicSubjectHref } from "@/lib/public-routes";
 import { SubjectId } from "@/lib/types";
 
 interface PracticeWorkspaceProps {
@@ -39,8 +40,11 @@ export function PracticeWorkspace({
         .map((answer) => answer.prompt)
         .join(" | ")}`
       : "";
-  const tutorHref = `/app/ask?subjectId=${subjectId}${usingMixedFallback || !topicId ? "" : `&topicId=${topicId}`}${weakPrompt ? `&prompt=${encodeURIComponent(weakPrompt)}` : ""
-    }`;
+  const tutorHref = getPublicAskHref(
+    subjectId,
+    usingMixedFallback || !topicId ? undefined : topicId,
+    weakPrompt || undefined,
+  );
 
   const resultPanel = result ? (
     <div className="surface-panel space-y-5 p-5">
@@ -67,7 +71,7 @@ export function PracticeWorkspace({
         <div className="rounded-[24px] border border-black/10 bg-white/82 p-4 shadow-sm">
           <p className="text-sm font-semibold text-slate-900">Best follow-up</p>
           <p className="mt-2 text-sm leading-6 text-slate-600">
-            Re-open the copilot and ask it to explain the exact mistakes from this drill.
+            Re-open the tutor and ask it to explain the exact mistakes from this drill.
           </p>
         </div>
       </div>
@@ -117,7 +121,7 @@ export function PracticeWorkspace({
           Close the loop while the concept is still fresh
         </h3>
         <p className="text-sm leading-6 text-slate-600">
-          The student flow should not end at chat. Read the lesson, ask the copilot, then test the idea before you
+          The student flow should not end at chat. Read the lesson, ask the tutor, then test the idea before you
           leave the workspace.
         </p>
         <div className="rounded-2xl border border-white/35 bg-white/70 px-4 py-4">
@@ -247,14 +251,14 @@ export function PracticeWorkspace({
       ) : (
         <div className="rounded-2xl border border-dashed border-black/10 px-4 py-8 text-center text-sm text-slate-500">
           <p>
-            No question bank is available for this subject yet. Keep the lesson open and use the copilot until drills are
+            No question bank is available for this subject yet. Keep the lesson open and use the tutor until drills are
             added.
           </p>
           <div className="mt-5 flex flex-wrap justify-center gap-3">
-            <Link className="button-secondary" href={`/app/ask?subjectId=${subjectId}`}>
+            <Link className="button-secondary" href={getPublicAskHref(subjectId)}>
               Open tutor for this subject
             </Link>
-            <Link className="button-secondary" href={`/app/subjects/${subjectId}`}>
+            <Link className="button-secondary" href={getPublicSubjectHref(subjectId)}>
               Review subject topics
             </Link>
           </div>
@@ -262,27 +266,34 @@ export function PracticeWorkspace({
       )}
 
       {hasQuestions ? (
-        <button
-          aria-label={`Score this drill (${answeredCount}/${questions.length} questions answered)`}
-          className="button-primary w-full focus:outline-none focus:ring-2 focus:ring-slate-950 focus:ring-offset-2"
-          disabled={answeredCount < questions.length}
-          onClick={() => {
-            const nextResult = practiceGateway.submit({
-              subjectId,
-              topicId: usingMixedFallback ? undefined : topicId || undefined,
-              answers: questions.map((question) => ({
-                questionId: question.id,
-                answer: answers[question.id] ?? "",
-              })),
-            });
-            setResult(nextResult);
-            setMobileReviewOpen(true);
-            void syncPracticeResult(nextResult).catch(() => undefined);
-          }}
-          type="button"
-        >
-          Score this drill
-        </button>
+        <div className="space-y-2">
+          <button
+            aria-label={`Score this drill (${answeredCount}/${questions.length} questions answered)`}
+            className="button-primary w-full focus:outline-none focus:ring-2 focus:ring-slate-950 focus:ring-offset-2"
+            disabled={answeredCount < questions.length}
+            onClick={() => {
+              const nextResult = practiceGateway.submit({
+                subjectId,
+                topicId: usingMixedFallback ? undefined : topicId || undefined,
+                answers: questions.map((question) => ({
+                  questionId: question.id,
+                  answer: answers[question.id] ?? "",
+                })),
+              });
+              setResult(nextResult);
+              setMobileReviewOpen(true);
+              void syncPracticeResult(nextResult).catch(() => undefined);
+            }}
+            type="button"
+          >
+            {answeredCount < questions.length ? "Finish all answers to score" : "Score this drill"}
+          </button>
+          <p className="text-center text-xs text-slate-500">
+            {answeredCount < questions.length
+              ? "Scoring unlocks after every question has an answer."
+              : "Ready to score and open your drill review."}
+          </p>
+        </div>
       ) : null}
 
       <div className="hidden md:block">{resultPanel}</div>

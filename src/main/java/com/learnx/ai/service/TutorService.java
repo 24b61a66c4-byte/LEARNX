@@ -72,25 +72,29 @@ public class TutorService {
             PerformanceSnapshot performanceSnapshot) {
         validateMessage(request.userQuestion());
 
-        Subject subject = catalogService.getSubject(request.subjectId());
-        Topic topic = catalogService.getTopic(request.topicId());
+        // Subject and topic are optional; if not provided, answer is personalized by
+        // learner profile only
+        Subject subject = request.hasSubjectContext() ? catalogService.getSubject(request.subjectId()) : null;
+        Topic topic = request.hasTopicContext() && subject != null ? catalogService.getTopic(request.topicId()) : null;
         ExamContext examContext = request.examContextId().isBlank()
                 ? null
                 : catalogService.findExamContext(request.examContextId()).orElse(null);
 
-        String historyKey = learnerProfile.getLearnerId() + ":" + subject.id();
+        String historyKey = learnerProfile.getLearnerId() + ":" + (subject != null ? subject.id() : "general");
         String conversationContext = getConversationContext(historyKey);
 
-        List<SearchResult> searchResults = getCachedSearchResults(new SearchQuery(
-                buildSearchQuery(subject, topic, examContext, request),
-                subject.id(),
-                topic.id(),
-                request.maxResources()));
+        List<SearchResult> searchResults = subject != null
+                ? getCachedSearchResults(new SearchQuery(
+                        buildSearchQuery(subject, topic, examContext, request),
+                        subject.id(),
+                        topic != null ? topic.id() : "",
+                        request.maxResources()))
+                : List.of();
 
         TutorPrompt prompt = new TutorPrompt(
-                subject.name(),
-                topic.title(),
-                topic.summary(),
+                subject != null ? subject.name() : "General knowledge",
+                topic != null ? topic.title() : "",
+                topic != null ? topic.summary() : "",
                 examContext == null ? "" : examContext.title(),
                 buildLearnerSummary(learnerProfile, topic, performanceSnapshot),
                 conversationContext,
@@ -100,7 +104,7 @@ public class TutorService {
 
         if (debugPromptLogging) {
             LOGGER.info("Tutor prompt debug | learner={} | subject={} | prompt={}",
-                    learnerProfile.getLearnerId(), subject.id(), prompt.toPromptText());
+                    learnerProfile.getLearnerId(), subject != null ? subject.id() : "general", prompt.toPromptText());
         }
 
         long start = System.currentTimeMillis();
@@ -202,7 +206,10 @@ public class TutorService {
 
     private String buildSearchQuery(Subject subject, Topic topic, ExamContext examContext, TutorRequest request) {
         StringBuilder builder = new StringBuilder();
-        builder.append(topic.title()).append(' ').append(subject.name());
+        if (topic != null) {
+            builder.append(topic.title()).append(' ');
+        }
+        builder.append(subject.name());
         if (examContext != null) {
             builder.append(' ').append(examContext.title());
         }
@@ -213,12 +220,15 @@ public class TutorService {
     }
 
     private String buildLearnerSummary(LearnerProfile learnerProfile, Topic topic, PerformanceSnapshot snapshot) {
-        TopicProgress topicProgress = learnerProfile.getTopicProgress().get(topic.id());
-        String topicStatus = topicProgress == null
-                ? "No prior attempts on this topic."
-                : "Topic mastery=" + round(topicProgress.getMasteryScore())
-                        + ", accuracy=" + round(topicProgress.getAccuracy())
-                        + ", attempts=" + topicProgress.getAttempts() + ".";
+        String topicStatus = "No specific topic selected yet.";
+        if (topic != null) {
+            TopicProgress topicProgress = learnerProfile.getTopicProgress().get(topic.id());
+            topicStatus = topicProgress == null
+                    ? "No prior attempts on this topic."
+                    : "Topic mastery=" + round(topicProgress.getMasteryScore())
+                            + ", accuracy=" + round(topicProgress.getAccuracy())
+                            + ", attempts=" + topicProgress.getAttempts() + ".";
+        }
 
         return "Overall accuracy=" + round(snapshot.overallAccuracy())
                 + ", recent average score=" + round(snapshot.recentAverageScore())

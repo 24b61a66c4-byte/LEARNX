@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useClientSnapshot } from "@/lib/client-snapshot";
 import { getTopicsBySubject } from "@/lib/data/catalog";
 import { getServerProgressSnapshot, practiceGateway } from "@/lib/gateways";
+import { getPublicLearnHref, getPublicSubjectHref } from "@/lib/public-routes";
 import { buildSubjectMasteryView } from "@/lib/progress-views";
 import { Subject } from "@/lib/types";
 
@@ -33,13 +34,13 @@ export function SubjectCard({ subject }: { subject: Subject }) {
   const mastery = buildSubjectMasteryView(subject.id, topics, history);
   const previewTopics = mastery.topicViews.slice(0, 3);
   const continueHref = mastery.continueTopic
-    ? `/app/learn/${subject.id}/${mastery.continueTopic.id}`
-    : `/app/subjects/${subject.id}`;
+    ? getPublicLearnHref(subject.id, mastery.continueTopic.id)
+    : getPublicSubjectHref(subject.id);
 
   return (
     <Link
       className="surface-card group block overflow-hidden p-5 transition hover:-translate-y-0.5 hover:shadow-[0_24px_60px_rgba(15,23,42,0.1)]"
-      href={`/app/subjects/${subject.id}`}
+      href={getPublicSubjectHref(subject.id)}
     >
       <div className="flex items-start justify-between gap-4">
         <div>

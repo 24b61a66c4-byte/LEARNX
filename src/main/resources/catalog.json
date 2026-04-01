@@ -1,134 +1,168 @@
 {
   "subjects": [
     {
-      "id": "edc",
-      "name": "Electronic Devices and Circuits",
-      "description": "Core electronic devices, circuits, and exam-oriented fundamentals.",
-      "tags": ["electronics", "jntu-r22", "circuits"]
+      "id": "dbms",
+      "name": "Mathematics",
+      "description": "Numbers, patterns, and problem solving that build confidence for school and exams.",
+      "tags": [
+        "math",
+        "patterns",
+        "revision"
+      ]
     },
     {
-      "id": "dbms",
-      "name": "Database Management Systems",
-      "description": "Relational database design, SQL, and query optimization basics.",
-      "tags": ["database", "sql", "jntu-r22"]
+      "id": "edc",
+      "name": "Science",
+      "description": "Everyday concepts, experiments, and clear explanations you can use in class and beyond.",
+      "tags": [
+        "science",
+        "experiments",
+        "revision"
+      ]
     }
   ],
   "topics": [
     {
-      "id": "edc-diode-basics",
-      "subjectId": "edc",
-      "title": "Diode Basics",
-      "summary": "Understand diode construction, biasing, and V-I characteristics.",
-      "prerequisiteIds": [],
-      "difficulty": 0.2,
-      "examImportance": 0.7,
-      "tags": ["pn-junction", "biasing", "characteristics"]
-    },
-    {
-      "id": "edc-rectifiers",
-      "subjectId": "edc",
-      "title": "Rectifiers",
-      "summary": "Study half-wave and full-wave rectifiers with ripple concepts.",
-      "prerequisiteIds": ["edc-diode-basics"],
-      "difficulty": 0.45,
-      "examImportance": 0.85,
-      "tags": ["half-wave", "full-wave", "ripple-factor"]
-    },
-    {
-      "id": "edc-transistor-basics",
-      "subjectId": "edc",
-      "title": "Transistor Basics",
-      "summary": "Cover transistor operation, regions, and common configurations.",
-      "prerequisiteIds": ["edc-diode-basics"],
-      "difficulty": 0.55,
-      "examImportance": 0.9,
-      "tags": ["bjt", "configurations", "operating-regions"]
-    },
-    {
       "id": "dbms-sql-basics",
       "subjectId": "dbms",
-      "title": "SQL Basics",
-      "summary": "Learn core SQL queries, selection, projection, and filtering.",
+      "title": "Number Basics",
+      "summary": "Get comfortable with numbers, operations, and reading a problem carefully.",
       "prerequisiteIds": [],
       "difficulty": 0.25,
       "examImportance": 0.8,
-      "tags": ["sql", "select", "where"]
+      "tags": [
+        "numbers",
+        "foundations",
+        "confidence"
+      ]
     },
     {
       "id": "dbms-joins",
       "subjectId": "dbms",
-      "title": "Joins",
-      "summary": "Understand inner, outer, and self joins with practical examples.",
-      "prerequisiteIds": ["dbms-sql-basics"],
+      "title": "Patterns and Relationships",
+      "summary": "See how one quantity changes with another and spot useful connections.",
+      "prerequisiteIds": [
+        "dbms-sql-basics"
+      ],
       "difficulty": 0.55,
       "examImportance": 0.95,
-      "tags": ["inner-join", "outer-join", "query-plans"]
+      "tags": [
+        "patterns",
+        "relationships",
+        "mapping"
+      ]
     },
     {
       "id": "dbms-normalization",
       "subjectId": "dbms",
-      "title": "Normalization",
-      "summary": "Study normal forms, anomalies, and schema refinement.",
-      "prerequisiteIds": ["dbms-sql-basics"],
+      "title": "Organizing Problems",
+      "summary": "Learn how to break a problem into smaller steps and keep your work clear.",
+      "prerequisiteIds": [
+        "dbms-sql-basics"
+      ],
       "difficulty": 0.65,
       "examImportance": 0.88,
-      "tags": ["1nf", "2nf", "3nf", "anomalies"]
+      "tags": [
+        "steps",
+        "structure",
+        "clarity"
+      ]
+    },
+    {
+      "id": "edc-diode-basics",
+      "subjectId": "edc",
+      "title": "Science Basics",
+      "summary": "Understand ideas, examples, and the reason behind each result.",
+      "prerequisiteIds": [],
+      "difficulty": 0.2,
+      "examImportance": 0.7,
+      "tags": [
+        "science",
+        "basics",
+        "observation"
+      ]
+    },
+    {
+      "id": "edc-rectifiers",
+      "subjectId": "edc",
+      "title": "Energy and Change",
+      "summary": "Study how things transform as they move through a system.",
+      "prerequisiteIds": [
+        "edc-diode-basics"
+      ],
+      "difficulty": 0.45,
+      "examImportance": 0.85,
+      "tags": [
+        "energy",
+        "change",
+        "flow"
+      ]
+    },
+    {
+      "id": "edc-transistor-basics",
+      "subjectId": "edc",
+      "title": "Control and Systems",
+      "summary": "Cover how one part of a system can guide another part.",
+      "prerequisiteIds": [
+        "edc-diode-basics"
+      ],
+      "difficulty": 0.55,
+      "examImportance": 0.9,
+      "tags": [
+        "control",
+        "systems",
+        "application"
+      ]
     }
   ],
   "examContexts": [
     {
-      "id": "edc-jntu-r22",
-      "subjectId": "edc",
-      "title": "JNTU R22 EDC",
-      "description": "Exam-focused EDC preparation aligned with JNTU R22 patterns.",
-      "focusTopicIds": ["edc-diode-basics", "edc-rectifiers", "edc-transistor-basics"],
-      "tags": ["jntu-r22", "semester-exam"]
-    },
-    {
       "id": "dbms-jntu-r22",
       "subjectId": "dbms",
-      "title": "JNTU R22 DBMS",
-      "description": "Exam-focused DBMS preparation aligned with JNTU R22 patterns.",
-      "focusTopicIds": ["dbms-sql-basics", "dbms-joins", "dbms-normalization"],
-      "tags": ["jntu-r22", "semester-exam"]
+      "title": "Mathematics study plan",
+      "description": "Exam-focused preparation for number sense, patterns, and structured problem solving.",
+      "focusTopicIds": [
+        "dbms-sql-basics",
+        "dbms-joins",
+        "dbms-normalization"
+      ],
+      "tags": [
+        "revision",
+        "semester-exam"
+      ]
+    },
+    {
+      "id": "edc-jntu-r22",
+      "subjectId": "edc",
+      "title": "Science study plan",
+      "description": "Exam-focused preparation for concepts, examples, and application.",
+      "focusTopicIds": [
+        "edc-diode-basics",
+        "edc-rectifiers",
+        "edc-transistor-basics"
+      ],
+      "tags": [
+        "revision",
+        "semester-exam"
+      ]
     }
   ],
   "questions": [
-    {
-      "id": "q-edc-1",
-      "subjectId": "edc",
-      "topicId": "edc-diode-basics",
-      "type": "MCQ",
-      "prompt": "A diode conducts heavily when it is in which bias condition?",
-      "options": ["Reverse bias", "Forward bias", "Breakdown only", "Open circuit"],
-      "correctOptionIndex": 1,
-      "acceptedKeywords": [],
-      "explanation": "A pn-junction diode allows significant current in forward bias.",
-      "difficulty": 0.2
-    },
-    {
-      "id": "q-edc-2",
-      "subjectId": "edc",
-      "topicId": "edc-rectifiers",
-      "type": "SHORT_ANSWER",
-      "prompt": "Name two common rectifier types.",
-      "options": [],
-      "correctOptionIndex": null,
-      "acceptedKeywords": ["half-wave", "full-wave"],
-      "minKeywordMatches": 2,
-      "explanation": "Half-wave and full-wave rectifiers are the two standard forms.",
-      "difficulty": 0.35
-    },
     {
       "id": "q-dbms-1",
       "subjectId": "dbms",
       "topicId": "dbms-sql-basics",
       "type": "MCQ",
-      "prompt": "Which SQL clause is used to filter rows?",
-      "options": ["GROUP BY", "WHERE", "ORDER BY", "HAVING"],
-      "correctOptionIndex": 1,
+      "prompt": "Which operation helps you find the total of equal groups?",
+      "options": [
+        "Addition",
+        "Subtraction",
+        "Multiplication",
+        "Division"
+      ],
+      "correctOptionIndex": 2,
       "acceptedKeywords": [],
-      "explanation": "WHERE filters rows before grouping and ordering.",
+      "explanation": "Multiplication helps combine equal groups into one total.",
       "difficulty": 0.25
     },
     {
@@ -136,12 +170,15 @@
       "subjectId": "dbms",
       "topicId": "dbms-joins",
       "type": "SHORT_ANSWER",
-      "prompt": "List two join types used in relational queries.",
+      "prompt": "Name two ways to show a relationship between numbers.",
       "options": [],
       "correctOptionIndex": null,
-      "acceptedKeywords": ["inner join", "left join"],
+      "acceptedKeywords": [
+        "table",
+        "graph"
+      ],
       "minKeywordMatches": 2,
-      "explanation": "Inner join and left join are standard join types in SQL.",
+      "explanation": "Tables and graphs make relationships easier to see.",
       "difficulty": 0.45
     },
     {
@@ -149,13 +186,52 @@
       "subjectId": "dbms",
       "topicId": "dbms-normalization",
       "type": "SHORT_ANSWER",
-      "prompt": "What problem does normalization help reduce in database design?",
+      "prompt": "What problem does simplifying expressions help reduce?",
       "options": [],
       "correctOptionIndex": null,
-      "acceptedKeywords": ["redundancy", "anomalies"],
+      "acceptedKeywords": [
+        "clutter",
+        "complexity",
+        "repetition"
+      ],
       "minKeywordMatches": 1,
-      "explanation": "Normalization reduces redundancy and update anomalies.",
+      "explanation": "Simplifying reduces clutter and repeated work.",
       "difficulty": 0.5
+    },
+    {
+      "id": "q-edc-1",
+      "subjectId": "edc",
+      "topicId": "edc-diode-basics",
+      "type": "MCQ",
+      "prompt": "Which example shows a change you can observe?",
+      "options": [
+        "Ice melting",
+        "A book resting",
+        "A chair standing still",
+        "A wall staying the same"
+      ],
+      "correctOptionIndex": 0,
+      "acceptedKeywords": [],
+      "explanation": "Ice melting is an easy example of a visible change.",
+      "difficulty": 0.2
+    },
+    {
+      "id": "q-edc-2",
+      "subjectId": "edc",
+      "topicId": "edc-rectifiers",
+      "type": "SHORT_ANSWER",
+      "prompt": "Name two examples of energy you notice in daily life.",
+      "options": [],
+      "correctOptionIndex": null,
+      "acceptedKeywords": [
+        "light",
+        "heat",
+        "sound",
+        "motion"
+      ],
+      "minKeywordMatches": 2,
+      "explanation": "Light, heat, sound, and motion are common examples of energy in daily life.",
+      "difficulty": 0.35
     }
   ]
 }

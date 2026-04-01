@@ -17,10 +17,10 @@ class AiProviderTest {
         AiProvider provider = new FallbackAiProvider();
 
         TutorResponse response = provider.generate(new TutorPrompt(
-                "DBMS",
+                "Mathematics",
                 "Normalization",
-                "Normalization reduces redundancy and anomalies.",
-                "JNTU R22 DBMS",
+                "Normalization helps reduce clutter and repeated work.",
+                "Mathematics study plan",
                 "Overall accuracy=0.40",
                 "",
                 "Explain normalization in exam style",

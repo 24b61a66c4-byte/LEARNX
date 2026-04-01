@@ -11,6 +11,7 @@ import {
 } from "@/lib/constants";
 import { getLessonByTopicId } from "@/lib/data/catalog";
 import { catalogGateway, tutorGateway } from "@/lib/gateways";
+import { getPublicLearnHref, getPublicPracticeHref } from "@/lib/public-routes";
 import { SubjectId, TutorMode, TutorThread } from "@/lib/types";
 
 function createThreadId() {
@@ -21,7 +22,7 @@ function createThreadId() {
 }
 
 const modeDescriptions: Record<TutorMode, string> = {
-  explain: "Use the copilot like a short lecture plus guided explanation.",
+  explain: "Use the tutor like a short lecture plus guided explanation.",
   "exam-answer": "Turn the topic into compact exam-ready writing without leaving the page.",
   "quiz-me": "Bounce into a tutor-led self-check while the concept is still fresh.",
 };
@@ -36,21 +37,23 @@ interface TutorPanelProps {
   defaultSubjectId?: SubjectId;
   defaultTopicId?: string;
   initialPrompt?: string;
+  showContextSelectors?: boolean;
   showFloatingActions?: boolean;
   showSupportLanes?: boolean;
   sectionId?: string;
 }
 
 export function TutorPanel({
-  defaultSubjectId = "dbms",
+  defaultSubjectId,
   defaultTopicId,
   initialPrompt = "",
+  showContextSelectors = false,
   showFloatingActions = true,
   showSupportLanes = true,
   sectionId,
 }: TutorPanelProps) {
   const subjects = catalogGateway.getSubjects();
-  const [subjectId, setSubjectId] = useState<SubjectId>(defaultSubjectId);
+  const [subjectId, setSubjectId] = useState<SubjectId | undefined>(defaultSubjectId);
   const [topicId, setTopicId] = useState<string>(defaultTopicId ?? "");
   const [mode, setMode] = useState<TutorMode>("explain");
   const [prompt, setPrompt] = useState(initialPrompt);
@@ -59,14 +62,27 @@ export function TutorPanel({
   const [thread, setThread] = useState<TutorThread | null>(null);
   const [responseStageIndex, setResponseStageIndex] = useState(0);
 
-  const availableTopics = useMemo(() => catalogGateway.getTopicsBySubject(subjectId), [subjectId]);
+  const activeSubject = useMemo(
+    () => (subjectId ? subjects.find((subject) => subject.id === subjectId) : undefined),
+    [subjectId, subjects],
+  );
+  const availableTopics = useMemo(
+    () => (subjectId ? catalogGateway.getTopicsBySubject(subjectId) : []),
+    [subjectId],
+  );
   const wordCount = prompt.trim().length === 0 ? 0 : prompt.trim().split(/\s+/).length;
-  const samplePrompts = SUBJECT_SAMPLE_PROMPTS[subjectId] ?? SUBJECT_SAMPLE_PROMPTS.dbms;
-  const selectedTopic = availableTopics.find((topic) => topic.id === topicId);
+  const samplePrompts = subjectId
+    ? SUBJECT_SAMPLE_PROMPTS[subjectId] ?? []
+    : [
+        "What would you like to learn about?",
+        "Ask me anything and I'll adjust to your level",
+        "Pick a topic or ask a free-form question",
+      ];
+  const selectedTopic = subjectId ? availableTopics.find((topic) => topic.id === topicId) : undefined;
   const hasAssistantReply = Boolean(thread?.messages?.some((message) => message.role === "assistant"));
-  const practiceHref = selectedTopic
-    ? `/app/practice?subjectId=${subjectId}&topicId=${selectedTopic.id}`
-    : `/app/practice?subjectId=${subjectId}`;
+  const practiceHref = selectedTopic && subjectId
+    ? getPublicPracticeHref(subjectId, selectedTopic.id)
+    : undefined;
   const lesson = selectedTopic ? getLessonByTopicId(selectedTopic.id) : null;
   const noteSeeds = [
     selectedTopic?.summary,
@@ -80,7 +96,9 @@ export function TutorPanel({
       title: selectedTopic ? `Teach ${selectedTopic.title} like a short class` : "Ask for a lecture-style explanation",
       detail: "This should feel closer to a teacher or a focused video recap than a generic chatbot answer.",
       href: `https://www.google.com/search?q=${encodeURIComponent(
-        selectedTopic ? `${selectedTopic.title} explained with examples` : `${subjectId} concepts explained with examples`,
+        selectedTopic
+          ? `${selectedTopic.title} explained with examples`
+          : `${activeSubject?.name ?? "study concepts"} explained with examples`,
       )}`,
     },
     {
@@ -89,7 +107,7 @@ export function TutorPanel({
       title: selectedTopic ? `What should I search next for ${selectedTopic.title}?` : "Ask what to search next",
       detail: "Use the tutor to generate smart web-search directions, examples, and keywords.",
       href: `https://www.youtube.com/results?search_query=${encodeURIComponent(
-        selectedTopic ? `${selectedTopic.title} short lecture` : `${subjectId} short lecture`,
+        selectedTopic ? `${selectedTopic.title} short lecture` : `${activeSubject?.name ?? "study topic"} short lecture`,
       )}`,
     },
     {
@@ -97,7 +115,7 @@ export function TutorPanel({
       action: selectedTopic ? "Open notes lane" : "Pick a topic",
       title: selectedTopic ? `Convert ${selectedTopic.title} into revision notes` : "Turn answers into notes",
       detail: "Collect note-ready lines, exam points, and correction cards in the same workspace.",
-      href: selectedTopic ? `/app/learn/${subjectId}/${selectedTopic.id}#topic-notes` : undefined,
+      href: selectedTopic && subjectId ? getPublicLearnHref(subjectId, selectedTopic.id, "topic-notes") : undefined,
     },
   ];
 
@@ -122,6 +140,7 @@ export function TutorPanel({
 
   async function submitPrompt() {
     if (!prompt.trim()) {
+      setError("Type a prompt before asking the tutor.");
       return;
     }
 
@@ -140,7 +159,7 @@ export function TutorPanel({
 
     try {
       const response = await tutorGateway.ask({
-        subjectId,
+        subjectId: subjectId || undefined,
         topicId: topicId || undefined,
         prompt: prompt.trim(),
         mode,
@@ -156,7 +175,7 @@ export function TutorPanel({
 
       const nextThread: TutorThread = {
         id: threadId,
-        subjectId,
+        subjectId: subjectId || undefined,
         topicId: topicId || undefined,
         updatedAt: new Date().toISOString(),
         messages: [...(thread?.messages ?? []), userMessage, assistantMessage],
@@ -166,7 +185,7 @@ export function TutorPanel({
       setThread(nextThread);
       setPrompt("");
     } catch (submitError) {
-      const message = submitError instanceof Error ? submitError.message : "The copilot could not respond.";
+      const message = submitError instanceof Error ? submitError.message : "The tutor could not respond.";
       setError(message.replace("validation:", "Validation error:"));
     } finally {
       setResponseStageIndex(0);
@@ -186,13 +205,11 @@ export function TutorPanel({
       <div className="surface-card p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <p className="eyebrow">Study copilot</p>
-            <h3 className="mt-2 text-2xl font-bold tracking-tight text-slate-950">
-              Keep chat, search thinking, and note-making in the same lane
-            </h3>
+            <p className="eyebrow">AI tutor</p>
+            <h3 className="mt-2 text-2xl font-bold tracking-tight text-slate-950">Keep the tutor front and center</h3>
             <p className="mt-3 text-sm leading-6 text-slate-600">
-              This is the student-facing assistant lane. It should feel like ChatGPT plus a tutor plus a web guide,
-              not a separate AI tool bolted onto the app.
+              This is the student-facing assistant lane. Search and notes stay nearby, but the tutor should always feel
+              like the dominant workspace.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -202,36 +219,48 @@ export function TutorPanel({
         </div>
       </div>
 
-      <div className="surface-panel p-5">
-        <div className="grid gap-3 sm:grid-cols-2">
-          <label className="space-y-2 text-sm font-semibold text-slate-800">
-            Subject
-            <select
-              className="field"
-              onChange={(event) => setSubjectId(event.target.value as SubjectId)}
-              value={subjectId}
-            >
-              {subjects.map((subject) => (
-                <option key={subject.id} value={subject.id}>
-                  {subject.name}
-                </option>
-              ))}
-            </select>
-          </label>
+      {showContextSelectors ? (
+        <div className="surface-panel p-5">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="space-y-2 text-sm font-semibold text-slate-800">
+              Subject context
+              <select
+                className="field"
+                onChange={(event) => {
+                  const nextSubjectId = event.target.value || undefined;
+                  setSubjectId(nextSubjectId as SubjectId | undefined);
+                  setTopicId("");
+                }}
+                value={subjectId ?? ""}
+              >
+                <option value="">General ask</option>
+                {subjects.map((subject) => (
+                  <option key={subject.id} value={subject.id}>
+                    {subject.name}
+                  </option>
+                ))}
+              </select>
+            </label>
 
-          <label className="space-y-2 text-sm font-semibold text-slate-800">
-            Topic
-            <select className="field" onChange={(event) => setTopicId(event.target.value)} value={topicId}>
-              <option value="">General subject help</option>
-              {availableTopics.map((topic) => (
-                <option key={topic.id} value={topic.id}>
-                  {topic.title}
-                </option>
-              ))}
-            </select>
-          </label>
+            <label className="space-y-2 text-sm font-semibold text-slate-800">
+              Topic context
+              <select
+                className="field"
+                disabled={!subjectId}
+                onChange={(event) => setTopicId(event.target.value)}
+                value={topicId}
+              >
+                <option value="">{subjectId ? "General subject help" : "Pick a subject first"}</option>
+                {availableTopics.map((topic) => (
+                  <option key={topic.id} value={topic.id}>
+                    {topic.title}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
         </div>
-      </div>
+      ) : null}
 
       <div className={showSupportLanes ? "grid gap-5 xl:grid-cols-[1.55fr_0.72fr_0.72fr]" : "space-y-5"}>
         <div className="surface-card space-y-5 p-5 xl:min-h-[46rem]">
@@ -239,9 +268,7 @@ export function TutorPanel({
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <p className="eyebrow">Live thread</p>
-                <h3 className="text-2xl font-bold tracking-tight text-slate-950">
-                  Ask for clarity, web directions, note conversion, or a quiz
-                </h3>
+                <h3 className="text-2xl font-bold tracking-tight text-slate-950">Ask for clarity, examples, or exam writing</h3>
                 <p className="mt-2 text-sm leading-6 text-slate-600">{modeDescriptions[mode]}</p>
               </div>
               {mode !== "explain" ? <span className="pill">{EXAM_WORD_HINTS[mode]}</span> : null}
@@ -287,14 +314,14 @@ export function TutorPanel({
             {thread?.messages?.length ? (
               thread.messages.map((message) => (
                 <article
-                  aria-label={`${message.role === "assistant" ? "Copilot" : "Your"} message: ${message.text.substring(0, 50)}...`}
+                  aria-label={`${message.role === "assistant" ? "Tutor" : "Your"} message: ${message.text.substring(0, 50)}...`}
                   className={`rounded-[24px] px-4 py-3 text-sm leading-6 ${message.role === "assistant" ? "bg-teal-50 text-slate-800" : "bg-slate-950 text-white"
                     }`}
                   key={message.id}
                   role="region"
                 >
                   <p className="mb-1 text-xs font-semibold uppercase tracking-[0.18em] opacity-70">
-                    {message.role === "assistant" ? "LearnX copilot" : "You"}
+                    {message.role === "assistant" ? "LearnX tutor" : "You"}
                   </p>
                   <p className="whitespace-pre-line">{message.text}</p>
                 </article>
@@ -319,33 +346,39 @@ export function TutorPanel({
           <label className="block space-y-2">
             <span className="text-sm font-semibold text-slate-800">Workspace prompt</span>
             <textarea
-              aria-label="Enter your question or prompt for the copilot (Enter to send, Shift+Enter for newline)"
+              aria-label="Enter your question or prompt for the tutor (Enter to send, Shift+Enter for newline)"
               className="field min-h-32 resize-y focus:outline-none focus:ring-2 focus:ring-slate-950 focus:ring-offset-2"
               onKeyDown={handlePromptKeyDown}
               onChange={(event) => setPrompt(event.target.value)}
-              placeholder="Explain the topic like a short lecture, tell me what to search next, and turn the answer into notes. (Enter to send, Shift+Enter for newline)"
+              placeholder="Explain the topic like a short lecture, tell me what to search next, or turn the answer into notes. (Enter to send, Shift+Enter for newline)"
               value={prompt}
             />
             <div className="flex items-center justify-between text-xs text-slate-500">
               <span>{wordCount} words</span>
-              <span>{prompt.length}/{TUTOR_MAX_PROMPT_LENGTH} chars</span>
+              <span>
+                {prompt.length}/{TUTOR_MAX_PROMPT_LENGTH} chars
+              </span>
             </div>
           </label>
 
           {error ? (
-            <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
+            <div aria-live="polite" className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
               {error}
             </div>
           ) : null}
 
+          <p className="text-xs text-slate-500">
+            Type a prompt to unlock sending. The tutor will answer, summarize, or turn it into a drill.
+          </p>
+
           <button
-            aria-label={sending ? "Generating response from copilot" : `Send prompt to copilot (${wordCount} words)`}
+            aria-label={sending ? "Generating response from tutor" : `Ask tutor (${wordCount} words)`}
             className="button-primary w-full focus:outline-none focus:ring-2 focus:ring-slate-950 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-            disabled={sending || !prompt.trim()}
+            disabled={sending}
             onClick={submitPrompt}
             type="button"
           >
-            {sending ? "Generating response..." : "Send to copilot"}
+            {sending ? "Generating response…" : "Ask tutor"}
           </button>
 
           <div className="rounded-[24px] border border-black/10 bg-white/82 px-4 py-4 shadow-sm">
@@ -353,14 +386,20 @@ export function TutorPanel({
               <div>
                 <p className="text-sm font-semibold text-slate-900">Next study action</p>
                 <p className="mt-1 text-sm leading-6 text-slate-600">
-                  {hasAssistantReply
-                    ? "You got an explanation. Lock retention with a short drill now."
-                    : "After one response, jump into a quick drill while the concept is fresh."}
+                  {practiceHref
+                    ? hasAssistantReply
+                      ? "You got an explanation. Lock retention with a short drill now."
+                      : "After one response, jump into a quick drill while the concept is fresh."
+                    : "Pick a subject topic when you want a linked drill. The tutor can still answer open-ended questions right away."}
                 </p>
               </div>
-              <Link className="button-secondary" href={practiceHref}>
-                Start mini-drill
-              </Link>
+              {practiceHref ? (
+                <Link className="button-secondary" href={practiceHref}>
+                  Start mini-drill
+                </Link>
+              ) : (
+                <span className="button-secondary cursor-not-allowed opacity-60">Pick topic for drill</span>
+              )}
             </div>
           </div>
         </div>
@@ -427,17 +466,17 @@ export function TutorPanel({
         ) : null}
       </div>
 
-      {selectedTopic && showFloatingActions ? (
+      {selectedTopic && subjectId && showFloatingActions ? (
         <div className="pointer-events-none fixed bottom-24 right-4 z-30 flex flex-col gap-3 sm:bottom-6">
           <Link
             className="pointer-events-auto inline-flex min-h-12 items-center justify-center rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white shadow-[0_18px_36px_rgba(15,23,42,0.2)] transition hover:bg-slate-900"
-            href={`/app/learn/${subjectId}/${selectedTopic.id}#drill-dock`}
+            href={getPublicLearnHref(subjectId, selectedTopic.id, "drill-dock")}
           >
             Drill
           </Link>
           <Link
             className="pointer-events-auto inline-flex min-h-12 items-center justify-center rounded-full border border-black/10 bg-white/94 px-5 py-3 text-sm font-semibold text-slate-900 shadow-[0_18px_36px_rgba(15,23,42,0.12)] transition hover:bg-white"
-            href={`/app/learn/${subjectId}/${selectedTopic.id}#topic-notes`}
+            href={getPublicLearnHref(subjectId, selectedTopic.id, "topic-notes")}
           >
             Save
           </Link>

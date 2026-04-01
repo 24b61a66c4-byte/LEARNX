@@ -2,6 +2,7 @@ package com.learnx.persistence.service;
 
 import com.learnx.persistence.model.LearnerProfile;
 import com.learnx.persistence.repository.LearnerProfileRepository;
+import com.learnx.core.service.SubjectService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -12,10 +13,12 @@ import java.util.UUID;
 @Service
 public class LearnerProfileService {
     private final LearnerProfileRepository repository;
+    private final SubjectService subjectService;
 
     @Autowired
-    public LearnerProfileService(LearnerProfileRepository repository) {
+    public LearnerProfileService(LearnerProfileRepository repository, SubjectService subjectService) {
         this.repository = repository;
+        this.subjectService = subjectService;
     }
 
     public LearnerProfile saveProfile(LearnerProfile profile) {
@@ -58,44 +61,15 @@ public class LearnerProfileService {
         }
 
         if (profile.getPreferredSubjectId() == null || profile.getPreferredSubjectId().isBlank()) {
-            profile.setPreferredSubjectId(resolvePreferredSubjectId(profile.getInterests()));
+            // Use SubjectService to resolve preferred subject dynamically
+            profile.setPreferredSubjectId(subjectService.resolvePreferredSubjectId(profile.getInterests()));
         } else {
             profile.setPreferredSubjectId(profile.getPreferredSubjectId().trim());
         }
     }
 
-    private String resolvePreferredSubjectId(String[] interests) {
-        if (hasInterest(interests, "math", "maths", "mathematics", "number", "code", "coding", "programming")) {
-            return "dbms";
-        }
-
-        if (hasInterest(interests, "science", "physics", "chemistry", "biology")) {
-            return "edc";
-        }
-
-        return "dbms";
-    }
-
-    private boolean hasInterest(String[] interests, String... keywords) {
-        if (interests == null || interests.length == 0) {
-            return false;
-        }
-
-        for (String interest : interests) {
-            if (interest == null) {
-                continue;
-            }
-
-            String normalized = interest.toLowerCase();
-            for (String keyword : keywords) {
-                if (normalized.contains(keyword)) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
+    // Hardcoded subject resolution removed - now delegated to SubjectService
+    // This allows subjects to be added/modified without changing code
 
     private String resolveCognitiveGroup(Integer age) {
         if (age == null) {

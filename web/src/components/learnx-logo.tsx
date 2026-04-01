@@ -12,7 +12,6 @@ export const LearnxLogo = forwardRef<HTMLDivElement, LearnxLogoProps>(({ classNa
         alt="LearnX"
         className="h-12 w-12 rounded-xl shadow-lg"
         height={48}
-        priority
         src="/logo.svg"
         width={48}
         unoptimized

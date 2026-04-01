@@ -21,6 +21,7 @@ import {
   getTopicsBySubject,
   searchCatalog,
 } from "@/lib/data/catalog";
+import { getPublicLearnHref } from "@/lib/public-routes";
 import {
   clearCookie,
   clearLocalStorage,
@@ -77,7 +78,7 @@ export interface LearnerStateGateway {
 
 export interface TutorGateway {
   ask(input: {
-    subjectId: SubjectId;
+    subjectId?: SubjectId;
     topicId?: string;
     prompt: string;
     mode: TutorMode;
@@ -422,7 +423,8 @@ export function getServerProgressSnapshot(): ProgressSnapshot {
 export function getServerDashboard(preferredSubjectId?: SubjectId): DashboardView {
   const targetSubject = getPreferredSubjectId(preferredSubjectId);
   const topics = getTopicsBySubject(targetSubject);
-  const fallbackTopic = topics[0] ?? getTopicsBySubject("dbms")[0] ?? null;
+  const fallbackSubjectId = getSubjects()[0]?.id;
+  const fallbackTopic = topics[0] ?? (fallbackSubjectId ? getTopicsBySubject(fallbackSubjectId)[0] : null) ?? null;
   const rewards = getServerProgressSnapshot().rewards;
 
   return {
@@ -431,7 +433,7 @@ export function getServerDashboard(preferredSubjectId?: SubjectId): DashboardVie
       ? {
         title: fallbackTopic.title,
         reason: "Start the next recommended topic in your selected subject.",
-        href: `/app/learn/${fallbackTopic.subjectId}/${fallbackTopic.id}`,
+        href: getPublicLearnHref(fallbackTopic.subjectId, fallbackTopic.id),
       }
       : null,
     quickPracticeHref: "/app/practice",
@@ -525,7 +527,7 @@ export const learnerStateGateway: LearnerStateGateway = {
         ranked[0]?.attempts === 0
           ? "Start the next recommended topic in your selected subject."
           : "This topic still has room to improve based on your latest practice.",
-      href: `/app/learn/${next.subjectId}/${next.id}`,
+      href: getPublicLearnHref(next.subjectId, next.id),
     };
   },
   getDashboard(preferredSubjectId) {
@@ -567,11 +569,9 @@ export const tutorGateway: TutorGateway = {
 
     const learnerId = readLocalStorage<{ profile: { email: string } | null } | null>(SESSION_STORAGE_KEY, null)?.profile?.email ?? "guest";
     const tutorApiUrl = getTutorApiUrl();
-    const fallbackTopicId = topicId || getTopicsBySubject(subjectId)[0]?.id;
-
-    if (!fallbackTopicId) {
-      throw new Error("validation: No topic available for this subject.");
-    }
+    const resolvedTopic = topicId ? getTopicById(topicId) : null;
+    const resolvedSubjectId = subjectId ?? resolvedTopic?.subjectId;
+    const resolvedTopicId = resolvedTopic?.id;
 
     // Attempt real backend call first
     try {
@@ -581,8 +581,8 @@ export const tutorGateway: TutorGateway = {
         headers,
         body: JSON.stringify({
           learnerId,
-          subjectId,
-          topicId: fallbackTopicId,
+          subjectId: resolvedSubjectId ?? "",
+          topicId: resolvedTopicId ?? "",
           examContextId: "",
           userQuestion: sanitized,
           maxResources: 6,
@@ -630,11 +630,15 @@ export const tutorGateway: TutorGateway = {
     }
 
     // Local fallback mock
-    const subject = getSubjectById(subjectId);
-    const topic = topicId ? getTopicById(topicId) : null;
-    const lesson = topicId ? getLessonByTopicId(topicId) : null;
-    const focus = topic?.title ?? subject?.name ?? "the selected concept";
-    const lessonHint = lesson?.blocks[0]?.content[0] ?? "Focus on the core definition first.";
+    const subject = resolvedSubjectId ? getSubjectById(resolvedSubjectId) : null;
+    const topic = resolvedTopic;
+    const lesson = topic ? getLessonByTopicId(topic.id) : null;
+    const focus = topic?.title ?? subject?.name ?? "your question";
+    const lessonHint =
+      lesson?.blocks[0]?.content[0] ??
+      (subject
+        ? `Start with the core idea in ${subject.name}, then add one simple example.`
+        : "Start with the core idea, then connect it to one simple example.");
 
     const answerMap: Record<TutorMode, string> = {
       explain: `${focus}: ${lessonHint} Break it into definition, intuition, and one short example before going deeper.`,

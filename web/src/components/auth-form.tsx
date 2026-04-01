@@ -28,18 +28,6 @@ export function AuthForm({ mode }: AuthFormProps) {
   const [errorMessage, setErrorMessage] = useState("");
 
   const title = mode === "login" ? "Enter your LearnX workspace" : "Create your LearnX workspace";
-  const supportPoints =
-    mode === "login"
-      ? [
-          "Reopen your saved study flow",
-          "Restore notes and drill history",
-          "Jump back into the next topic studio",
-        ]
-      : [
-          "Create your learner profile",
-          "Unlock age-adaptive explanations",
-          "Start with a guided topic studio",
-        ];
   const submitLabel = submitting
     ? "Loading..."
     : mode === "login"
@@ -102,8 +90,8 @@ export function AuthForm({ mode }: AuthFormProps) {
         <h1 className="text-3xl font-bold tracking-tight text-slate-950">{title}</h1>
         <p className="muted text-sm leading-6">
           {mode === "login"
-            ? "Your notes, onboarding choices, and recent study data come back when you sign in."
-            : "Create your account, finish onboarding, and LearnX will open the right study flow instead of a blank screen."}
+            ? "Sign in to reopen your study workspace."
+            : "Create your account to continue into onboarding."}
         </p>
       </div>
 
@@ -112,14 +100,6 @@ export function AuthForm({ mode }: AuthFormProps) {
           <p className="text-sm text-red-700">{errorMessage}</p>
         </div>
       )}
-
-      <div className="grid gap-3 sm:grid-cols-3">
-        {supportPoints.map((point) => (
-          <div className="rounded-[22px] border border-black/10 bg-white/82 px-4 py-4 shadow-sm" key={point}>
-            <p className="text-sm font-medium text-slate-800">{point}</p>
-          </div>
-        ))}
-      </div>
 
       {mode === "signup" && (
         <label className="block space-y-2">
@@ -175,15 +155,6 @@ export function AuthForm({ mode }: AuthFormProps) {
       >
         {submitLabel}
       </button>
-
-      <div className="rounded-[24px] border border-black/10 bg-white/82 px-4 py-4 shadow-sm">
-        <p className="text-sm font-semibold text-slate-900">What happens next</p>
-        <p className="mt-2 text-sm leading-6 text-slate-600">
-          {mode === "login"
-            ? "You land in the app with your latest study context ready."
-            : "You continue to onboarding so LearnX can tune explanations, layout, and study flow to your learner profile."}
-        </p>
-      </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-[24px] border border-black/10 bg-slate-950 px-4 py-4 text-white shadow-[0_20px_40px_rgba(15,23,42,0.08)]">
         <div>

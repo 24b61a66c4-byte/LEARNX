@@ -16,7 +16,7 @@ export function getTopicWorkspaceContext(subjectId: SubjectId, topicId: string) 
       topic.summary,
       lesson?.blocks[0]?.content[0] ?? "Open the first lesson block and turn it into one revision line.",
       lesson?.blocks.find((block) => block.kind === "exam")?.content[0] ??
-        "Ask the copilot to convert the topic into one exam-ready answer.",
+        "Ask the tutor to convert the topic into one exam-ready answer.",
       lesson?.blocks.find((block) => block.kind === "mistake-watch")?.content[0] ??
         "Save the first common mistake you notice and turn it into a correction card.",
     ],

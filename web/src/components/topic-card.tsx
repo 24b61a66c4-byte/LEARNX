@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useClientSnapshot } from "@/lib/client-snapshot";
 import { getServerProgressSnapshot, practiceGateway } from "@/lib/gateways";
 import { buildSubjectMasteryView } from "@/lib/progress-views";
+import { getPublicLearnHref, getPublicPracticeHref } from "@/lib/public-routes";
 import { Topic } from "@/lib/types";
 import { getTopicsBySubject } from "@/lib/data/catalog";
 
@@ -68,10 +69,10 @@ export function TopicCard({ topic }: { topic: Topic }) {
       </div>
 
       <div className="mt-4 flex flex-wrap gap-3">
-        <Link className="button-secondary" href={`/app/learn/${topic.subjectId}/${topic.id}`}>
+        <Link className="button-secondary" href={getPublicLearnHref(topic.subjectId, topic.id)}>
           Open lesson
         </Link>
-        <Link className="button-secondary" href={`/app/practice?subjectId=${topic.subjectId}&topicId=${topic.id}`}>
+        <Link className="button-secondary" href={getPublicPracticeHref(topic.subjectId, topic.id)}>
           Drill this topic
         </Link>
       </div>

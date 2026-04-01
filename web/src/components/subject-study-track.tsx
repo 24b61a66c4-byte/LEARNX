@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import { useClientSnapshot } from "@/lib/client-snapshot";
 import { practiceGateway } from "@/lib/gateways";
+import { getPublicLearnHref, getPublicPracticeHref } from "@/lib/public-routes";
 import { buildSubjectMasteryView, type TopicMasteryView } from "@/lib/progress-views";
 import type { SubjectId, Topic } from "@/lib/types";
 
@@ -75,17 +76,17 @@ export function SubjectStudyTrack({ subjectId, topics }: SubjectStudyTrackProps)
       </div>
 
       {continueTopic ? (
-        <div className="surface-panel p-4">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <p className="text-sm font-semibold text-slate-900">{continueTopic.title}</p>
-              <p className="mt-1 text-sm leading-6 text-slate-600">{continueReason}</p>
-            </div>
-            <Link className="button-secondary" href={`/app/learn/${subjectId}/${continueTopic.id}`}>
+      <div className="surface-panel p-4">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <p className="text-sm font-semibold text-slate-900">{continueTopic.title}</p>
+            <p className="mt-1 text-sm leading-6 text-slate-600">{continueReason}</p>
+          </div>
+            <Link className="button-secondary" href={getPublicLearnHref(subjectId, continueTopic.id)}>
               Continue topic
             </Link>
-          </div>
         </div>
+      </div>
       ) : null}
 
       <div className="grid gap-4 lg:grid-cols-2">
@@ -113,7 +114,7 @@ export function SubjectStudyTrack({ subjectId, topics }: SubjectStudyTrackProps)
                   </span>
                 </div>
               ))}
-              <Link className="mt-3 inline-flex text-sm font-semibold text-rose-700 hover:underline" href={`/app/practice?subjectId=${subjectId}`}>
+              <Link className="mt-3 inline-flex text-sm font-semibold text-rose-700 hover:underline" href={getPublicPracticeHref(subjectId)}>
                 Drill weak topics
               </Link>
             </div>

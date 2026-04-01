@@ -100,4 +100,34 @@ class TutorServiceTest {
 
                 assertFalse(response.explanation().isBlank());
         }
+
+        @Test
+        void supportsOpenEndedQuestionWithoutSubjectOrTopic() {
+                CatalogService catalogService = new CatalogService(new JsonCatalogStore());
+                SearchProvider searchProvider = query -> {
+                        throw new AssertionError("Search should not run without subject context");
+                };
+                AiProvider aiProvider = prompt -> {
+                        assertEquals("General knowledge", prompt.subjectName());
+                        assertTrue(prompt.topicTitle().isBlank());
+                        assertTrue(prompt.searchResults().isEmpty());
+                        return new TutorResponse(
+                                        "Photosynthesis is how plants use sunlight to make food.",
+                                        "1. Define it\n2. Mention sunlight, water, carbon dioxide\n3. State the result",
+                                        List.of("Plants make food", "Sunlight powers the process"),
+                                        List.of(),
+                                        false);
+                };
+
+                TutorService tutorService = new TutorService(catalogService, searchProvider, aiProvider,
+                                new FallbackAiProvider(), 2000, false);
+                TutorResponse response = tutorService.answerQuestion(
+                                new TutorRequest("learner-1", "", "", "", "What's photosynthesis?", 3),
+                                new LearnerProfile("learner-1", "Ricky", 15),
+                                new PerformanceSnapshot(0.6, 0.7, 2.0, List.of("dbms-joins"), List.of(), Map.of()));
+
+                assertFalse(response.fallback());
+                assertTrue(response.citations().isEmpty());
+                assertTrue(response.explanation().contains("Photosynthesis"));
+        }
 }

@@ -28,7 +28,7 @@ class LearnxEngineTest {
                 learnerProfile.getLearnerId(),
                 "dbms",
                 "dbms-sql-basics",
-                List.of(SubmittedAnswer.forMcq("q-dbms-1", 1)),
+                List.of(SubmittedAnswer.forMcq("q-dbms-1", 2)),
                 LocalDateTime.now().minusMinutes(2),
                 LocalDateTime.now()
         ));

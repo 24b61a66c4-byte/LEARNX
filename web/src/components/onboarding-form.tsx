@@ -173,10 +173,10 @@ export function OnboardingForm() {
     <section className="mx-auto max-w-4xl space-y-6">
       <div className="surface-card space-y-6 px-6 py-8 sm:px-8">
         <div className="space-y-2">
-          <p className="eyebrow">Profile setup</p>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-950">Complete your profile</h1>
+          <p className="eyebrow">First-time setup</p>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-950">Build your study path</h1>
           <p className="muted text-sm">
-            Answer a few quick questions so LearnX can keep the workspace simple and focused.
+            Answer a few quick questions so LearnX can tune the tutor, topic suggestions, and study flow.
           </p>
         </div>
 
@@ -305,7 +305,9 @@ export function OnboardingForm() {
             <div className="surface-panel space-y-4 p-5">
               <div>
                 <p className="eyebrow">Exam target</p>
-                <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-950">What are you studying for?</h2>
+                <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-950">
+                  What do you want LearnX to help with?
+                </h2>
                 <p className="mt-2 text-sm leading-6 text-slate-600">
                   This helps LearnX tune explanations to your learning level and goals.
                 </p>
@@ -368,7 +370,7 @@ export function OnboardingForm() {
               <div className="mt-4 space-y-2">
                 <p className="text-xs font-semibold uppercase tracking-[0.1em] text-slate-500">Quick start:</p>
                 <p className="text-sm text-slate-700">
-                  Learn at your pace with explanations adapted to {cognitiveGroup}. Visual diagrams, voice mode, and quizzes live in the sidebar and settings after you finish.
+                  Learn at your pace with explanations adapted to {cognitiveGroup}. Visual diagrams and voice mode live in the sidebar after you finish, while accessibility stays in settings.
                 </p>
                 <p className="text-sm text-slate-700">
                   Launch style: <span className="font-semibold text-slate-950">{selectedLaunchMode.title}</span>.

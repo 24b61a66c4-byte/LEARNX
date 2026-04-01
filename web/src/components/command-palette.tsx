@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState, type KeyboardEvent as ReactK
 import { useRouter } from "next/navigation";
 
 import { catalogGateway } from "@/lib/gateways";
+import { getPublicSubjectHref } from "@/lib/public-routes";
 
 interface CommandPaletteProps {
   open: boolean;
@@ -28,7 +29,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
         id: subject.id,
         label: subject.name,
         sublabel: subject.description,
-        href: `/app/subjects/${subject.id}`,
+        href: getPublicSubjectHref(subject.id),
         tag: "Subject",
       })),
     [],
@@ -37,7 +38,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
     () => [
       {
         id: "quick-ask",
-        label: "Ask the AI tutor",
+        label: "Ask tutor",
         sublabel: "Open the coach workspace for fast explanations or exam answers.",
         href: "/app/ask",
         tag: "Action",

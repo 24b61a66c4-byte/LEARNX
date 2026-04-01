@@ -8,6 +8,7 @@ import {
   notesGateway,
   practiceGateway,
   sessionGateway,
+  tutorGateway,
 } from "@/lib/gateways";
 import { readLocalStorage, writeLocalStorage } from "@/lib/storage";
 
@@ -22,6 +23,7 @@ vi.mock("@/lib/storage", () => ({
 describe("Session Gateway", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.unstubAllGlobals();
   });
 
   it("returns default session when no storage", () => {
@@ -38,6 +40,11 @@ describe("Session Gateway", () => {
 });
 
 describe("Catalog Gateway", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.unstubAllGlobals();
+  });
+
   it("fetches subjects", () => {
     const subjects = catalogGateway.getSubjects();
     expect(Array.isArray(subjects)).toBe(true);
@@ -48,6 +55,7 @@ describe("Catalog Gateway", () => {
 describe("Server-safe snapshots", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.unstubAllGlobals();
   });
 
   it("returns a deterministic server progress snapshot without storage reads", () => {
@@ -70,6 +78,11 @@ describe("Server-safe snapshots", () => {
 });
 
 describe("Learner Rewards", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.unstubAllGlobals();
+  });
+
   it("derives rewards from practice history", () => {
     vi.mocked(readLocalStorage).mockImplementation((key: string, fallback: unknown) => {
       if (key === "learnx.practiceHistory") {
@@ -112,6 +125,11 @@ describe("Learner Rewards", () => {
 });
 
 describe("Practice Gateway", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.unstubAllGlobals();
+  });
+
   it("awards xp and persists the result", () => {
     vi.mocked(readLocalStorage).mockImplementation((key: string, fallback: unknown) => {
       if (key === "learnx.practiceHistory") {
@@ -138,6 +156,11 @@ describe("Practice Gateway", () => {
 });
 
 describe("Notes Gateway", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.unstubAllGlobals();
+  });
+
   it("saves and persists a topic note", () => {
     vi.mocked(readLocalStorage).mockImplementation((key: string, fallback: unknown) => {
       if (key === "learnx.topicNotes") {
@@ -158,5 +181,43 @@ describe("Notes Gateway", () => {
     expect(result.topicId).toBe("dbms-joins");
     expect(result.source).toBe("lesson");
     expect(vi.mocked(writeLocalStorage)).toHaveBeenCalled();
+  });
+});
+
+describe("Tutor Gateway", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.unstubAllGlobals();
+  });
+
+  it("supports open-ended asks without forcing subject or topic context", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        explanation: "Photosynthesis is how plants turn sunlight into food.",
+        examAnswerOutline: "Define it, explain the inputs, state the output.",
+        keyPoints: ["Sunlight", "Water", "Carbon dioxide"],
+        fallback: false,
+        aiResponse: {
+          text: "Photosynthesis is how plants turn sunlight into food.",
+          model: "learnx-gemini",
+          mode: "explain",
+          latencyMs: 128,
+        },
+      }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await tutorGateway.ask({
+      prompt: "What's photosynthesis?",
+      mode: "explain",
+    });
+
+    expect(result.answer).toContain("Photosynthesis");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const requestInit = fetchMock.mock.calls[0]?.[1] as RequestInit;
+    const requestBody = JSON.parse(String(requestInit.body));
+    expect(requestBody.subjectId).toBe("");
+    expect(requestBody.topicId).toBe("");
   });
 });

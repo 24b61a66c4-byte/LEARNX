@@ -121,10 +121,10 @@ export default function LandingPage() {
                       <div className="min-w-0 flex-1">
                         <p className="eyebrow">Workspace preview</p>
                         <h2 className="mt-2 text-xl font-bold tracking-tight text-slate-950 sm:text-2xl">
-                          One topic. Four coordinated lanes.
+                          One topic. One guided flow.
                         </h2>
                       </div>
-                      <span className="reward-chip shrink-0">Premium flow</span>
+                      <span className="reward-chip shrink-0">Guided flow</span>
                     </div>
 
                     <div className="mt-5 grid gap-3">

@@ -6,6 +6,7 @@ import { SubjectCard } from "@/components/subject-card";
 import { useClientSnapshot } from "@/lib/client-snapshot";
 import { getTopicsBySubject } from "@/lib/data/catalog";
 import { practiceGateway } from "@/lib/gateways";
+import { getPublicAskHref, getPublicLearnHref, getPublicSubjectHref } from "@/lib/public-routes";
 import { buildSubjectMasteryView } from "@/lib/progress-views";
 import { OnboardingProfile, PracticeResult, Subject } from "@/lib/types";
 import { getStoredOnboardingProfile } from "@/lib/profile-preferences";
@@ -41,8 +42,8 @@ export function SubjectsPanel({ subjects }: { subjects: Subject[] }) {
   );
   const continueTopic = preferredMastery.continueTopic;
   const continueHref = continueTopic
-    ? `/app/learn/${preferredSubject.id}/${continueTopic.id}`
-    : `/app/subjects/${preferredSubject.id}`;
+    ? getPublicLearnHref(preferredSubject.id, continueTopic.id)
+    : getPublicSubjectHref(preferredSubject.id);
 
   const topicViews = preferredMastery.topicViews;
   const getStatusColor = (status: string) => {
@@ -106,7 +107,7 @@ export function SubjectsPanel({ subjects }: { subjects: Subject[] }) {
             <Link className="button-primary" href={continueHref}>
               Continue this topic
             </Link>
-            <Link className="button-secondary" href={`/app/ask?subjectId=${preferredSubject.id}`}>
+            <Link className="button-secondary" href={getPublicAskHref(preferredSubject.id)}>
               Open tutor for {preferredSubject.name}
             </Link>
           </div>

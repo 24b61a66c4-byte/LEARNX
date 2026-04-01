@@ -124,6 +124,17 @@ export default function ProfilePage() {
     });
   }
 
+  function toggleStudyFeature(feature: "enableVisualDiagrams" | "enableVoiceInput" | "enableQuizMode") {
+    if (!profile) {
+      return;
+    }
+
+    void persistProfile({
+      ...profile,
+      [feature]: !profile[feature],
+    });
+  }
+
   return (
     <div className="mx-auto max-w-4xl space-y-10 pb-10">
       {/* Profile Hero */}
@@ -198,7 +209,7 @@ export default function ProfilePage() {
             <div>
               <p className="eyebrow">Accessibility</p>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                These live in settings so the onboarding flow stays light. The study features themselves stay in the sidebar.
+                These stay in settings so the onboarding flow stays light.
               </p>
             </div>
 
@@ -231,6 +242,54 @@ export default function ProfilePage() {
               );
             })}
           </div>
+
+          <div className="mt-8 grid gap-3">
+            <div>
+              <p className="eyebrow">Study controls</p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                Tune the tutor experience without crowding the main workspace.
+              </p>
+            </div>
+
+            {[
+              {
+                feature: "enableVisualDiagrams" as const,
+                label: "Visual diagrams",
+                description: "Open Mermaid-style support when concepts need structure.",
+              },
+              {
+                feature: "enableVoiceInput" as const,
+                label: "Voice mode",
+                description: "Talk through the lesson instead of only typing.",
+              },
+              {
+                feature: "enableQuizMode" as const,
+                label: "Adaptive quiz",
+                description: "Turn the current topic into short practice checks.",
+              },
+            ].map((item) => {
+              const enabled = profile?.[item.feature] ?? false;
+              return (
+                <label
+                  className={`flex items-center justify-between gap-4 rounded-[22px] border px-4 py-4 transition ${
+                    enabled ? "border-teal-300 bg-teal-50" : "border-black/10 bg-white/84"
+                  }`}
+                  key={item.feature}
+                >
+                  <div>
+                    <p className="font-semibold text-slate-950">{item.label}</p>
+                    <p className="mt-1 text-sm text-slate-600">{item.description}</p>
+                  </div>
+                  <input
+                    aria-label={`Toggle ${item.label}`}
+                    checked={enabled}
+                    onChange={() => toggleStudyFeature(item.feature)}
+                    type="checkbox"
+                  />
+                </label>
+              );
+            })}
+          </div>
         </section>
 
         <aside className="surface-panel p-6">
@@ -251,7 +310,7 @@ export default function ProfilePage() {
             <div className="rounded-[24px] border border-black/10 bg-white/84 px-4 py-4 shadow-sm">
               <p className="text-sm text-slate-500">Sidebar features</p>
               <p className="mt-1 text-sm leading-6 text-slate-600">
-                Visual diagrams, voice mode, and adaptive quiz are kept in the sidebar so they stay one click away.
+                Visual diagrams, voice mode, and adaptive quiz now live in settings instead of crowding the sidebar.
               </p>
             </div>
           </div>

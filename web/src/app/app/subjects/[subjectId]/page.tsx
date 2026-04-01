@@ -3,15 +3,16 @@ import { notFound } from "next/navigation";
 import { SubjectStudyTrack } from "@/components/subject-study-track";
 import { TopicCard } from "@/components/topic-card";
 import { getExamContext, getSubjectById, getTopicsBySubject } from "@/lib/data/catalog";
-import { SubjectId } from "@/lib/types";
+import { resolveSubjectIdFromSegment } from "@/lib/public-routes";
 
 export default async function SubjectDetailPage({
   params,
 }: {
-  params: Promise<{ subjectId: SubjectId }>;
+  params: Promise<{ subjectId: string }>;
 }) {
   const { subjectId } = await params;
-  const subject = getSubjectById(subjectId);
+  const resolvedSubjectId = resolveSubjectIdFromSegment(subjectId) ?? "dbms";
+  const subject = getSubjectById(resolvedSubjectId);
 
   if (!subject) {
     notFound();
@@ -44,7 +45,7 @@ export default async function SubjectDetailPage({
         </div>
       </div>
 
-      <SubjectStudyTrack subjectId={subjectId} topics={topicList} />
+      <SubjectStudyTrack subjectId={subject.id} topics={topicList} />
 
       <div className="grid gap-5">
         {topicList.map((topic) => (

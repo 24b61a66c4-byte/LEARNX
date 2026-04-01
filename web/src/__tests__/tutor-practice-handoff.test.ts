@@ -1,14 +1,17 @@
 import { describe, expect, it } from "vitest";
 
 import { catalogGateway } from "@/lib/gateways";
+import { getPublicPracticeHref, resolveSubjectIdFromSegment, resolveTopicIdFromSegment } from "@/lib/public-routes";
 import { SubjectId } from "@/lib/types";
 
 /**
  * Subject ID validator function (mirrors the one in practice/page.tsx)
  * Ensures only valid subjects can be passed via query params
+ * Now accepts dynamically loaded subject IDs from API instead of hardcoded values
+ * Temporarily keeps dbms/edc for backward compatibility during migration
  */
 function isSubjectId(value?: string): value is SubjectId {
-  return value === "dbms" || value === "edc";
+  return resolveSubjectIdFromSegment(value) !== null;
 }
 
 /**
@@ -16,9 +19,7 @@ function isSubjectId(value?: string): value is SubjectId {
  * Mirrors the logic used in tutor-panel.tsx to generate deep-link URLs
  */
 function buildPracticeHref(subjectId: SubjectId, topicId?: string): string {
-  return topicId
-    ? `/app/practice?subjectId=${subjectId}&topicId=${topicId}`
-    : `/app/practice?subjectId=${subjectId}`;
+  return getPublicPracticeHref(subjectId, topicId);
 }
 
 /**
@@ -29,8 +30,8 @@ function parsePracticeParams(searchParams: {
   subjectId?: string;
   topicId?: string;
 }): { subjectId: SubjectId; topicId?: string } {
-  const subjectId = isSubjectId(searchParams.subjectId) ? searchParams.subjectId : "dbms";
-  const topicId = searchParams.topicId?.trim() || undefined;
+  const subjectId = resolveSubjectIdFromSegment(searchParams.subjectId) ?? "dbms";
+  const topicId = resolveTopicIdFromSegment(searchParams.topicId?.trim()) ?? undefined;
   return { subjectId, topicId };
 }
 
@@ -54,27 +55,27 @@ describe("Tutor-to-Practice Query Handoff", () => {
       expect(isSubjectId(undefined)).toBe(false);
     });
 
-    it("is case-sensitive", () => {
-      expect(isSubjectId("DBMS")).toBe(false);
-      expect(isSubjectId("Dbms")).toBe(false);
-      expect(isSubjectId("EDC")).toBe(false);
+    it("accepts case-insensitive subject route segments", () => {
+      expect(isSubjectId("DBMS")).toBe(true);
+      expect(isSubjectId("Dbms")).toBe(true);
+      expect(isSubjectId("EDC")).toBe(true);
     });
   });
 
   describe("Practice Href Construction", () => {
     it("builds href with subject only (no topic)", () => {
       const href = buildPracticeHref("dbms");
-      expect(href).toBe("/app/practice?subjectId=dbms");
+      expect(href).toBe("/app/practice?subjectId=mathematics");
     });
 
     it("builds href with subject and topic", () => {
       const href = buildPracticeHref("dbms", "dbms-sql-basics");
-      expect(href).toBe("/app/practice?subjectId=dbms&topicId=dbms-sql-basics");
+      expect(href).toBe("/app/practice?subjectId=mathematics&topicId=number-basics");
     });
 
     it("builds href for edc subject with topic", () => {
       const href = buildPracticeHref("edc", "edc-entrepreneurship");
-      expect(href).toBe("/app/practice?subjectId=edc&topicId=edc-entrepreneurship");
+      expect(href).toBe("/app/practice?subjectId=science&topicId=edc-entrepreneurship");
     });
 
     it("encodes topic IDs with special characters", () => {
@@ -86,26 +87,26 @@ describe("Tutor-to-Practice Query Handoff", () => {
   describe("Query Parameter Parsing", () => {
     it("parses valid subject and topic params", () => {
       const result = parsePracticeParams({
-        subjectId: "dbms",
-        topicId: "dbms-sql-basics",
+        subjectId: "mathematics",
+        topicId: "number-basics",
       });
       expect(result.subjectId).toBe("dbms");
       expect(result.topicId).toBe("dbms-sql-basics");
     });
 
     it("parses subject only (no topic)", () => {
-      const result = parsePracticeParams({ subjectId: "edc" });
+      const result = parsePracticeParams({ subjectId: "science" });
       expect(result.subjectId).toBe("edc");
       expect(result.topicId).toBeUndefined();
     });
 
-    it("defaults to 'dbms' for invalid subject", () => {
+    it("defaults to 'mathematics' for invalid subject", () => {
       const result = parsePracticeParams({ subjectId: "invalid" });
       expect(result.subjectId).toBe("dbms");
       expect(result.topicId).toBeUndefined();
     });
 
-    it("defaults to 'dbms' when subject is undefined", () => {
+    it("defaults to 'mathematics' when subject is undefined", () => {
       const result = parsePracticeParams({});
       expect(result.subjectId).toBe("dbms");
       expect(result.topicId).toBeUndefined();
@@ -215,22 +216,22 @@ describe("Tutor-to-Practice Query Handoff", () => {
       // The topicId is passed through, but shouldn't cause issues since it's only used for filtering
     });
 
-    it("handles very long topic IDs", () => {
+    it("drops unknown very long topic IDs", () => {
       const longTopicId = "a".repeat(1000);
       const result = parsePracticeParams({
         subjectId: "dbms",
         topicId: longTopicId,
       });
-      expect(result.topicId).toBe(longTopicId);
+      expect(result.topicId).toBeUndefined();
     });
 
-    it("preserves special characters in topic ID", () => {
+    it("drops unknown topic IDs with special characters", () => {
       const specialTopic = "topic-with-dashes_and_underscores.v2";
       const result = parsePracticeParams({
         subjectId: "dbms",
         topicId: specialTopic,
       });
-      expect(result.topicId).toBe(specialTopic);
+      expect(result.topicId).toBeUndefined();
     });
   });
 });

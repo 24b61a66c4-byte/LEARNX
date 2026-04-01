@@ -1,11 +1,7 @@
 import { PracticeWorkspace } from "@/components/practice-workspace";
 import { PracticeEntryHeader } from "@/components/practice-entry-header";
 import { getSubjectById, getTopicById } from "@/lib/data/catalog";
-import { SubjectId } from "@/lib/types";
-
-function isSubjectId(value?: string): value is SubjectId {
-  return value === "dbms" || value === "edc";
-}
+import { resolveSubjectIdFromSegment, resolveTopicIdFromSegment } from "@/lib/public-routes";
 
 export default async function PracticePage({
   searchParams,
@@ -16,8 +12,8 @@ export default async function PracticePage({
   }>;
 }) {
   const params = await searchParams;
-  const subjectId = isSubjectId(params.subjectId) ? params.subjectId : "dbms";
-  const topicId = params.topicId?.trim() || undefined;
+  const subjectId = resolveSubjectIdFromSegment(params.subjectId) ?? "dbms";
+  const topicId = resolveTopicIdFromSegment(params.topicId) ?? undefined;
 
   const subject = getSubjectById(subjectId);
   const topic = topicId ? getTopicById(topicId) : undefined;
@@ -33,7 +29,7 @@ export default async function PracticePage({
         <div className="border-b border-black/10 bg-slate-50/50 px-8 py-4">
           <div className="flex items-center gap-2">
             <span className="h-2 w-2 rounded-full bg-teal-500" />
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Live Workspace Terminal</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Live study workspace</p>
           </div>
         </div>
         

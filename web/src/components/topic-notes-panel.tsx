@@ -272,9 +272,14 @@ export function TopicNotesPanel({
             value={draft}
           />
         </label>
-        {error ? <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">{error}</div> : null}
-        <button className="button-primary w-full" disabled={!draft.trim()} onClick={() => saveNote()} type="button">
-          Save to notebook
+        {error ? (
+          <div aria-live="polite" className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
+            {error}
+          </div>
+        ) : null}
+        <p className="text-xs text-slate-500">Add at least one line, then save it into the notebook.</p>
+        <button className="button-primary w-full" onClick={() => saveNote()} type="button">
+          Save note
         </button>
       </div>
 

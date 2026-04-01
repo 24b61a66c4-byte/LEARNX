@@ -5,21 +5,24 @@ import { LessonBlock } from "@/components/lesson-block";
 import { PracticeWorkspace } from "@/components/practice-workspace";
 import { ResumeTracker } from "@/components/resume-tracker";
 import { SearchLane } from "@/components/search-lane";
+import { StudySupportDock } from "@/components/study-support-dock";
 import { TopicNotesPanel } from "@/components/topic-notes-panel";
 import { TopicStudioOverview } from "@/components/topic-studio-overview";
 import { TutorPanel } from "@/components/tutor-panel";
 import { getSubjectById } from "@/lib/data/catalog";
+import { getPublicAskHref, getPublicPracticeHref, resolveSubjectIdFromSegment, resolveTopicIdFromSegment } from "@/lib/public-routes";
 import { getTopicWorkspaceContext } from "@/lib/topic-workspace";
-import { SubjectId } from "@/lib/types";
 
 export default async function TopicPage({
   params,
 }: {
-  params: Promise<{ subjectId: SubjectId; topicId: string }>;
+  params: Promise<{ subjectId: string; topicId: string }>;
 }) {
   const { subjectId, topicId } = await params;
-  const subject = getSubjectById(subjectId);
-  const workspaceContext = getTopicWorkspaceContext(subjectId, topicId);
+  const resolvedSubjectId = resolveSubjectIdFromSegment(subjectId) ?? "dbms";
+  const resolvedTopicId = resolveTopicIdFromSegment(topicId) ?? topicId;
+  const subject = getSubjectById(resolvedSubjectId);
+  const workspaceContext = getTopicWorkspaceContext(resolvedSubjectId, resolvedTopicId);
   const topic = workspaceContext?.topic;
   const lesson = workspaceContext?.lesson;
 
@@ -46,10 +49,10 @@ export default async function TopicPage({
                 ))}
               </div>
               <div className="flex flex-wrap gap-3">
-                <Link className="button-primary" href={`/app/ask?subjectId=${subject.id}&topicId=${topic.id}`}>
+                <Link className="button-primary" href={getPublicAskHref(resolvedSubjectId, resolvedTopicId)}>
                   Open ask studio
                 </Link>
-                <Link className="button-secondary" href={`/app/practice?subjectId=${subject.id}&topicId=${topic.id}`}>
+                <Link className="button-secondary" href={getPublicPracticeHref(resolvedSubjectId, resolvedTopicId)}>
                   Open drill mode
                 </Link>
               </div>
@@ -79,21 +82,21 @@ export default async function TopicPage({
         </div>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[0.82fr_1.12fr_0.96fr]">
+      <TutorPanel
+        defaultSubjectId={resolvedSubjectId}
+        defaultTopicId={topic.id}
+        sectionId="tutor-lane"
+        showContextSelectors={false}
+        showFloatingActions={false}
+        showSupportLanes={false}
+      />
+
+      <div className="grid gap-6 xl:grid-cols-[0.82fr_1.18fr]">
         <div className="space-y-6">
           <TopicStudioOverview
             lessonBlockCount={lesson?.blocks.length ?? 0}
             topicId={topic.id}
             topicTitle={topic.title}
-          />
-          <SearchLane
-            sectionId="search-lane"
-            key={`search-${topic.id}`}
-            searchSuggestions={workspaceContext.searchSuggestions}
-            tags={topic.tags}
-            topicSummary={topic.summary}
-            topicTitle={topic.title}
-            watchLane={workspaceContext.watchLane}
           />
         </div>
 
@@ -125,24 +128,32 @@ export default async function TopicPage({
             ))}
           </div>
 
-          <TopicNotesPanel
-            key={`notes-${topic.id}`}
-            seedNotes={workspaceContext.noteSeeds}
-            subjectId={subject.id}
-            topicId={topic.id}
-            topicTitle={topic.title}
+          <StudySupportDock
+            defaultTab="search"
+            description="Search examples or capture notes without pulling attention away from the lesson."
+            notes={
+              <TopicNotesPanel
+                key={`notes-${topic.id}`}
+                seedNotes={workspaceContext.noteSeeds}
+                subjectId={resolvedSubjectId}
+                topicId={topic.id}
+                topicTitle={topic.title}
+              />
+            }
+            search={
+              <SearchLane
+                sectionId="search-lane"
+                key={`search-${topic.id}`}
+                searchSuggestions={workspaceContext.searchSuggestions}
+                tags={topic.tags}
+                topicSummary={topic.summary}
+                topicTitle={topic.title}
+                watchLane={workspaceContext.watchLane}
+              />
+            }
+            title="Search & notes"
           />
-        </div>
-
-        <div className="space-y-6">
-          <TutorPanel
-            defaultSubjectId={subject.id}
-            defaultTopicId={topic.id}
-            sectionId="tutor-lane"
-            showFloatingActions={false}
-            showSupportLanes={false}
-          />
-          <PracticeWorkspace defaultSubjectId={subject.id} defaultTopicId={topic.id} />
+          <PracticeWorkspace defaultSubjectId={resolvedSubjectId} defaultTopicId={topic.id} />
         </div>
       </div>
     </section>

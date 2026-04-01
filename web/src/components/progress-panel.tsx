@@ -7,6 +7,7 @@ import { LEVEL_XP_STEP } from "@/lib/constants";
 import { useClientSnapshot } from "@/lib/client-snapshot";
 import { getSubjectById, getTopicById } from "@/lib/data/catalog";
 import { getServerProgressSnapshot, learnerStateGateway } from "@/lib/gateways";
+import { getPublicLearnHref } from "@/lib/public-routes";
 
 function XPRing({ xp, level }: { xp: number; level: number }) {
   const radius = 40;
@@ -248,7 +249,7 @@ export function ProgressPanel() {
                             {topic.accuracy}% accuracy
                           </p>
                         </div>
-                        <Link className="text-sm font-semibold text-rose-700 hover:underline" href={`/app/learn/${topic.subjectId}/${topic.topicId}`}>
+                        <Link className="text-sm font-semibold text-rose-700 hover:underline" href={getPublicLearnHref(topic.subjectId, topic.topicId)}>
                           Review
                         </Link>
                       </div>
@@ -336,7 +337,7 @@ export function ProgressPanel() {
                     </div>
                     <Link
                       className="rounded-full border border-white/15 bg-white/5 px-3 py-2 text-xs font-semibold text-white transition hover:bg-white/10"
-                      href={`/app/learn/${plan.topic.subjectId}/${plan.topic.topicId}`}
+                      href={getPublicLearnHref(plan.topic.subjectId, plan.topic.topicId)}
                     >
                       Open
                     </Link>

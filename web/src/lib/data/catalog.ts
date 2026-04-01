@@ -3,176 +3,42 @@ import {
   Lesson,
   Question,
   Subject,
-  SubjectId,
   Topic,
 } from "@/lib/types";
+import { getPublicSubjectHref, getPublicTopicHref } from "@/lib/public-routes";
+import backendCatalogData from "../../../../src/main/resources/catalog.json";
 
-export const subjects: Subject[] = [
-  {
-    id: "dbms",
-    name: "Mathematics",
-    description: "Numbers, patterns, and problem solving that build confidence for school and exams.",
-    tags: ["math", "patterns", "revision"],
+type BackendCatalog = {
+  subjects: Array<Omit<Subject, "accent" | "backdrop">>;
+  topics: Topic[];
+  examContexts: ExamContext[];
+  questions: Question[];
+};
+
+const backendCatalog = backendCatalogData as BackendCatalog;
+
+const subjectUiMap: Record<string, Pick<Subject, "accent" | "backdrop">> = {
+  dbms: {
     accent: "from-teal-500/25 via-cyan-500/15 to-sky-500/30",
     backdrop: "bg-teal-500/10 text-teal-900",
   },
-  {
-    id: "edc",
-    name: "Science",
-    description: "Everyday concepts, experiments, and clear explanations you can use in class and beyond.",
-    tags: ["science", "experiments", "revision"],
+  edc: {
     accent: "from-amber-400/25 via-orange-400/15 to-rose-400/25",
     backdrop: "bg-amber-400/15 text-amber-950",
   },
-];
+};
 
-export const topics: Topic[] = [
-  {
-    id: "dbms-sql-basics",
-    subjectId: "dbms",
-    title: "Number Basics",
-    summary: "Get comfortable with numbers, operations, and reading a problem carefully.",
-    prerequisiteIds: [],
-    difficulty: 0.25,
-    examImportance: 0.8,
-    tags: ["numbers", "foundations", "confidence"],
-  },
-  {
-    id: "dbms-joins",
-    subjectId: "dbms",
-    title: "Patterns and Relationships",
-    summary: "See how one quantity changes with another and spot useful connections.",
-    prerequisiteIds: ["dbms-sql-basics"],
-    difficulty: 0.55,
-    examImportance: 0.95,
-    tags: ["patterns", "relationships", "mapping"],
-  },
-  {
-    id: "dbms-normalization",
-    subjectId: "dbms",
-    title: "Organizing Problems",
-    summary: "Learn how to break a problem into smaller steps and keep your work clear.",
-    prerequisiteIds: ["dbms-sql-basics"],
-    difficulty: 0.65,
-    examImportance: 0.88,
-    tags: ["steps", "structure", "clarity"],
-  },
-  {
-    id: "edc-diode-basics",
-    subjectId: "edc",
-    title: "Science Basics",
-    summary: "Understand ideas, examples, and the reason behind each result.",
-    prerequisiteIds: [],
-    difficulty: 0.2,
-    examImportance: 0.7,
-    tags: ["science", "basics", "observation"],
-  },
-  {
-    id: "edc-rectifiers",
-    subjectId: "edc",
-    title: "Energy and Change",
-    summary: "Study how things transform as they move through a system.",
-    prerequisiteIds: ["edc-diode-basics"],
-    difficulty: 0.45,
-    examImportance: 0.85,
-    tags: ["energy", "change", "flow"],
-  },
-  {
-    id: "edc-transistor-basics",
-    subjectId: "edc",
-    title: "Control and Systems",
-    summary: "Cover how one part of a system can guide another part.",
-    prerequisiteIds: ["edc-diode-basics"],
-    difficulty: 0.55,
-    examImportance: 0.9,
-    tags: ["control", "systems", "application"],
-  },
-];
+export const subjects: Subject[] = backendCatalog.subjects.map((subject) => ({
+  ...subject,
+  accent: subjectUiMap[subject.id]?.accent ?? "from-slate-300/25 via-slate-200/15 to-slate-100/30",
+  backdrop: subjectUiMap[subject.id]?.backdrop ?? "bg-slate-200/70 text-slate-900",
+}));
 
-export const examContexts: ExamContext[] = [
-  {
-    id: "dbms-jntu-r22",
-    subjectId: "dbms",
-    title: "Mathematics study plan",
-    description: "Exam-focused preparation for number sense, patterns, and structured problem solving.",
-    focusTopicIds: ["dbms-sql-basics", "dbms-joins", "dbms-normalization"],
-    tags: ["revision", "semester-exam"],
-  },
-  {
-    id: "edc-jntu-r22",
-    subjectId: "edc",
-    title: "Science study plan",
-    description: "Exam-focused preparation for concepts, examples, and application.",
-    focusTopicIds: ["edc-diode-basics", "edc-rectifiers", "edc-transistor-basics"],
-    tags: ["revision", "semester-exam"],
-  },
-];
+export const topics: Topic[] = backendCatalog.topics;
 
-export const questions: Question[] = [
-  {
-    id: "q-dbms-1",
-    subjectId: "dbms",
-    topicId: "dbms-sql-basics",
-    type: "MCQ",
-    prompt: "Which operation helps you find the total of equal groups?",
-    options: ["Addition", "Subtraction", "Multiplication", "Division"],
-    correctOptionIndex: 2,
-    acceptedKeywords: [],
-    explanation: "Multiplication helps combine equal groups into one total.",
-    difficulty: 0.25,
-  },
-  {
-    id: "q-dbms-2",
-    subjectId: "dbms",
-    topicId: "dbms-joins",
-    type: "SHORT_ANSWER",
-    prompt: "Name two ways to show a relationship between numbers.",
-    options: [],
-    correctOptionIndex: null,
-    acceptedKeywords: ["table", "graph"],
-    minKeywordMatches: 2,
-    explanation: "Tables and graphs make relationships easier to see.",
-    difficulty: 0.45,
-  },
-  {
-    id: "q-dbms-3",
-    subjectId: "dbms",
-    topicId: "dbms-normalization",
-    type: "SHORT_ANSWER",
-    prompt: "What problem does simplifying expressions help reduce?",
-    options: [],
-    correctOptionIndex: null,
-    acceptedKeywords: ["clutter", "complexity", "repetition"],
-    minKeywordMatches: 1,
-    explanation: "Simplifying reduces clutter and repeated work.",
-    difficulty: 0.5,
-  },
-  {
-    id: "q-edc-1",
-    subjectId: "edc",
-    topicId: "edc-diode-basics",
-    type: "MCQ",
-    prompt: "Which example shows a change you can observe?",
-    options: ["Ice melting", "A book resting", "A chair standing still", "A wall staying the same"],
-    correctOptionIndex: 0,
-    acceptedKeywords: [],
-    explanation: "Ice melting is an easy example of a visible change.",
-    difficulty: 0.2,
-  },
-  {
-    id: "q-edc-2",
-    subjectId: "edc",
-    topicId: "edc-rectifiers",
-    type: "SHORT_ANSWER",
-    prompt: "Name two examples of energy you notice in daily life.",
-    options: [],
-    correctOptionIndex: null,
-    acceptedKeywords: ["light", "heat", "sound", "motion"],
-    minKeywordMatches: 2,
-    explanation: "Light, heat, sound, and motion are common examples of energy in daily life.",
-    difficulty: 0.35,
-  },
-];
+export const examContexts: ExamContext[] = backendCatalog.examContexts;
+
+export const questions: Question[] = backendCatalog.questions;
 
 export const lessons: Lesson[] = [
   {
@@ -418,7 +284,7 @@ export function getSubjectById(subjectId: string) {
   return subjects.find((subject) => subject.id === subjectId);
 }
 
-export function getTopicsBySubject(subjectId: SubjectId) {
+export function getTopicsBySubject(subjectId: string) {
   return topics.filter((topic) => topic.subjectId === subjectId);
 }
 
@@ -426,7 +292,7 @@ export function getTopicById(topicId: string) {
   return topics.find((topic) => topic.id === topicId);
 }
 
-export function getQuestions(subjectId?: SubjectId, topicId?: string) {
+export function getQuestions(subjectId?: string, topicId?: string) {
   return questions.filter((question) => {
     if (subjectId && question.subjectId !== subjectId) {
       return false;
@@ -448,7 +314,7 @@ export function getLessonByTopicId(topicId: string) {
   return lessons.find((lesson) => lesson.topicId === topicId);
 }
 
-export function getExamContext(subjectId: SubjectId) {
+export function getExamContext(subjectId: string) {
   return examContexts.find((context) => context.subjectId === subjectId);
 }
 
@@ -464,7 +330,7 @@ export function searchCatalog(query: string) {
       id: subject.id,
       label: subject.name,
       sublabel: "Subject",
-      href: `/app/subjects/${subject.id}`,
+      href: getPublicSubjectHref(subject.id),
     }));
 
   const topicHits = topics
@@ -473,7 +339,7 @@ export function searchCatalog(query: string) {
       id: topic.id,
       label: topic.title,
       sublabel: getSubjectById(topic.subjectId)?.name ?? "Topic",
-      href: `/app/learn/${topic.subjectId}/${topic.id}`,
+      href: getPublicTopicHref(topic.subjectId, topic.id),
     }));
 
   return [...subjectHits, ...topicHits].slice(0, 8);

@@ -1,4 +1,4 @@
-export type SubjectId = "dbms" | "edc";
+export type SubjectId = string; // Dynamically loaded from API, not hardcoded
 export type QuestionType = "MCQ" | "SHORT_ANSWER";
 export type TutorMode = "explain" | "exam-answer" | "quiz-me";
 export type StudyGoal =
@@ -57,13 +57,13 @@ export interface Question {
 export interface LessonBlock {
   id: string;
   kind:
-    | "summary"
-    | "deep-dive"
-    | "steps"
-    | "example"
-    | "exam"
-    | "mistake-watch"
-    | "formula";
+  | "summary"
+  | "deep-dive"
+  | "steps"
+  | "example"
+  | "exam"
+  | "mistake-watch"
+  | "formula";
   title: string;
   content: string[];
 }
@@ -208,7 +208,7 @@ export interface TutorResponse {
 
 export interface TutorThread {
   id: string;
-  subjectId: SubjectId;
+  subjectId?: SubjectId;
   topicId?: string;
   messages: TutorMessage[];
   updatedAt: string;
