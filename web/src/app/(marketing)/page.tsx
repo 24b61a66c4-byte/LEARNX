@@ -117,44 +117,40 @@ export default function LandingPage() {
 
                 <div className="grid gap-4 lg:grid-cols-[1.18fr_0.82fr]">
                   <div className="rounded-[28px] border border-black/10 bg-white/88 p-5 shadow-sm">
-                    <div className="flex items-center justify-between gap-3">
-                      <div>
+                    <div className="flex flex-wrap items-start justify-between gap-3 sm:items-center">
+                      <div className="min-w-0 flex-1">
                         <p className="eyebrow">Workspace preview</p>
-                        <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-950">
+                        <h2 className="mt-2 text-xl font-bold tracking-tight text-slate-950 sm:text-2xl">
                           One topic. Four coordinated lanes.
                         </h2>
                       </div>
-                      <span className="reward-chip">Premium flow</span>
+                      <span className="reward-chip shrink-0">Premium flow</span>
                     </div>
 
                     <div className="mt-5 grid gap-3">
                       {workspaceLanes.map((lane, index) => (
                         <div
-                          className={`rounded-[24px] border px-4 py-4 shadow-sm ${
-                            index === 1
+                          className={`rounded-[24px] border px-4 py-4 shadow-sm ${index === 1
                               ? "border-black/10 bg-slate-950 text-white"
                               : "border-black/10 bg-white"
-                          }`}
+                            }`}
                           key={lane.title}
                         >
                           <p
-                            className={`text-xs font-semibold uppercase tracking-[0.18em] ${
-                              index === 1 ? "text-slate-300" : "text-slate-500"
-                            }`}
+                            className={`text-xs font-semibold uppercase tracking-[0.18em] ${index === 1 ? "text-slate-300" : "text-slate-500"
+                              }`}
                           >
                             {lane.label}
                           </p>
                           <p
-                            className={`mt-2 text-lg font-semibold tracking-tight ${
-                              index === 1 ? "text-white" : "text-slate-950"
-                            }`}
+                            className={`mt-2 text-lg font-semibold tracking-tight ${index === 1 ? "text-white" : "text-slate-950"
+                              }`}
                           >
                             {lane.title}
                           </p>
                           <p
-                            className={`mt-2 text-sm leading-6 ${
-                              index === 1 ? "text-slate-200" : "text-slate-600"
-                            }`}
+                            className={`mt-2 text-sm leading-6 ${index === 1 ? "text-slate-200" : "text-slate-600"
+                              }`}
                           >
                             {lane.detail}
                           </p>
