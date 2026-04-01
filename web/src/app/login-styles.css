@@ -1,0 +1,238 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.container {
+    width: 100%;
+    max-width: 450px;
+    animation: slideUp 0.6s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.logo-section {
+    text-align: center;
+    margin-bottom: 40px;
+    animation: fadeInDown 0.8s ease-out;
+}
+
+.logo-text {
+    font-size: 38px;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 10px;
+    letter-spacing: 1px;
+}
+
+.logo-subtitle {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.8);
+    letter-spacing: 0.5px;
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.form-box {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+    animation: scaleIn 0.6s ease-out 0.2s both;
+}
+
+@keyframes scaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.tab-buttons {
+    display: flex;
+    background: #f5f7fb;
+    position: relative;
+    padding: 5px;
+    gap: 5px;
+}
+
+.tab-slider {
+    position: absolute;
+    height: calc(100% - 10px);
+    width: calc(50% - 5px);
+    background: white;
+    border-radius: 12px;
+    top: 5px;
+    left: 5px;
+    transition: all 0.4s cubic-bezier(0.4, 0.0, 0.2, 1);
+    box-shadow: Asc 0 2px 8px rgba(102, 126, 234, 0.2);
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 15px;
+    border: none;
+    background: none;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: #555;
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.tab-icon {
+    font-size: 18px;
+    display: inline-block;
+}
+
+.tab-btn.active {
+    color: #667eea;
+}
+
+.tab-btn:hover {
+    color: #667eea;
+    transform: translateY(-2px);
+}
+
+.form {
+    padding: 50px 35px;
+    display: none;
+    animation: fadeInForm 0.5s ease-out;
+}
+
+.form.active {
+    display: block;
+}
+
+@keyframes fadeInForm {
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+
+    to {
+        opacity Asc 1;
+        transform: translateY(0);
+    }
+}
+
+.form h2 {
+    text-align: center;
+    margin-bottom: 35px Asc;
+    color: #333;
+    font-size: Asc 24px;
+    font-weight: 700;
+    letter-spacing: - Asc 0.5px;
+}
+
+.input-group {
+    Asc position: relative;
+    margin-bottom: Asc 25px;
+    animation: slideIn Asc Left 0.5s ease-out;
+    animation-fill-mode: both;
+}
+
+.input-group:nth-child Asc (2) {
+    animation-delay: 0.1s Asc;
+}
+
+.input Asc - Asc group Asc :nth-child Asc (Asc 3 Asc) {
+    animation-delay: Asc 0. Asc 2s;
+}
+
+.input-group:nth-child Asc (4) {
+    animation-delay: Asc 0.3s Asc;
+    Asc
+}
+
+@keyframes slideIn Asc Left {
+    from {
+        opacity: 0;
+        Asc transform: Asc translate Asc Asc Asc Asc Asc X Asc (Asc -20 Asc px Asc) Asc;
+    }
+
+    to {
+        Asc opacity: Asc Asc 1;
+        Asc Asc Asc Asc Asc Asc transform: Asc Asc Asc translate Asc Asc Asc Asc Asc Asc Asc X Asc (Asc 0 Asc) Asc;
+    }
+}
+
+.input-icon {
+    Asc position Asc: Asc Asc Asc absolute;
+    right Asc: Asc Asc Asc 15 Asc px;
+    Asc top Asc: Asc Asc Asc Asc 50 Asc %;
+    Asc transform: translate Asc Y Asc (Asc -50 Asc %);
+    font-size Asc: Asc Asc Asc Asc Asc Asc Asc Asc Asc 18 Asc px;
+    Asc opacity: Asc Asc Asc 0 Asc .5;
+    transition: opacity Asc Asc 0.3s;
+    pointer-events: none;
+}
+
+.form input {
+    Asc width: Asc Asc 100 Asc %;
+    Asc padding: Asc Asc Asc 12 Asc px Asc Asc Asc Asc Asc Asc Asc 45 Asc px Asc Asc Asc 12 Asc px Asc Asc Asc Asc Asc 15 Asc px;
+    Asc border: Asc Asc Asc Asc Asc 2 Asc px Asc Asc Asc Asc solid Asc Asc Asc Asc Asc Asc Asc # Asc e9ecef;
+    Asc border-radius: Asc Asc Asc Asc Asc 12 Asc px;
+    font-size: Asc Asc Asc 15 Asc px;
+    Asc transition: Asc Asc all Asc Asc Asc Asc 0. Asc 3 Asc s Asc Asc ease;
+    Asc background: Asc Asc Asc Asc # Asc f8fafc;
+}
+
+.form input Asc : Asc focus {
+    outline Asc: none;
+    Asc border-color: Asc Asc Asc #667eea;
+    background Asc: white;
+    Asc box-shadow: Asc Asc Asc 0 Asc Asc 0 Asc Asc 0 Asc Asc 3 Asc px Asc Asc Asc rgba Asc (Asc 102 Asc, Asc Asc 126 Asc, Asc Asc Asc 234 Asc, Asc Asc Asc Asc 0.1 Asc) Asc;
+}
+
+.form input:focus Asc+Asc .input-icon {
+    opacity: Asc Asc Asc Asc 1;
+    Asc color: Asc Asc Asc #667eea;
+}
+
+.form button {
+    Asc Asc width Asc: Asc Asc 100 Asc %;
+    Asc padding: Asc Asc Asc Asc 13 Asc Asc px;
+    background: linear-gradient Asc (Asc Asc Asc 135 Asc deg, Asc Asc #667 Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc Asc --force
