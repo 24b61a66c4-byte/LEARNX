@@ -2,6 +2,9 @@ package com.learnx.api.controller;
 
 import com.learnx.persistence.model.StudyNote;
 import com.learnx.persistence.service.StudyNoteService;
+import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -11,8 +14,10 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/notes")
-@CrossOrigin(origins = "*")
 public class NotesController {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(NotesController.class);
+
     private final StudyNoteService notesService;
 
     @Autowired
@@ -21,12 +26,13 @@ public class NotesController {
     }
 
     @PostMapping
-    public ResponseEntity<?> saveNote(@RequestBody StudyNote note) {
+    public ResponseEntity<?> saveNote(@Valid @RequestBody StudyNote note) {
         try {
             StudyNote saved = notesService.saveNote(note);
             return ResponseEntity.ok(saved);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Error saving note: " + e.getMessage());
+            LOGGER.error("Error saving note for userId={}", note.getUserId(), e);
+            return ResponseEntity.badRequest().body("Error saving note");
         }
     }
 
@@ -43,7 +49,10 @@ public class NotesController {
             UUID parsedUserId = UUID.fromString(userId);
             List<StudyNote> notes = notesService.getUserNotes(parsedUserId);
             return ResponseEntity.ok(notes);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body("Invalid user ID format");
         } catch (Exception e) {
+            LOGGER.error("Error fetching notes for userId={}", userId, e);
             return ResponseEntity.badRequest().body("Error fetching notes");
         }
     }
@@ -56,7 +65,10 @@ public class NotesController {
             UUID parsedUserId = UUID.fromString(userId);
             List<StudyNote> notes = notesService.getUserNotesByTopic(parsedUserId, topicId);
             return ResponseEntity.ok(notes);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body("Invalid user ID format");
         } catch (Exception e) {
+            LOGGER.error("Error fetching notes for userId={} topicId={}", userId, topicId, e);
             return ResponseEntity.badRequest().body("Error fetching notes");
         }
     }
@@ -64,7 +76,7 @@ public class NotesController {
     @PutMapping("/{noteId}")
     public ResponseEntity<?> updateNote(
             @PathVariable Long noteId,
-            @RequestBody StudyNote updatedNote) {
+            @Valid @RequestBody StudyNote updatedNote) {
         try {
             return notesService.getNoteById(noteId)
                     .map(existing -> {
@@ -75,6 +87,7 @@ public class NotesController {
                     })
                     .orElseGet(() -> ResponseEntity.notFound().build());
         } catch (Exception e) {
+            LOGGER.error("Error updating note noteId={}", noteId, e);
             return ResponseEntity.badRequest().body("Error updating note");
         }
     }
@@ -85,6 +98,7 @@ public class NotesController {
             notesService.deleteNote(noteId);
             return ResponseEntity.ok().build();
         } catch (Exception e) {
+            LOGGER.error("Error deleting note noteId={}", noteId, e);
             return ResponseEntity.badRequest().body("Error deleting note");
         }
     }

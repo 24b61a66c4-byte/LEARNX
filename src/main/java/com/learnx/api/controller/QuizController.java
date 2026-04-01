@@ -2,6 +2,9 @@ package com.learnx.api.controller;
 
 import com.learnx.persistence.model.QuizResult;
 import com.learnx.persistence.service.QuizResultService;
+import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -11,8 +14,10 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/quiz-results")
-@CrossOrigin(origins = "*")
 public class QuizController {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(QuizController.class);
+
     private final QuizResultService quizService;
 
     @Autowired
@@ -21,12 +26,13 @@ public class QuizController {
     }
 
     @PostMapping
-    public ResponseEntity<?> submitQuiz(@RequestBody QuizResult result) {
+    public ResponseEntity<?> submitQuiz(@Valid @RequestBody QuizResult result) {
         try {
             QuizResult saved = quizService.saveResult(result);
             return ResponseEntity.ok(saved);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Error saving quiz result: " + e.getMessage());
+            LOGGER.error("Error saving quiz result for userId={}", result.getUserId(), e);
+            return ResponseEntity.badRequest().body("Error saving quiz result");
         }
     }
 
@@ -36,7 +42,10 @@ public class QuizController {
             UUID parsedUserId = UUID.fromString(userId);
             List<QuizResult> results = quizService.getUserResults(parsedUserId);
             return ResponseEntity.ok(results);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body("Invalid user ID format");
         } catch (Exception e) {
+            LOGGER.error("Error fetching quiz results for userId={}", userId, e);
             return ResponseEntity.badRequest().body("Error fetching results");
         }
     }
@@ -49,7 +58,10 @@ public class QuizController {
             UUID parsedUserId = UUID.fromString(userId);
             List<QuizResult> results = quizService.getUserResultsBySubject(parsedUserId, subjectId);
             return ResponseEntity.ok(results);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body("Invalid user ID format");
         } catch (Exception e) {
+            LOGGER.error("Error fetching quiz results for userId={} subjectId={}", userId, subjectId, e);
             return ResponseEntity.badRequest().body("Error fetching results");
         }
     }
@@ -62,7 +74,10 @@ public class QuizController {
             UUID parsedUserId = UUID.fromString(userId);
             Double average = quizService.getAverageScore(parsedUserId, subjectId);
             return ResponseEntity.ok(average);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body("Invalid user ID format");
         } catch (Exception e) {
+            LOGGER.error("Error calculating average score for userId={} subjectId={}", userId, subjectId, e);
             return ResponseEntity.badRequest().body("Error calculating average");
         }
     }
