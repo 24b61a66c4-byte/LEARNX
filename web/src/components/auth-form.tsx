@@ -18,6 +18,34 @@ interface AuthFormProps {
   mode: "login" | "signup";
 }
 
+function isEmailRateLimitError(message: string): boolean {
+  const normalized = message.toLowerCase();
+  return (
+    normalized.includes("rate limit")
+    || normalized.includes("too many requests")
+    || normalized.includes("over_email_send_rate_limit")
+  );
+}
+
+function isUserAlreadyExistsError(message: string): boolean {
+  const normalized = message.toLowerCase();
+  return (
+    normalized.includes("user already registered")
+    || normalized.includes("already registered")
+    || normalized.includes("already exists")
+  );
+}
+
+function formatAuthErrorMessage(message: string | undefined, mode: "login" | "signup"): string {
+  if (!message) {
+    return mode === "login" ? "Login failed. Please try again." : "Signup failed. Please try again.";
+  }
+  if (isEmailRateLimitError(message)) {
+    return "Too many attempts right now. Please wait about a minute and try again.";
+  }
+  return message;
+}
+
 export function AuthForm({ mode }: AuthFormProps) {
   const router = useRouter();
   const [displayName, setDisplayName] = useState("");
@@ -49,7 +77,7 @@ export function AuthForm({ mode }: AuthFormProps) {
       if (mode === "login") {
         const { data, error } = await signInWithEmail(email.trim(), password);
         if (error) {
-          setErrorMessage(error.message || "Login failed. Please try again.");
+          setErrorMessage(formatAuthErrorMessage(error.message, "login"));
           setSubmitting(false);
           return;
         }
@@ -62,7 +90,26 @@ export function AuthForm({ mode }: AuthFormProps) {
       } else {
         const { data, error } = await signUpWithEmail(email.trim(), password);
         if (error) {
-          setErrorMessage(error.message || "Signup failed. Please try again.");
+          if (isUserAlreadyExistsError(error.message ?? "")) {
+            const { data: loginData, error: loginError } = await signInWithEmail(email.trim(), password);
+            if (loginError) {
+              setErrorMessage("This email is already registered. Please log in with your existing password or reset it.");
+              setSubmitting(false);
+              return;
+            }
+
+            if (loginData.user) {
+              const session = await syncSessionFromAuthUser(loginData.user);
+              router.push(session?.onboarded ? "/app" : "/app/onboarding");
+              return;
+            }
+
+            setErrorMessage("This email is already registered. Please log in to continue.");
+            setSubmitting(false);
+            return;
+          }
+
+          setErrorMessage(formatAuthErrorMessage(error.message, "signup"));
           setSubmitting(false);
           return;
         }
