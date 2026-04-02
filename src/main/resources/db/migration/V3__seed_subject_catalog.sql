@@ -129,7 +129,7 @@ VALUES
     (
         'coding',
         'Coding',
-        'Build programs, games, and logic step by step with friendly explanations and hands-on practice.',
+        'Programming fundamentals with age-aware examples, logic patterns, and guided practice.',
         '#10b981',
         'bg-emerald-400/15 text-emerald-950',
         3,
@@ -158,5 +158,5 @@ VALUES
     ('edc', 'experiments'),
     ('edc', 'revision'),
     ('coding', 'coding'),
-    ('coding', 'programming'),
-    ('coding', 'logic');
+    ('coding', 'logic'),
+    ('coding', 'problem-solving');
