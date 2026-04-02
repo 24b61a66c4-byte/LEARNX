@@ -1,12 +1,15 @@
 package com.learnx.persistence.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -51,36 +54,96 @@ public class QuizResult {
     @Column
     private LocalDateTime completedAt = LocalDateTime.now();
 
+    @Valid
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "quiz_result_answers", joinColumns = @JoinColumn(name = "quiz_result_id"))
+    private List<QuizAnswerDetail> answers = new ArrayList<>();
+
     @Column(updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
     // Getters and Setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public Long getId() {
+        return id;
+    }
 
-    public UUID getUserId() { return userId; }
-    public void setUserId(UUID userId) { this.userId = userId; }
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-    public String getSubjectId() { return subjectId; }
-    public void setSubjectId(String subjectId) { this.subjectId = subjectId; }
+    public UUID getUserId() {
+        return userId;
+    }
 
-    public String getTopicId() { return topicId; }
-    public void setTopicId(String topicId) { this.topicId = topicId; }
+    public void setUserId(UUID userId) {
+        this.userId = userId;
+    }
 
-    public Integer getTotalQuestions() { return totalQuestions; }
-    public void setTotalQuestions(Integer totalQuestions) { this.totalQuestions = totalQuestions; }
+    public String getSubjectId() {
+        return subjectId;
+    }
 
-    public Integer getCorrectCount() { return correctCount; }
-    public void setCorrectCount(Integer correctCount) { this.correctCount = correctCount; }
+    public void setSubjectId(String subjectId) {
+        this.subjectId = subjectId;
+    }
 
-    public Double getScorePercent() { return scorePercent; }
-    public void setScorePercent(Double scorePercent) { this.scorePercent = scorePercent; }
+    public String getTopicId() {
+        return topicId;
+    }
 
-    public Integer getXpEarned() { return xpEarned; }
-    public void setXpEarned(Integer xpEarned) { this.xpEarned = xpEarned; }
+    public void setTopicId(String topicId) {
+        this.topicId = topicId;
+    }
 
-    public LocalDateTime getCompletedAt() { return completedAt; }
-    public void setCompletedAt(LocalDateTime completedAt) { this.completedAt = completedAt; }
+    public Integer getTotalQuestions() {
+        return totalQuestions;
+    }
 
-    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setTotalQuestions(Integer totalQuestions) {
+        this.totalQuestions = totalQuestions;
+    }
+
+    public Integer getCorrectCount() {
+        return correctCount;
+    }
+
+    public void setCorrectCount(Integer correctCount) {
+        this.correctCount = correctCount;
+    }
+
+    public Double getScorePercent() {
+        return scorePercent;
+    }
+
+    public void setScorePercent(Double scorePercent) {
+        this.scorePercent = scorePercent;
+    }
+
+    public Integer getXpEarned() {
+        return xpEarned;
+    }
+
+    public void setXpEarned(Integer xpEarned) {
+        this.xpEarned = xpEarned;
+    }
+
+    public LocalDateTime getCompletedAt() {
+        return completedAt;
+    }
+
+    public void setCompletedAt(LocalDateTime completedAt) {
+        this.completedAt = completedAt;
+    }
+
+    public List<QuizAnswerDetail> getAnswers() {
+        return answers;
+    }
+
+    public void setAnswers(List<QuizAnswerDetail> answers) {
+        this.answers = answers;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
 }

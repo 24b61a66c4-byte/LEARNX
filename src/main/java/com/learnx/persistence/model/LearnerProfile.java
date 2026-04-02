@@ -33,6 +33,9 @@ public class LearnerProfile {
     @Column(length = 50)
     private String preferredSubjectId;
 
+    @Column(name = "preferred_topic_ids", columnDefinition = "TEXT ARRAY")
+    private String[] preferredTopicIds;
+
     @Column(length = 100)
     private String studyGoal;
 
@@ -64,50 +67,139 @@ public class LearnerProfile {
     private LocalDateTime updatedAt = LocalDateTime.now();
 
     // Getters and Setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public Long getId() {
+        return id;
+    }
 
-    public UUID getUserId() { return userId; }
-    public void setUserId(UUID userId) { this.userId = userId; }
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-    public String getDisplayName() { return displayName; }
-    public void setDisplayName(String displayName) { this.displayName = displayName; }
+    public UUID getUserId() {
+        return userId;
+    }
 
-    public Integer getAge() { return age; }
-    public void setAge(Integer age) { this.age = age; }
+    public void setUserId(UUID userId) {
+        this.userId = userId;
+    }
 
-    public String getCognitiveGroup() { return cognitiveGroup; }
-    public void setCognitiveGroup(String cognitiveGroup) { this.cognitiveGroup = cognitiveGroup; }
+    public String getDisplayName() {
+        return displayName;
+    }
 
-    public String getPreferredSubjectId() { return preferredSubjectId; }
-    public void setPreferredSubjectId(String preferredSubjectId) { this.preferredSubjectId = preferredSubjectId; }
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
+    }
 
-    public String getStudyGoal() { return studyGoal; }
-    public void setStudyGoal(String studyGoal) { this.studyGoal = studyGoal; }
+    public Integer getAge() {
+        return age;
+    }
 
-    public String getExamTarget() { return examTarget; }
-    public void setExamTarget(String examTarget) { this.examTarget = examTarget; }
+    public void setAge(Integer age) {
+        this.age = age;
+    }
 
-    public String getLaunchMode() { return launchMode; }
-    public void setLaunchMode(String launchMode) { this.launchMode = launchMode; }
+    public String getCognitiveGroup() {
+        return cognitiveGroup;
+    }
 
-    public String[] getInterests() { return interests; }
-    public void setInterests(String[] interests) { this.interests = interests; }
+    public void setCognitiveGroup(String cognitiveGroup) {
+        this.cognitiveGroup = cognitiveGroup;
+    }
 
-    public Boolean getEnableVisualDiagrams() { return enableVisualDiagrams; }
-    public void setEnableVisualDiagrams(Boolean enableVisualDiagrams) { this.enableVisualDiagrams = enableVisualDiagrams; }
+    public String getPreferredSubjectId() {
+        return preferredSubjectId;
+    }
 
-    public Boolean getEnableVoiceInput() { return enableVoiceInput; }
-    public void setEnableVoiceInput(Boolean enableVoiceInput) { this.enableVoiceInput = enableVoiceInput; }
+    public void setPreferredSubjectId(String preferredSubjectId) {
+        this.preferredSubjectId = preferredSubjectId;
+    }
 
-    public Boolean getEnableQuizMode() { return enableQuizMode; }
-    public void setEnableQuizMode(Boolean enableQuizMode) { this.enableQuizMode = enableQuizMode; }
+    public String[] getPreferredTopicIds() {
+        return preferredTopicIds;
+    }
 
-    public String[] getAccessibilityFeatures() { return accessibilityFeatures; }
-    public void setAccessibilityFeatures(String[] accessibilityFeatures) { this.accessibilityFeatures = accessibilityFeatures; }
+    public void setPreferredTopicIds(String[] preferredTopicIds) {
+        this.preferredTopicIds = preferredTopicIds;
+    }
 
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+    public String getStudyGoal() {
+        return studyGoal;
+    }
+
+    public void setStudyGoal(String studyGoal) {
+        this.studyGoal = studyGoal;
+    }
+
+    public String getExamTarget() {
+        return examTarget;
+    }
+
+    public void setExamTarget(String examTarget) {
+        this.examTarget = examTarget;
+    }
+
+    public String getLaunchMode() {
+        return launchMode;
+    }
+
+    public void setLaunchMode(String launchMode) {
+        this.launchMode = launchMode;
+    }
+
+    public String[] getInterests() {
+        return interests;
+    }
+
+    public void setInterests(String[] interests) {
+        this.interests = interests;
+    }
+
+    public Boolean getEnableVisualDiagrams() {
+        return enableVisualDiagrams;
+    }
+
+    public void setEnableVisualDiagrams(Boolean enableVisualDiagrams) {
+        this.enableVisualDiagrams = enableVisualDiagrams;
+    }
+
+    public Boolean getEnableVoiceInput() {
+        return enableVoiceInput;
+    }
+
+    public void setEnableVoiceInput(Boolean enableVoiceInput) {
+        this.enableVoiceInput = enableVoiceInput;
+    }
+
+    public Boolean getEnableQuizMode() {
+        return enableQuizMode;
+    }
+
+    public void setEnableQuizMode(Boolean enableQuizMode) {
+        this.enableQuizMode = enableQuizMode;
+    }
+
+    public String[] getAccessibilityFeatures() {
+        return accessibilityFeatures;
+    }
+
+    public void setAccessibilityFeatures(String[] accessibilityFeatures) {
+        this.accessibilityFeatures = accessibilityFeatures;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
 }
