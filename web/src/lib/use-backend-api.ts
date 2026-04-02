@@ -58,6 +58,7 @@ export function useBackendApi() {
           age: normalized.age,
           cognitiveGroup: normalized.cognitiveGroup,
           preferredSubjectId: normalized.preferredSubjectId || getRecommendedSubjectId(normalized.age, normalized.cognitiveGroup, normalized.interests),
+          preferredTopicIds: normalized.preferredTopicIds || [],
           studyGoal: normalized.studyGoal,
           examTarget: normalized.examTarget,
           launchMode: normalized.launchMode,

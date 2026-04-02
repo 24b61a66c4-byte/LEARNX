@@ -20,9 +20,11 @@ class CatalogServiceTest {
     void loadsValidCatalogFromJsonStore() {
         CatalogService catalogService = new CatalogService(new JsonCatalogStore());
 
-        assertEquals(2, catalogService.getSubjects().size());
+        assertEquals(3, catalogService.getSubjects().size());
         assertEquals(3, catalogService.getTopicsForSubject("dbms").size());
+        assertEquals(3, catalogService.getTopicsForSubject("coding").size());
         assertEquals(1, catalogService.getQuestionsForTopic("dbms-joins").size());
+        assertEquals(1, catalogService.getQuestionsForTopic("coding-variables").size());
     }
 
     @Test
@@ -31,11 +33,9 @@ class CatalogServiceTest {
                 List.of(subject("dbms")),
                 List.of(
                         topic("sql-1", "dbms"),
-                        topic("sql-1", "dbms")
-                ),
+                        topic("sql-1", "dbms")),
                 List.of(),
-                List.of()
-        );
+                List.of());
 
         assertThrows(CatalogValidationException.class, () -> new CatalogService(store));
     }
@@ -46,8 +46,7 @@ class CatalogServiceTest {
                 List.of(subject("dbms")),
                 List.of(topic("joins", "dbms", "sql-basics")),
                 List.of(),
-                List.of()
-        );
+                List.of());
 
         assertThrows(CatalogValidationException.class, () -> new CatalogService(store));
     }
@@ -58,11 +57,9 @@ class CatalogServiceTest {
                 List.of(subject("dbms")),
                 List.of(
                         topic("a", "dbms", "b"),
-                        topic("b", "dbms", "a")
-                ),
+                        topic("b", "dbms", "a")),
                 List.of(),
-                List.of()
-        );
+                List.of());
 
         assertThrows(CatalogValidationException.class, () -> new CatalogService(store));
     }

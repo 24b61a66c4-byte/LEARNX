@@ -19,8 +19,26 @@ public class QuizResultService {
     }
 
     public QuizResult saveResult(QuizResult result) {
-        result.setCompletedAt(LocalDateTime.now());
+        normalizeResult(result);
+        if (result.getCompletedAt() == null) {
+            result.setCompletedAt(LocalDateTime.now());
+        }
         return repository.save(result);
+    }
+
+    private void normalizeResult(QuizResult result) {
+        if (result == null) {
+            return;
+        }
+
+        if (result.getAnswers() == null) {
+            result.setAnswers(List.of());
+            return;
+        }
+
+        result.setAnswers(result.getAnswers().stream()
+                .filter(answer -> answer != null)
+                .toList());
     }
 
     public List<QuizResult> getUserResults(UUID userId) {

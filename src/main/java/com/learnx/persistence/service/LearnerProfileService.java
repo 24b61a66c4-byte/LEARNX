@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -48,7 +49,12 @@ public class LearnerProfileService {
 
     public void deleteProfile(UUID userId) {
         Optional<LearnerProfile> profile = repository.findByUserId(userId);
-        profile.ifPresent(p -> repository.deleteById(p.getId()));
+        profile.ifPresent(p -> {
+            Long profileId = p.getId();
+            if (profileId != null) {
+                repository.deleteById(profileId);
+            }
+        });
     }
 
     private void normalizeProfile(LearnerProfile profile) {
@@ -56,16 +62,54 @@ public class LearnerProfileService {
             return;
         }
 
+        String[] normalizedPreferredTopicIds = normalizeTopicIds(profile.getPreferredTopicIds());
+        profile.setPreferredTopicIds(normalizedPreferredTopicIds);
+
         if (profile.getAge() != null) {
             profile.setCognitiveGroup(resolveCognitiveGroup(profile.getAge()));
         }
 
         if (profile.getPreferredSubjectId() == null || profile.getPreferredSubjectId().isBlank()) {
-            // Use SubjectService to resolve preferred subject dynamically
-            profile.setPreferredSubjectId(subjectService.resolvePreferredSubjectId(profile.getInterests()));
+            String preferredFromTopic = inferSubjectIdFromTopicIds(normalizedPreferredTopicIds);
+            if (preferredFromTopic != null) {
+                profile.setPreferredSubjectId(preferredFromTopic);
+            } else {
+                profile.setPreferredSubjectId(subjectService.resolvePreferredSubjectId(profile.getInterests()));
+            }
         } else {
-            profile.setPreferredSubjectId(profile.getPreferredSubjectId().trim());
+            profile.setPreferredSubjectId(subjectService.normalizeSubjectId(profile.getPreferredSubjectId().trim()));
         }
+    }
+
+    private String[] normalizeTopicIds(String[] preferredTopicIds) {
+        if (preferredTopicIds == null || preferredTopicIds.length == 0) {
+            return null;
+        }
+
+        String[] normalized = Arrays.stream(preferredTopicIds)
+                .filter(value -> value != null && !value.isBlank())
+                .map(String::trim)
+                .distinct()
+                .limit(10)
+                .toArray(String[]::new);
+
+        return normalized.length == 0 ? null : normalized;
+    }
+
+    private String inferSubjectIdFromTopicIds(String[] preferredTopicIds) {
+        if (preferredTopicIds == null || preferredTopicIds.length == 0) {
+            return null;
+        }
+
+        for (String topicId : preferredTopicIds) {
+            int separatorIndex = topicId.indexOf('-');
+            String candidate = separatorIndex > 0 ? topicId.substring(0, separatorIndex) : topicId;
+            if (subjectService.getSubjectById(candidate).isPresent()) {
+                return subjectService.normalizeSubjectId(candidate);
+            }
+        }
+
+        return null;
     }
 
     // Hardcoded subject resolution removed - now delegated to SubjectService

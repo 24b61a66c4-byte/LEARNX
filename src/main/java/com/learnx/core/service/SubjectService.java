@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 /**
  * SubjectService manages the catalog of available subjects.
@@ -25,7 +26,9 @@ public class SubjectService {
      */
     public List<SubjectDTO> getAllSubjects() {
         ensureCacheInitialized();
-        return new ArrayList<>(cache.values());
+        return cache.values().stream()
+                .sorted(Comparator.comparingInt(subject -> subject.displayOrder))
+                .toList();
     }
 
     /**
@@ -33,8 +36,16 @@ public class SubjectService {
      */
     public Optional<SubjectDTO> getSubjectById(String id) {
         ensureCacheInitialized();
-        String mappedId = mapLegacyId(id);
+        String mappedId = normalizeSubjectId(id);
         return Optional.ofNullable(cache.get(mappedId));
+    }
+
+    /**
+     * Normalize aliases and route-style subject names to the catalog IDs used across
+     * the rest of the application.
+     */
+    public String normalizeSubjectId(String id) {
+        return mapLegacyId(id);
     }
 
     /**
@@ -43,33 +54,26 @@ public class SubjectService {
      */
     public String resolvePreferredSubjectId(String[] interests) {
         if (interests == null || interests.length == 0) {
-            // Default to first subject, not hardcoded "dbms"
             return getDefaultSubjectId();
         }
 
         ensureCacheInitialized();
 
-        // Check for math/coding interests
-        if (hasInterest(interests, "math", "maths", "mathematics", "number", "code", "coding", "programming")) {
-            // Find subject with "math" tag
-            for (SubjectDTO subject : cache.values()) {
-                if (subject.tags.contains("math")) {
-                    return subject.id;
-                }
-            }
+        if (hasInterest(interests, "code", "coding", "program", "programming", "app", "apps", "game", "games")) {
+            return findSubjectIdByAnyTag("coding", "programming", "logic")
+                    .orElse("coding");
         }
 
-        // Check for science interests
+        if (hasInterest(interests, "math", "maths", "mathematics", "number")) {
+            return findSubjectIdByAnyTag("math", "mathematics", "numbers")
+                    .orElse("dbms");
+        }
+
         if (hasInterest(interests, "science", "physics", "chemistry", "biology")) {
-            // Find subject with "science" tag
-            for (SubjectDTO subject : cache.values()) {
-                if (subject.tags.contains("science")) {
-                    return subject.id;
-                }
-            }
+            return findSubjectIdByAnyTag("science", "experiments", "observation")
+                    .orElse("edc");
         }
 
-        // Return default
         return getDefaultSubjectId();
     }
 
@@ -81,7 +85,7 @@ public class SubjectService {
         return cache.values().stream()
                 .min(Comparator.comparingInt(s -> s.displayOrder))
                 .map(s -> s.id)
-                .orElse("mathematics"); // Ultimate fallback
+                .orElse("dbms");
     }
 
     /**
@@ -108,12 +112,31 @@ public class SubjectService {
     }
 
     private String mapLegacyId(String id) {
-        // Support old DBMS/EDC identifiers for backward compatibility
+        if (id == null) {
+            return "";
+        }
+
         return switch (id) {
-            case "dbms" -> "mathematics";
-            case "edc" -> "science";
-            default -> id;
+            case "mathematics", "math" -> "dbms";
+            case "science" -> "edc";
+            case "computer-science", "programming" -> "coding";
+            default -> id.trim().toLowerCase();
         };
+    }
+
+    private Optional<String> findSubjectIdByAnyTag(String... tags) {
+        Set<String> normalizedTags = Arrays.stream(tags)
+                .map(tag -> tag == null ? "" : tag.trim().toLowerCase())
+                .filter(tag -> !tag.isBlank())
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+
+        return cache.values().stream()
+                .filter(subject -> subject.tags != null && subject.tags.stream()
+                        .map(tag -> tag == null ? "" : tag.trim().toLowerCase())
+                        .anyMatch(normalizedTags::contains))
+                .sorted(Comparator.comparingInt(subject -> subject.displayOrder))
+                .map(subject -> subject.id)
+                .findFirst();
     }
 
     private boolean hasInterest(String[] interests, String... keywords) {

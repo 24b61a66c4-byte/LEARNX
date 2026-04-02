@@ -6,6 +6,7 @@ import type { ReactNode } from "react";
 import "./globals.css";
 
 import { LearnxLogo } from "@/components/learnx-logo";
+import { SiteHeader } from "@/components/site-header";
 import { Providers } from "@/app/providers";
 
 const displayFont = Space_Grotesk({
@@ -32,7 +33,7 @@ export default function RootLayout({
   children: ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html data-scroll-behavior="smooth" lang="en" suppressHydrationWarning>
       <body className={`${displayFont.variable} ${bodyFont.variable}`}>
         <Providers>
           <div className="relative min-h-screen">
@@ -50,12 +51,7 @@ export default function RootLayout({
                 >
                   <LearnxLogo />
                 </Link>
-                <div className="hidden items-center gap-3 text-sm sm:flex">
-                  <span className="pill bg-white/70 text-slate-600">Study workspace</span>
-                  <Link className="button-secondary px-4 py-2 text-sm" href="/login">
-                    Sign in
-                  </Link>
-                </div>
+                <SiteHeader />
               </div>
             </header>
             <main id="main-content">{children}</main>

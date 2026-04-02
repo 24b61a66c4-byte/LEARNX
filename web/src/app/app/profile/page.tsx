@@ -9,7 +9,7 @@ import { getServerDashboard, learnerStateGateway, sessionGateway } from "@/lib/g
 import { ExportProgress } from "@/components/export-progress";
 import { StreakCalendar } from "@/components/streak-calendar";
 import { persistOnboardingProfile } from "@/lib/profile-updates";
-import { getCognitiveGroup, getRecommendedSubjectId, getStoredOnboardingProfile } from "@/lib/profile-preferences";
+import { getCognitiveGroup, getRecommendedSubjectId, getRecommendedTopicIds, getStoredOnboardingProfile } from "@/lib/profile-preferences";
 import { AccessibilityFeature, OnboardingProfile } from "@/lib/types";
 
 function XPRingCompact({ xp, level }: { xp: number; level: number }) {
@@ -96,13 +96,17 @@ export default function ProfilePage() {
     }
 
     const hasAge = nextAge !== "";
+    const nextRecommendedTopicIds = hasAge
+      ? getRecommendedTopicIds(nextAge, getCognitiveGroup(nextAge), profile.interests)
+      : profile.preferredTopicIds;
     const nextProfile: OnboardingProfile = {
       ...profile,
       age: hasAge ? nextAge : undefined,
       cognitiveGroup: hasAge ? getCognitiveGroup(nextAge) : undefined,
-      preferredSubjectId: hasAge
-        ? getRecommendedSubjectId(nextAge, getCognitiveGroup(nextAge), profile.interests)
-        : profile.preferredSubjectId,
+      preferredTopicIds: profile.preferredTopicIds?.length ? profile.preferredTopicIds : nextRecommendedTopicIds,
+      preferredSubjectId:
+        profile.preferredSubjectId ??
+        (hasAge ? getRecommendedSubjectId(nextAge, getCognitiveGroup(nextAge), profile.interests) : "dbms"),
     };
 
     void persistProfile(nextProfile);

@@ -26,6 +26,10 @@ const subjectUiMap: Record<string, Pick<Subject, "accent" | "backdrop">> = {
     accent: "from-amber-400/25 via-orange-400/15 to-rose-400/25",
     backdrop: "bg-amber-400/15 text-amber-950",
   },
+  coding: {
+    accent: "from-emerald-400/25 via-lime-300/15 to-cyan-400/25",
+    backdrop: "bg-emerald-400/15 text-emerald-950",
+  },
 };
 
 export const subjects: Subject[] = backendCatalog.subjects.map((subject) => ({
@@ -270,6 +274,151 @@ export const lessons: Lesson[] = [
         content: [
           "Define the system in one line and explain how it responds.",
           "Mention the key parts, their roles, and one practical example.",
+        ],
+      },
+    ],
+  },
+  {
+    topicId: "coding-logic-basics",
+    blocks: [
+      {
+        id: "coding-logic-summary",
+        kind: "summary",
+        title: "What coding logic means",
+        content: [
+          "Coding logic is the skill of breaking a task into clear steps a computer can follow.",
+          "At the beginner level, that usually means sequence, patterns, and simple algorithms from daily life.",
+        ],
+      },
+      {
+        id: "coding-logic-steps",
+        kind: "steps",
+        title: "How to plan a small algorithm",
+        content: [
+          "Start by writing what should happen first.",
+          "Keep each step short and in the right order.",
+          "Test the steps once to check whether the result matches the goal.",
+        ],
+      },
+      {
+        id: "coding-logic-example",
+        kind: "example",
+        title: "Worked example",
+        content: [
+          "A hand-washing algorithm could be: turn on water, add soap, scrub, rinse, and dry hands.",
+          "If you scramble the order, the result is weaker, which shows why sequence matters in coding.",
+        ],
+      },
+      {
+        id: "coding-logic-exam",
+        kind: "exam",
+        title: "Explain it clearly",
+        content: [
+          "Define coding logic, say that computers follow steps in order, and give one everyday algorithm example.",
+          "Mention the sequence, the goal, and why the order matters.",
+        ],
+      },
+      {
+        id: "coding-logic-mistakes",
+        kind: "mistake-watch",
+        title: "Common mistakes",
+        content: [
+          "Skipping a step and assuming the computer will guess it.",
+          "Using unclear instructions such as 'do the thing'.",
+          "Testing only the final result instead of checking each step.",
+        ],
+      },
+    ],
+  },
+  {
+    topicId: "coding-variables",
+    blocks: [
+      {
+        id: "coding-var-summary",
+        kind: "summary",
+        title: "What variables do",
+        content: [
+          "A variable stores a value so a program can use it later, update it, or compare it.",
+          "This is how code remembers scores, names, counters, and many other pieces of information.",
+        ],
+      },
+      {
+        id: "coding-var-deep",
+        kind: "deep-dive",
+        title: "Think of a labeled box",
+        content: [
+          "You can imagine a variable as a labeled box with a value inside.",
+          "The label helps you find it again, and the value can change when the program runs.",
+        ],
+      },
+      {
+        id: "coding-var-example",
+        kind: "example",
+        title: "Worked example",
+        content: [
+          "A game might store score = 10 and then update it to 15 after the player wins a round.",
+          "The variable keeps the latest value ready for the next step in the program.",
+        ],
+      },
+      {
+        id: "coding-var-exam",
+        kind: "exam",
+        title: "Explain it clearly",
+        content: [
+          "Define a variable, say that it stores data, and give one example such as a score or a name.",
+          "Mention the label, the value, and how the value can change.",
+        ],
+      },
+    ],
+  },
+  {
+    topicId: "coding-control-flow",
+    blocks: [
+      {
+        id: "coding-flow-summary",
+        kind: "summary",
+        title: "How control flow guides code",
+        content: [
+          "Control flow decides which step runs next in a program.",
+          "This includes conditions for choices and loops for repeated actions.",
+        ],
+      },
+      {
+        id: "coding-flow-steps",
+        kind: "steps",
+        title: "Decision and repeat checklist",
+        content: [
+          "Ask a clear yes-or-no question for the condition.",
+          "Choose the action for each path.",
+          "If something repeats, decide how many times it should run or when it should stop.",
+        ],
+      },
+      {
+        id: "coding-flow-example",
+        kind: "example",
+        title: "Worked example",
+        content: [
+          "If a player has 3 lives left, keep playing; otherwise show 'Game over'.",
+          "A loop can then move an enemy left and right five times without writing the same instruction again and again.",
+        ],
+      },
+      {
+        id: "coding-flow-exam",
+        kind: "exam",
+        title: "Explain it clearly",
+        content: [
+          "Define control flow, mention conditions and loops, and give one simple coding example.",
+          "Show the rule, the possible paths, and the benefit of repetition when steps stay the same.",
+        ],
+      },
+      {
+        id: "coding-flow-mistakes",
+        kind: "mistake-watch",
+        title: "Common mistakes",
+        content: [
+          "Forgetting what should happen when the condition is false.",
+          "Creating a loop without a clear stop rule.",
+          "Using repeated code when a loop would be clearer.",
         ],
       },
     ],

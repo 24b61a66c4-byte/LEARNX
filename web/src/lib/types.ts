@@ -86,6 +86,7 @@ export interface AppSession {
 
 export interface OnboardingProfile {
   preferredSubjectId: SubjectId;
+  preferredTopicIds?: string[];
   studyGoal: StudyGoal;
   examTarget?: ExamTarget;
   launchMode?: LaunchMode;
@@ -152,6 +153,7 @@ export interface PracticeSubmission {
 
 export interface PracticeAnswerResult {
   questionId: string;
+  topicId?: string;
   prompt: string;
   correct: boolean;
   score: number;

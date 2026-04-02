@@ -20,6 +20,7 @@ type ServerLearnerProfile = {
   age?: number;
   cognitiveGroup?: string;
   preferredSubjectId?: string;
+  preferredTopicIds?: string[];
   studyGoal?: string;
   examTarget?: string;
   launchMode?: string;
@@ -38,6 +39,16 @@ type ServerQuizResult = {
   scorePercent: number;
   xpEarned?: number;
   completedAt?: string;
+  answers?: {
+    questionId?: string;
+    topicId?: string;
+    prompt?: string;
+    learnerAnswer?: string;
+    correctAnswer?: string;
+    correct?: boolean;
+    score?: number;
+    explanation?: string;
+  }[];
 };
 
 type ServerStudyNote = {
@@ -104,6 +115,7 @@ function mapServerProfile(profile: ServerLearnerProfile): OnboardingProfile | nu
 
   return normalizeOnboardingProfile({
     preferredSubjectId: profile.preferredSubjectId as OnboardingProfile["preferredSubjectId"],
+    preferredTopicIds: profile.preferredTopicIds,
     studyGoal: profile.studyGoal as OnboardingProfile["studyGoal"],
     examTarget: profile.examTarget as OnboardingProfile["examTarget"],
     launchMode: profile.launchMode as OnboardingProfile["launchMode"],
@@ -126,7 +138,16 @@ function mapServerResult(result: ServerQuizResult): PracticeResult {
     totalCount: result.totalQuestions,
     xpEarned: result.xpEarned ?? 0,
     badgeAwarded: null,
-    answers: [],
+    answers: (result.answers ?? []).map((answer) => ({
+      questionId: answer.questionId ?? "",
+      topicId: answer.topicId,
+      prompt: answer.prompt ?? "",
+      correct: Boolean(answer.correct),
+      score: answer.score ?? 0,
+      explanation: answer.explanation ?? "",
+      learnerAnswer: answer.learnerAnswer ?? "",
+      correctAnswer: answer.correctAnswer ?? "",
+    })),
     completedAt: normalizeTimestamp(result.completedAt),
   };
 }
@@ -203,6 +224,7 @@ export async function syncOnboardingProfile(profile: OnboardingProfile) {
     age: normalized.age,
     cognitiveGroup: normalized.cognitiveGroup,
     preferredSubjectId: normalized.preferredSubjectId,
+    preferredTopicIds: normalized.preferredTopicIds,
     studyGoal: normalized.studyGoal,
     examTarget: normalized.examTarget,
     launchMode: normalized.launchMode,
@@ -230,6 +252,16 @@ export async function syncPracticeResult(result: PracticeResult) {
     scorePercent: result.scorePercent,
     xpEarned: result.xpEarned,
     completedAt: result.completedAt,
+    answers: result.answers.map((answer) => ({
+      questionId: answer.questionId,
+      topicId: answer.topicId,
+      prompt: answer.prompt,
+      learnerAnswer: answer.learnerAnswer,
+      correctAnswer: answer.correctAnswer,
+      correct: answer.correct,
+      score: answer.score,
+      explanation: answer.explanation,
+    })),
   });
 }
 

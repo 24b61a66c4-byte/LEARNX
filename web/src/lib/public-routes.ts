@@ -3,11 +3,13 @@ import type { SubjectId, Topic } from "@/lib/types";
 const subjectSlugById: Record<SubjectId, string> = {
   dbms: "mathematics",
   edc: "science",
+  coding: "coding",
 };
 
 const subjectIdBySlug: Record<string, SubjectId> = {
   dbms: "dbms",
   edc: "edc",
+  coding: "coding",
   mathematics: "dbms",
   science: "edc",
 };
@@ -19,6 +21,9 @@ const topicSlugById: Record<string, string> = {
   "edc-diode-basics": "science-basics",
   "edc-rectifiers": "energy-and-change",
   "edc-transistor-basics": "control-and-systems",
+  "coding-logic-basics": "logic-and-sequences",
+  "coding-variables": "variables-and-data",
+  "coding-control-flow": "conditions-and-loops",
 };
 
 const topicIdBySlug: Record<string, string> = Object.fromEntries(
@@ -96,6 +101,18 @@ export function getPublicPracticeHref(subjectId: SubjectId, topicId?: string) {
   }
 
   return `/app/practice?${searchParams.toString()}`;
+}
+
+export function getPublicPracticeResultsHref(subjectId: SubjectId, topicId?: string) {
+  const searchParams = new URLSearchParams({
+    subjectId: getPublicSubjectSlug(subjectId),
+  });
+
+  if (topicId) {
+    searchParams.set("topicId", getPublicTopicSlug(topicId));
+  }
+
+  return `/app/practice/results?${searchParams.toString()}`;
 }
 
 export function getResolvedTopicHref(topic: Topic, fragment?: string) {

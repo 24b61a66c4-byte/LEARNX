@@ -5,7 +5,6 @@ import com.learnx.api.config.LearnxRateLimitProperties;
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
 import io.github.bucket4j.ConsumptionProbe;
-import io.github.bucket4j.Refill;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -15,6 +14,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -38,7 +38,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected boolean shouldNotFilter(HttpServletRequest request) {
+    protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
         String path = request.getRequestURI();
         if (!properties.isEnabled()) {
             return true;
@@ -50,7 +50,8 @@ public class RateLimitFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+    protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response,
+            @NonNull FilterChain filterChain)
             throws ServletException, IOException {
         String bucketKey = resolveBucketKey(request);
         Bucket bucket = buckets.computeIfAbsent(bucketKey, ignored -> newBucket());
@@ -70,11 +71,12 @@ public class RateLimitFilter extends OncePerRequestFilter {
     }
 
     private Bucket newBucket() {
-        Bandwidth limit = Bandwidth.classic(
-                Math.max(1L, properties.getCapacity()),
-                Refill.greedy(
+        Bandwidth limit = Bandwidth.builder()
+                .capacity(Math.max(1L, properties.getCapacity()))
+                .refillGreedy(
                         Math.max(1L, properties.getRefillTokens()),
-                        Duration.ofMinutes(Math.max(1L, properties.getRefillMinutes()))));
+                        Duration.ofMinutes(Math.max(1L, properties.getRefillMinutes())))
+                .build();
         return Bucket.builder().addLimit(limit).build();
     }
 

@@ -11,7 +11,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useClientSnapshot } from "@/lib/client-snapshot";
 import { getSubjectById, getTopicById } from "@/lib/data/catalog";
 import { getPublicAskHref, getPublicLearnHref, getPublicPracticeHref } from "@/lib/public-routes";
-import { getCognitiveGroup, getStoredOnboardingProfile } from "@/lib/profile-preferences";
+import { getStoredOnboardingProfile } from "@/lib/profile-preferences";
 import {
   defaultSession,
   getServerDashboard,
@@ -23,15 +23,102 @@ import {
 import { readLocalStorage } from "@/lib/storage";
 import { AppSession, DashboardView, OnboardingProfile, PracticeResult, StudyNote, TutorThread } from "@/lib/types";
 
+type NavGlyphProps = {
+  className?: string;
+};
+
+type NavGlyph = (props: NavGlyphProps) => ReactNode;
+
+function HomeIcon({ className }: NavGlyphProps) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+      <path d="M3 11.5 12 4l9 7.5" />
+      <path d="M5.5 10.5V20h13V10.5" />
+    </svg>
+  );
+}
+
+function BookIcon({ className }: NavGlyphProps) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+      <path d="M4 6.5A2.5 2.5 0 0 1 6.5 4H20v15.5a.5.5 0 0 1-.5.5H6.5A2.5 2.5 0 0 0 4 22z" />
+      <path d="M8 7h8" />
+      <path d="M8 11h8" />
+    </svg>
+  );
+}
+
+function ChatIcon({ className }: NavGlyphProps) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+      <path d="M5 18.5V6.5A2.5 2.5 0 0 1 7.5 4h9A2.5 2.5 0 0 1 19 6.5v7A2.5 2.5 0 0 1 16.5 16H9l-4 2.5Z" />
+      <path d="M8 8h8" />
+      <path d="M8 11.5h5" />
+    </svg>
+  );
+}
+
+function TargetIcon({ className }: NavGlyphProps) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="7.5" />
+      <circle cx="12" cy="12" r="3.5" />
+      <path d="M12 2v3" />
+      <path d="M22 12h-3" />
+    </svg>
+  );
+}
+
+function ChartIcon({ className }: NavGlyphProps) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+      <path d="M4 19.5h16" />
+      <path d="M7 16V9.5" />
+      <path d="M12 16V6" />
+      <path d="M17 16v-4.5" />
+    </svg>
+  );
+}
+
+function HistoryIcon({ className }: NavGlyphProps) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+      <path d="M4 12a8 8 0 1 0 2.3-5.7" />
+      <path d="M4 4v4h4" />
+      <path d="M12 8v4l2.5 1.5" />
+    </svg>
+  );
+}
+
+function SettingsIcon({ className }: NavGlyphProps) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="3" />
+      <path d="M19.4 15a1 1 0 0 0 .2 1.1l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1 1 0 0 0-1.1-.2 1 1 0 0 0-.6.9V20a2 2 0 1 1-4 0v-.2a1 1 0 0 0-.6-.9 1 1 0 0 0-1.1.2l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1 1 0 0 0 .2-1.1 1 1 0 0 0-.9-.6H4a2 2 0 1 1 0-4h.2a1 1 0 0 0 .9-.6 1 1 0 0 0-.2-1.1l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1 1 0 0 0 1.1.2 1 1 0 0 0 .6-.9V4a2 2 0 1 1 4 0v.2a1 1 0 0 0 .6.9 1 1 0 0 0 1.1-.2l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1 1 0 0 0-.2 1.1 1 1 0 0 0 .9.6H20a2 2 0 1 1 0 4h-.2a1 1 0 0 0-.9.6Z" />
+    </svg>
+  );
+}
+
+function LogOutIcon({ className }: NavGlyphProps) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+      <path d="M9 20H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h4" />
+      <path d="m16 17 5-5-5-5" />
+      <path d="M21 12H9" />
+    </svg>
+  );
+}
+
 const navItems = [
-  { href: "/app", label: "Home", shortLabel: "HM" },
-  { href: "/app/subjects", label: "Subjects", shortLabel: "SB" },
-  { href: "/app/ask", label: "Tutor", shortLabel: "TU" },
-  { href: "/app/practice", label: "Practice", shortLabel: "PR" },
-  { href: "/app/progress", label: "Progress", shortLabel: "PG" },
+  { href: "/app", label: "Home", icon: HomeIcon },
+  { href: "/app/subjects", label: "Subjects", icon: BookIcon },
+  { href: "/app/ask", label: "Tutor", icon: ChatIcon },
+  { href: "/app/practice", label: "Practice", icon: TargetIcon },
+  { href: "/app/progress", label: "Progress", icon: ChartIcon },
 ];
 
 const SIDEBAR_COLLAPSED_STORAGE_KEY = "learnx-shell-sidebar-collapsed";
+const SIDEBAR_HISTORY_STORAGE_KEY = "learnx-shell-history-open";
 
 function getShellState(): {
   session: AppSession;
@@ -102,7 +189,7 @@ function formatShortDate(value: string) {
 function NavLink({
   href,
   label,
-  shortLabel,
+  icon: Icon,
   active,
   compact = false,
   collapsed = false,
@@ -110,7 +197,7 @@ function NavLink({
 }: {
   href: string;
   label: string;
-  shortLabel?: string;
+  icon: NavGlyph;
   active: boolean;
   compact?: boolean;
   collapsed?: boolean;
@@ -138,7 +225,7 @@ function NavLink({
           : "bg-slate-200/70 text-slate-700 group-hover:bg-slate-300/70"
           }`}
       >
-        {shortLabel ?? label.slice(0, 2).toUpperCase()}
+        <Icon className="h-4 w-4" />
       </span>
       {compactMode ? null : <span className={active ? "bg-slate-950 text-white" : undefined}>{label}</span>}
       {active && !compactMode ? <span className="nav-active-rail" /> : null}
@@ -157,6 +244,13 @@ export function AppShell({ children }: { children: ReactNode }) {
     }
 
     return window.localStorage.getItem(SIDEBAR_COLLAPSED_STORAGE_KEY) === "1";
+  });
+  const [historyPanelOpen, setHistoryPanelOpen] = useState(() => {
+    if (typeof window === "undefined") {
+      return false;
+    }
+
+    return window.localStorage.getItem(SIDEBAR_HISTORY_STORAGE_KEY) === "1";
   });
   const [mobileNavRoute, setMobileNavRoute] = useState<string | null>(null);
   const shellState = useClientSnapshot(getShellState, getServerShellState);
@@ -186,6 +280,14 @@ export function AppShell({ children }: { children: ReactNode }) {
     window.localStorage.setItem(SIDEBAR_COLLAPSED_STORAGE_KEY, sidebarCollapsed ? "1" : "0");
   }, [sidebarCollapsed]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    window.localStorage.setItem(SIDEBAR_HISTORY_STORAGE_KEY, historyPanelOpen ? "1" : "0");
+  }, [historyPanelOpen]);
+
   const { dashboard, onboarding, session, history, threads, notes } = shellState;
   const activeOnboarding = onboarding;
   const isOnboardingRoute = pathname === "/app/onboarding";
@@ -194,7 +296,6 @@ export function AppShell({ children }: { children: ReactNode }) {
     (typeof user?.user_metadata?.name === "string" ? user.user_metadata.name : null) ??
     session.profile?.displayName ??
     "LearnX Student";
-  const email = user?.email ?? session.profile?.email ?? "local session";
   const firstName = displayName.split(" ")[0] ?? "Student";
   const avatarInitials = displayName
     .split(" ")
@@ -213,9 +314,6 @@ export function AppShell({ children }: { children: ReactNode }) {
   const tutorHref = dashboard.resumeTopic
     ? getPublicAskHref(dashboard.resumeTopic.subjectId, dashboard.resumeTopic.id)
     : getPublicAskHref(fallbackSubjectId);
-  const ageLabel = activeOnboarding?.age ?? "set in settings";
-  const groupLabel = activeOnboarding?.age ? getCognitiveGroup(activeOnboarding.age).toUpperCase() : "TEENS";
-
   const recentWork = [
     history[0]
       ? {
@@ -306,32 +404,50 @@ export function AppShell({ children }: { children: ReactNode }) {
                   active={isActivePath(pathname, item.href)}
                   collapsed={sidebarCollapsed}
                   href={item.href}
+                  icon={item.icon}
                   key={item.href}
                   label={item.label}
-                  shortLabel={item.shortLabel}
                 />
               ))}
             </div>
 
             <div className={`space-y-3 ${sidebarCollapsed ? "hidden" : "block"}`}>
-              <p className="eyebrow">History</p>
-              {visibleRecentWork.length === 0 ? (
-                <div className="surface-panel px-4 py-4 text-sm leading-6 text-slate-500">
-                  Drills, notes, and tutor threads will appear here after you start studying.
+              <div className="flex items-center justify-between gap-3 px-1">
+                <div className="flex items-center gap-2">
+                  <HistoryIcon className="h-4 w-4 text-slate-500" />
+                  <p className="eyebrow">Recent activity</p>
                 </div>
+                <button
+                  className="text-xs font-semibold text-slate-600"
+                  onClick={() => setHistoryPanelOpen((current) => !current)}
+                  type="button"
+                >
+                  {historyPanelOpen ? "Hide" : "Show"}
+                </button>
+              </div>
+              {historyPanelOpen ? (
+                visibleRecentWork.length === 0 ? (
+                  <div className="surface-panel px-4 py-4 text-sm leading-6 text-slate-500">
+                    Drills, notes, and tutor threads will appear here once the learner starts studying.
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {visibleRecentWork.map((item) => (
+                      <Link
+                        className="surface-panel block px-4 py-4 transition hover:-translate-y-0.5 hover:shadow-[0_16px_36px_rgba(15,23,42,0.08)]"
+                        href={item.href}
+                        key={`${item.label}-${item.title}`}
+                      >
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{item.label}</p>
+                        <p className="mt-2 font-semibold text-slate-950">{item.title}</p>
+                        <p className="mt-1 text-sm leading-6 text-slate-600">{item.detail}</p>
+                      </Link>
+                    ))}
+                  </div>
+                )
               ) : (
-                <div className="space-y-3">
-                  {visibleRecentWork.map((item) => (
-                    <Link
-                      className="surface-panel block px-4 py-4 transition hover:-translate-y-0.5 hover:shadow-[0_16px_36px_rgba(15,23,42,0.08)]"
-                      href={item.href}
-                      key={`${item.label}-${item.title}`}
-                    >
-                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{item.label}</p>
-                      <p className="mt-2 font-semibold text-slate-950">{item.title}</p>
-                      <p className="mt-1 text-sm leading-6 text-slate-600">{item.detail}</p>
-                    </Link>
-                  ))}
+                <div className="surface-panel px-4 py-4 text-sm leading-6 text-slate-500">
+                  Keep this hidden until you want a quick look at recent drills, notes, and tutor threads.
                 </div>
               )}
             </div>
@@ -345,25 +461,24 @@ export function AppShell({ children }: { children: ReactNode }) {
               {sidebarCollapsed ? null : (
                 <div className="min-w-0">
                   <p className="truncate font-semibold text-slate-950">{displayName}</p>
-                  <p className="truncate text-sm text-slate-500">{email}</p>
-                  <p className="truncate text-xs text-slate-500">
-                    Age {ageLabel} {activeOnboarding?.age ? `• ${groupLabel}` : ""}
-                  </p>
+                  <p className="truncate text-sm text-slate-500">Profile details and learner settings live in account.</p>
                 </div>
               )}
             </div>
             <div className={`grid gap-2 ${sidebarCollapsed ? "grid-cols-1" : "grid-cols-2"}`}>
-              <Link className="button-secondary w-full" href={profileHref}>
-                Settings
+              <Link className="button-secondary w-full gap-2" href={profileHref}>
+                <SettingsIcon className="h-4 w-4" />
+                Account
               </Link>
               <button
                 aria-label="Sign out of LearnX and return to login"
-                className="button-secondary w-full"
+                className="button-secondary w-full gap-2"
                 onClick={() => {
                   void handleSignOut();
                 }}
                 type="button"
               >
+                <LogOutIcon className="h-4 w-4" />
                 Sign out
               </button>
             </div>
@@ -377,9 +492,9 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <div className="space-y-2">
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="eyebrow">Study cockpit</p>
-                    <span className="pill">🔥 {dashboard.rewards.streakDays}d streak</span>
-                    <span className="pill">Top {100 - dashboard.rewards.percentile}% pace</span>
-                    <span className="pill">L{dashboard.rewards.level}</span>
+                    <span className="pill">Streak: {dashboard.rewards.streakDays} day{dashboard.rewards.streakDays === 1 ? "" : "s"}</span>
+                    <span className="pill">Level {dashboard.rewards.level}</span>
+                    <span className="pill">Today: {dashboard.todayAttempts}/{dashboard.dailyGoalTarget} drills</span>
                   </div>
                   <h1 className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
                     Welcome back, {firstName}
@@ -423,7 +538,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   <p className="mt-2 text-lg font-semibold tracking-tight">{displayName}</p>
                   <p className="mt-1 text-sm text-slate-300">{focusLine}</p>
                 </div>
-                <span className="reward-chip">{dashboard.rewards.level}</span>
+                <span className="reward-chip">Level {dashboard.rewards.level}</span>
               </div>
               <div className="mt-4 flex gap-2">
                 <Link
@@ -451,10 +566,10 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <NavLink
                   active={isActivePath(pathname, item.href)}
                   href={item.href}
+                  icon={item.icon}
                   key={`mobile-${item.href}`}
                   label={item.label}
                   onNavigate={() => setMobileNavRoute(null)}
-                  shortLabel={item.shortLabel}
                 />
               ))}
             </div>
@@ -469,9 +584,9 @@ export function AppShell({ children }: { children: ReactNode }) {
               active={isActivePath(pathname, item.href)}
               compact
               href={item.href}
+              icon={item.icon}
               key={item.href}
               label={item.label}
-              shortLabel={item.shortLabel}
             />
           ))}
         </div>

@@ -13,6 +13,7 @@ export interface ProfilePayload {
   age?: number;
   cognitiveGroup?: string;
   preferredSubjectId?: string;
+  preferredTopicIds?: string[];
   studyGoal?: string;
   examTarget?: string;
   launchMode?: string;
@@ -32,6 +33,16 @@ export interface QuizResultPayload {
   scorePercent: number;
   xpEarned?: number;
   completedAt?: string;
+  answers?: {
+    questionId?: string;
+    topicId?: string;
+    prompt?: string;
+    learnerAnswer?: string;
+    correctAnswer?: string;
+    correct?: boolean;
+    score?: number;
+    explanation?: string;
+  }[];
 }
 
 export interface StudyNotePayload {

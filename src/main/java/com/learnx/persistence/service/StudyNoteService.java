@@ -3,6 +3,7 @@ package com.learnx.persistence.service;
 import com.learnx.persistence.model.StudyNote;
 import com.learnx.persistence.repository.StudyNoteRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -24,7 +25,7 @@ public class StudyNoteService {
         return repository.save(note);
     }
 
-    public Optional<StudyNote> getNoteById(Long id) {
+    public Optional<StudyNote> getNoteById(@NonNull Long id) {
         return repository.findById(id);
     }
 
@@ -40,7 +41,7 @@ public class StudyNoteService {
         return repository.findByUserIdAndSubjectId(userId, subjectId);
     }
 
-    public void deleteNote(Long id) {
+    public void deleteNote(@NonNull Long id) {
         repository.deleteById(id);
     }
 }

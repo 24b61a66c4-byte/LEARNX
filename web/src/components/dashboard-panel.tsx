@@ -5,9 +5,10 @@ import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
 import { useClientSnapshot } from "@/lib/client-snapshot";
+import { getTopicById } from "@/lib/data/catalog";
 import { catalogGateway, getServerDashboard, learnerStateGateway } from "@/lib/gateways";
 import { getPublicAskHref, getPublicLearnHref, getPublicPracticeHref } from "@/lib/public-routes";
-import { OnboardingProfile, SubjectId } from "@/lib/types";
+import { OnboardingProfile, SubjectId, Topic } from "@/lib/types";
 import { getStoredOnboardingProfile } from "@/lib/profile-preferences";
 
 const promptSuggestions = ["Explain this", "Quiz me", "Turn into notes", "Search examples"];
@@ -33,6 +34,10 @@ export function DashboardPanel() {
   const subjects = catalogGateway.getSubjects();
   const activeSubject =
     subjects.find((subject) => subject.id === workspaceState.onboarding?.preferredSubjectId) ?? subjects[0] ?? null;
+  const selectedTopics =
+    workspaceState.onboarding?.preferredTopicIds
+      ?.map((topicId) => getTopicById(topicId))
+      .filter((topic): topic is Topic => Boolean(topic)) ?? [];
 
   if (!activeSubject) {
     return null;
@@ -77,7 +82,7 @@ export function DashboardPanel() {
     <section className="space-y-6">
       <div className="surface-card overflow-hidden p-5 sm:p-6">
         <div className={`rounded-[32px] bg-gradient-to-br ${activeSubject.accent} p-5 sm:p-6`}>
-          <div className="grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
+          <div className="grid gap-5 lg:grid-cols-[1.2fr_0.8fr]">
             <div className="space-y-4">
               <div className="space-y-3">
                 <p className="eyebrow">Today focus</p>
@@ -85,6 +90,15 @@ export function DashboardPanel() {
                   {continueTitle}
                 </h1>
                 <p className="max-w-3xl text-sm leading-7 text-slate-700 sm:text-base">{continueReason}</p>
+                {selectedTopics.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {selectedTopics.map((topic) => (
+                      <span className="pill" key={topic.id}>
+                        {topic.title}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
               </div>
 
               <form className="surface-panel space-y-4 p-4 sm:p-5" onSubmit={submitQuickPrompt}>
@@ -92,7 +106,7 @@ export function DashboardPanel() {
                   <div>
                     <p className="eyebrow">Ask anything</p>
                     <p className="mt-2 text-sm leading-6 text-slate-600">
-                      Ask a question first. LearnX can keep the answer open-ended, or tie it to {activeSubject.name} when you already have context.
+                      Ask a question first. LearnX can keep the answer open-ended, or tie it to {continueTopic?.title ?? activeSubject.name} when you already have context.
                     </p>
                   </div>
                   <span className="reward-chip">{promptSubjectId ? activeSubject.name : "Open-ended"}</span>
@@ -131,13 +145,13 @@ export function DashboardPanel() {
               </form>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
-              <div className="rounded-[26px] border border-white/45 bg-white/82 p-5 shadow-sm">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Today</p>
-                <p className="mt-3 text-3xl font-bold tracking-tight text-slate-950">
+            <div className="space-y-3">
+              <div className="shell-stat-card">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Today&apos;s drill target</p>
+                <p className="mt-2 text-2xl font-bold tracking-tight text-slate-950">
                   {workspaceState.dashboard.todayAttempts}/{workspaceState.dashboard.dailyGoalTarget}
                 </p>
-                <div className="momentum-meter mt-4">
+                <div className="momentum-meter mt-3">
                   {todaySegments.map((active, index) => (
                     <span data-active={active} key={index} />
                   ))}
@@ -149,16 +163,40 @@ export function DashboardPanel() {
                 </p>
               </div>
 
-              <div className="rounded-[26px] border border-white/45 bg-white/82 p-5 shadow-sm">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Level + XP</p>
-                <p className="mt-3 text-3xl font-bold tracking-tight text-slate-950">
-                  L{workspaceState.dashboard.rewards.level}
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
+                <div className="shell-stat-card">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Current level</p>
+                  <p className="mt-2 text-2xl font-bold tracking-tight text-slate-950">
+                    Level {workspaceState.dashboard.rewards.level}
+                  </p>
+                  <p className="mt-2 text-sm font-semibold text-slate-800">
+                    {workspaceState.dashboard.rewards.xp} XP total
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    {workspaceState.dashboard.rewards.xpToNextLevel} XP left to the next level.
+                  </p>
+                </div>
+
+                <div className="shell-stat-card">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Next reward</p>
+                  <p className="mt-2 text-lg font-semibold tracking-tight text-slate-950">
+                    {workspaceState.dashboard.rewards.nextBadgeLabel}
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    Keep the learner on one topic long enough to turn practice into momentum.
+                  </p>
+                </div>
+              </div>
+
+              <div className="shell-stat-card">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Focus track</p>
+                <p className="mt-2 text-lg font-semibold tracking-tight text-slate-950">
+                  {selectedTopics[0]?.title ?? activeSubject.name}
                 </p>
-                <p className="mt-2 text-sm font-semibold text-slate-800">
-                  {workspaceState.dashboard.rewards.xp} XP total
-                </p>
-                <p className="mt-3 text-sm leading-6 text-slate-600">
-                  {workspaceState.dashboard.rewards.xpToNextLevel} XP left to the next level.
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  {selectedTopics.length > 1
+                    ? `${selectedTopics.length} starting topics are pinned for the learner right now.`
+                    : "This is the main track LearnX will keep in focus first."}
                 </p>
               </div>
             </div>

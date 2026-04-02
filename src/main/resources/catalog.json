@@ -1,237 +1,361 @@
 {
-  "subjects": [
-    {
-      "id": "dbms",
-      "name": "Mathematics",
-      "description": "Numbers, patterns, and problem solving that build confidence for school and exams.",
-      "tags": [
-        "math",
-        "patterns",
-        "revision"
-      ]
-    },
-    {
-      "id": "edc",
-      "name": "Science",
-      "description": "Everyday concepts, experiments, and clear explanations you can use in class and beyond.",
-      "tags": [
-        "science",
-        "experiments",
-        "revision"
-      ]
-    }
-  ],
-  "topics": [
-    {
-      "id": "dbms-sql-basics",
-      "subjectId": "dbms",
-      "title": "Number Basics",
-      "summary": "Get comfortable with numbers, operations, and reading a problem carefully.",
-      "prerequisiteIds": [],
-      "difficulty": 0.25,
-      "examImportance": 0.8,
-      "tags": [
-        "numbers",
-        "foundations",
-        "confidence"
-      ]
-    },
-    {
-      "id": "dbms-joins",
-      "subjectId": "dbms",
-      "title": "Patterns and Relationships",
-      "summary": "See how one quantity changes with another and spot useful connections.",
-      "prerequisiteIds": [
-        "dbms-sql-basics"
-      ],
-      "difficulty": 0.55,
-      "examImportance": 0.95,
-      "tags": [
-        "patterns",
-        "relationships",
-        "mapping"
-      ]
-    },
-    {
-      "id": "dbms-normalization",
-      "subjectId": "dbms",
-      "title": "Organizing Problems",
-      "summary": "Learn how to break a problem into smaller steps and keep your work clear.",
-      "prerequisiteIds": [
-        "dbms-sql-basics"
-      ],
-      "difficulty": 0.65,
-      "examImportance": 0.88,
-      "tags": [
-        "steps",
-        "structure",
-        "clarity"
-      ]
-    },
-    {
-      "id": "edc-diode-basics",
-      "subjectId": "edc",
-      "title": "Science Basics",
-      "summary": "Understand ideas, examples, and the reason behind each result.",
-      "prerequisiteIds": [],
-      "difficulty": 0.2,
-      "examImportance": 0.7,
-      "tags": [
-        "science",
-        "basics",
-        "observation"
-      ]
-    },
-    {
-      "id": "edc-rectifiers",
-      "subjectId": "edc",
-      "title": "Energy and Change",
-      "summary": "Study how things transform as they move through a system.",
-      "prerequisiteIds": [
-        "edc-diode-basics"
-      ],
-      "difficulty": 0.45,
-      "examImportance": 0.85,
-      "tags": [
-        "energy",
-        "change",
-        "flow"
-      ]
-    },
-    {
-      "id": "edc-transistor-basics",
-      "subjectId": "edc",
-      "title": "Control and Systems",
-      "summary": "Cover how one part of a system can guide another part.",
-      "prerequisiteIds": [
-        "edc-diode-basics"
-      ],
-      "difficulty": 0.55,
-      "examImportance": 0.9,
-      "tags": [
-        "control",
-        "systems",
-        "application"
-      ]
-    }
-  ],
-  "examContexts": [
-    {
-      "id": "dbms-jntu-r22",
-      "subjectId": "dbms",
-      "title": "Mathematics study plan",
-      "description": "Exam-focused preparation for number sense, patterns, and structured problem solving.",
-      "focusTopicIds": [
-        "dbms-sql-basics",
-        "dbms-joins",
-        "dbms-normalization"
-      ],
-      "tags": [
-        "revision",
-        "semester-exam"
-      ]
-    },
-    {
-      "id": "edc-jntu-r22",
-      "subjectId": "edc",
-      "title": "Science study plan",
-      "description": "Exam-focused preparation for concepts, examples, and application.",
-      "focusTopicIds": [
-        "edc-diode-basics",
-        "edc-rectifiers",
-        "edc-transistor-basics"
-      ],
-      "tags": [
-        "revision",
-        "semester-exam"
-      ]
-    }
-  ],
-  "questions": [
-    {
-      "id": "q-dbms-1",
-      "subjectId": "dbms",
-      "topicId": "dbms-sql-basics",
-      "type": "MCQ",
-      "prompt": "Which operation helps you find the total of equal groups?",
-      "options": [
-        "Addition",
-        "Subtraction",
-        "Multiplication",
-        "Division"
-      ],
-      "correctOptionIndex": 2,
-      "acceptedKeywords": [],
-      "explanation": "Multiplication helps combine equal groups into one total.",
-      "difficulty": 0.25
-    },
-    {
-      "id": "q-dbms-2",
-      "subjectId": "dbms",
-      "topicId": "dbms-joins",
-      "type": "SHORT_ANSWER",
-      "prompt": "Name two ways to show a relationship between numbers.",
-      "options": [],
-      "correctOptionIndex": null,
-      "acceptedKeywords": [
-        "table",
-        "graph"
-      ],
-      "minKeywordMatches": 2,
-      "explanation": "Tables and graphs make relationships easier to see.",
-      "difficulty": 0.45
-    },
-    {
-      "id": "q-dbms-3",
-      "subjectId": "dbms",
-      "topicId": "dbms-normalization",
-      "type": "SHORT_ANSWER",
-      "prompt": "What problem does simplifying expressions help reduce?",
-      "options": [],
-      "correctOptionIndex": null,
-      "acceptedKeywords": [
-        "clutter",
-        "complexity",
-        "repetition"
-      ],
-      "minKeywordMatches": 1,
-      "explanation": "Simplifying reduces clutter and repeated work.",
-      "difficulty": 0.5
-    },
-    {
-      "id": "q-edc-1",
-      "subjectId": "edc",
-      "topicId": "edc-diode-basics",
-      "type": "MCQ",
-      "prompt": "Which example shows a change you can observe?",
-      "options": [
-        "Ice melting",
-        "A book resting",
-        "A chair standing still",
-        "A wall staying the same"
-      ],
-      "correctOptionIndex": 0,
-      "acceptedKeywords": [],
-      "explanation": "Ice melting is an easy example of a visible change.",
-      "difficulty": 0.2
-    },
-    {
-      "id": "q-edc-2",
-      "subjectId": "edc",
-      "topicId": "edc-rectifiers",
-      "type": "SHORT_ANSWER",
-      "prompt": "Name two examples of energy you notice in daily life.",
-      "options": [],
-      "correctOptionIndex": null,
-      "acceptedKeywords": [
-        "light",
-        "heat",
-        "sound",
-        "motion"
-      ],
-      "minKeywordMatches": 2,
-      "explanation": "Light, heat, sound, and motion are common examples of energy in daily life.",
-      "difficulty": 0.35
-    }
-  ]
+    "subjects": [
+        {
+            "id": "dbms",
+            "name": "Mathematics",
+            "description": "Numbers, patterns, and problem solving that build confidence for school and exams.",
+            "tags": [
+                "math",
+                "patterns",
+                "revision"
+            ]
+        },
+        {
+            "id": "edc",
+            "name": "Science",
+            "description": "Everyday concepts, experiments, and clear explanations you can use in class and beyond.",
+            "tags": [
+                "science",
+                "experiments",
+                "revision"
+            ]
+        },
+        {
+            "id": "coding",
+            "name": "Coding",
+            "description": "Programming fundamentals with age-aware examples, logic patterns, and guided practice.",
+            "tags": [
+                "coding",
+                "logic",
+                "problem-solving"
+            ]
+        }
+    ],
+    "topics": [
+        {
+            "id": "dbms-sql-basics",
+            "subjectId": "dbms",
+            "title": "Number Basics",
+            "summary": "Get comfortable with numbers, operations, and reading a problem carefully.",
+            "prerequisiteIds": [],
+            "difficulty": 0.25,
+            "examImportance": 0.8,
+            "tags": [
+                "numbers",
+                "foundations",
+                "confidence"
+            ]
+        },
+        {
+            "id": "dbms-joins",
+            "subjectId": "dbms",
+            "title": "Patterns and Relationships",
+            "summary": "See how one quantity changes with another and spot useful connections.",
+            "prerequisiteIds": [
+                "dbms-sql-basics"
+            ],
+            "difficulty": 0.55,
+            "examImportance": 0.95,
+            "tags": [
+                "patterns",
+                "relationships",
+                "mapping"
+            ]
+        },
+        {
+            "id": "dbms-normalization",
+            "subjectId": "dbms",
+            "title": "Organizing Problems",
+            "summary": "Learn how to break a problem into smaller steps and keep your work clear.",
+            "prerequisiteIds": [
+                "dbms-sql-basics"
+            ],
+            "difficulty": 0.65,
+            "examImportance": 0.88,
+            "tags": [
+                "steps",
+                "structure",
+                "clarity"
+            ]
+        },
+        {
+            "id": "edc-diode-basics",
+            "subjectId": "edc",
+            "title": "Science Basics",
+            "summary": "Understand ideas, examples, and the reason behind each result.",
+            "prerequisiteIds": [],
+            "difficulty": 0.2,
+            "examImportance": 0.7,
+            "tags": [
+                "science",
+                "basics",
+                "observation"
+            ]
+        },
+        {
+            "id": "edc-rectifiers",
+            "subjectId": "edc",
+            "title": "Energy and Change",
+            "summary": "Study how things transform as they move through a system.",
+            "prerequisiteIds": [
+                "edc-diode-basics"
+            ],
+            "difficulty": 0.45,
+            "examImportance": 0.85,
+            "tags": [
+                "energy",
+                "change",
+                "flow"
+            ]
+        },
+        {
+            "id": "edc-transistor-basics",
+            "subjectId": "edc",
+            "title": "Control and Systems",
+            "summary": "Cover how one part of a system can guide another part.",
+            "prerequisiteIds": [
+                "edc-diode-basics"
+            ],
+            "difficulty": 0.55,
+            "examImportance": 0.9,
+            "tags": [
+                "control",
+                "systems",
+                "application"
+            ]
+        },
+        {
+            "id": "coding-logic-basics",
+            "subjectId": "coding",
+            "title": "Coding Logic Basics",
+            "summary": "Learn sequence, patterns, and everyday algorithms using kid-friendly examples.",
+            "prerequisiteIds": [],
+            "difficulty": 0.2,
+            "examImportance": 0.72,
+            "tags": [
+                "logic",
+                "sequence",
+                "patterns"
+            ]
+        },
+        {
+            "id": "coding-variables",
+            "subjectId": "coding",
+            "title": "Variables and Data",
+            "summary": "Understand how coding stores values and updates them step by step.",
+            "prerequisiteIds": [
+                "coding-logic-basics"
+            ],
+            "difficulty": 0.38,
+            "examImportance": 0.84,
+            "tags": [
+                "variables",
+                "data",
+                "updates"
+            ]
+        },
+        {
+            "id": "coding-control-flow",
+            "subjectId": "coding",
+            "title": "Conditions and Loops",
+            "summary": "Build decision-making and repetition flow for practical coding problems.",
+            "prerequisiteIds": [
+                "coding-logic-basics",
+                "coding-variables"
+            ],
+            "difficulty": 0.52,
+            "examImportance": 0.9,
+            "tags": [
+                "conditions",
+                "loops",
+                "flow"
+            ]
+        }
+    ],
+    "examContexts": [
+        {
+            "id": "dbms-jntu-r22",
+            "subjectId": "dbms",
+            "title": "Mathematics study plan",
+            "description": "Exam-focused preparation for number sense, patterns, and structured problem solving.",
+            "focusTopicIds": [
+                "dbms-sql-basics",
+                "dbms-joins",
+                "dbms-normalization"
+            ],
+            "tags": [
+                "revision",
+                "semester-exam"
+            ]
+        },
+        {
+            "id": "edc-jntu-r22",
+            "subjectId": "edc",
+            "title": "Science study plan",
+            "description": "Exam-focused preparation for concepts, examples, and application.",
+            "focusTopicIds": [
+                "edc-diode-basics",
+                "edc-rectifiers",
+                "edc-transistor-basics"
+            ],
+            "tags": [
+                "revision",
+                "semester-exam"
+            ]
+        },
+        {
+            "id": "coding-foundation",
+            "subjectId": "coding",
+            "title": "Coding foundation plan",
+            "description": "Structured coding preparation from logic to decision flow and repeatable practice.",
+            "focusTopicIds": [
+                "coding-logic-basics",
+                "coding-variables",
+                "coding-control-flow"
+            ],
+            "tags": [
+                "revision",
+                "coding"
+            ]
+        }
+    ],
+    "questions": [
+        {
+            "id": "q-dbms-1",
+            "subjectId": "dbms",
+            "topicId": "dbms-sql-basics",
+            "type": "MCQ",
+            "prompt": "Which operation helps you find the total of equal groups?",
+            "options": [
+                "Addition",
+                "Subtraction",
+                "Multiplication",
+                "Division"
+            ],
+            "correctOptionIndex": 2,
+            "acceptedKeywords": [],
+            "explanation": "Multiplication helps combine equal groups into one total.",
+            "difficulty": 0.25
+        },
+        {
+            "id": "q-dbms-2",
+            "subjectId": "dbms",
+            "topicId": "dbms-joins",
+            "type": "SHORT_ANSWER",
+            "prompt": "Name two ways to show a relationship between numbers.",
+            "options": [],
+            "correctOptionIndex": null,
+            "acceptedKeywords": [
+                "table",
+                "graph"
+            ],
+            "minKeywordMatches": 2,
+            "explanation": "Tables and graphs make relationships easier to see.",
+            "difficulty": 0.45
+        },
+        {
+            "id": "q-dbms-3",
+            "subjectId": "dbms",
+            "topicId": "dbms-normalization",
+            "type": "SHORT_ANSWER",
+            "prompt": "What problem does simplifying expressions help reduce?",
+            "options": [],
+            "correctOptionIndex": null,
+            "acceptedKeywords": [
+                "clutter",
+                "complexity",
+                "repetition"
+            ],
+            "minKeywordMatches": 1,
+            "explanation": "Simplifying reduces clutter and repeated work.",
+            "difficulty": 0.5
+        },
+        {
+            "id": "q-edc-1",
+            "subjectId": "edc",
+            "topicId": "edc-diode-basics",
+            "type": "MCQ",
+            "prompt": "Which example shows a change you can observe?",
+            "options": [
+                "Ice melting",
+                "A book resting",
+                "A chair standing still",
+                "A wall staying the same"
+            ],
+            "correctOptionIndex": 0,
+            "acceptedKeywords": [],
+            "explanation": "Ice melting is an easy example of a visible change.",
+            "difficulty": 0.2
+        },
+        {
+            "id": "q-edc-2",
+            "subjectId": "edc",
+            "topicId": "edc-rectifiers",
+            "type": "SHORT_ANSWER",
+            "prompt": "Name two examples of energy you notice in daily life.",
+            "options": [],
+            "correctOptionIndex": null,
+            "acceptedKeywords": [
+                "light",
+                "heat",
+                "sound",
+                "motion"
+            ],
+            "minKeywordMatches": 2,
+            "explanation": "Light, heat, sound, and motion are common examples of energy in daily life.",
+            "difficulty": 0.35
+        },
+        {
+            "id": "q-coding-1",
+            "subjectId": "coding",
+            "topicId": "coding-logic-basics",
+            "type": "MCQ",
+            "prompt": "What is the best first step before writing code for a problem?",
+            "options": [
+                "Guess and type quickly",
+                "Understand inputs and outputs",
+                "Skip planning and test later",
+                "Memorize random syntax"
+            ],
+            "correctOptionIndex": 1,
+            "acceptedKeywords": [],
+            "explanation": "Strong coding starts by clarifying what goes in and what should come out.",
+            "difficulty": 0.24
+        },
+        {
+            "id": "q-coding-2",
+            "subjectId": "coding",
+            "topicId": "coding-variables",
+            "type": "SHORT_ANSWER",
+            "prompt": "Name two examples of values that can be stored in variables.",
+            "options": [],
+            "correctOptionIndex": null,
+            "acceptedKeywords": [
+                "number",
+                "text",
+                "boolean",
+                "string"
+            ],
+            "minKeywordMatches": 2,
+            "explanation": "Common variable values include numbers, text (strings), and booleans.",
+            "difficulty": 0.36
+        },
+        {
+            "id": "q-coding-3",
+            "subjectId": "coding",
+            "topicId": "coding-control-flow",
+            "type": "MCQ",
+            "prompt": "When should you use a loop?",
+            "options": [
+                "When a task must repeat",
+                "When storing one value once",
+                "When naming variables",
+                "When choosing a color theme"
+            ],
+            "correctOptionIndex": 0,
+            "acceptedKeywords": [],
+            "explanation": "Loops are for repeated steps, especially when the pattern stays the same.",
+            "difficulty": 0.5
+        }
+    ]
 }

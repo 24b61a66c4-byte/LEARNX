@@ -7,8 +7,7 @@ import { SubjectId } from "@/lib/types";
 /**
  * Subject ID validator function (mirrors the one in practice/page.tsx)
  * Ensures only valid subjects can be passed via query params
- * Now accepts dynamically loaded subject IDs from API instead of hardcoded values
- * Temporarily keeps dbms/edc for backward compatibility during migration
+ * Uses the same public-route subject aliases as the app
  */
 function isSubjectId(value?: string): value is SubjectId {
   return resolveSubjectIdFromSegment(value) !== null;
@@ -45,6 +44,10 @@ describe("Tutor-to-Practice Query Handoff", () => {
       expect(isSubjectId("edc")).toBe(true);
     });
 
+    it("accepts valid subject ID 'coding'", () => {
+      expect(isSubjectId("coding")).toBe(true);
+    });
+
     it("rejects invalid subject IDs", () => {
       expect(isSubjectId("invalid")).toBe(false);
       expect(isSubjectId("cs")).toBe(false);
@@ -59,6 +62,7 @@ describe("Tutor-to-Practice Query Handoff", () => {
       expect(isSubjectId("DBMS")).toBe(true);
       expect(isSubjectId("Dbms")).toBe(true);
       expect(isSubjectId("EDC")).toBe(true);
+      expect(isSubjectId("Coding")).toBe(true);
     });
   });
 
@@ -73,9 +77,9 @@ describe("Tutor-to-Practice Query Handoff", () => {
       expect(href).toBe("/app/practice?subjectId=mathematics&topicId=number-basics");
     });
 
-    it("builds href for edc subject with topic", () => {
-      const href = buildPracticeHref("edc", "edc-entrepreneurship");
-      expect(href).toBe("/app/practice?subjectId=science&topicId=edc-entrepreneurship");
+    it("builds href for coding subject with topic", () => {
+      const href = buildPracticeHref("coding", "coding-control-flow");
+      expect(href).toBe("/app/practice?subjectId=coding&topicId=conditions-and-loops");
     });
 
     it("encodes topic IDs with special characters", () => {
@@ -98,6 +102,15 @@ describe("Tutor-to-Practice Query Handoff", () => {
       const result = parsePracticeParams({ subjectId: "science" });
       expect(result.subjectId).toBe("edc");
       expect(result.topicId).toBeUndefined();
+    });
+
+    it("parses coding subject and topic slugs", () => {
+      const result = parsePracticeParams({
+        subjectId: "coding",
+        topicId: "variables-and-data",
+      });
+      expect(result.subjectId).toBe("coding");
+      expect(result.topicId).toBe("coding-variables");
     });
 
     it("defaults to 'mathematics' for invalid subject", () => {
@@ -223,6 +236,21 @@ describe("Tutor-to-Practice Query Handoff", () => {
         topicId: longTopicId,
       });
       expect(result.topicId).toBeUndefined();
+    });
+
+    it("handles round-trip for coding topics", () => {
+      const originalSubjectId: SubjectId = "coding";
+      const originalTopicId = "coding-control-flow";
+
+      const href = buildPracticeHref(originalSubjectId, originalTopicId);
+      const urlParams = new URLSearchParams(href.split("?")[1]);
+      const result = parsePracticeParams({
+        subjectId: urlParams.get("subjectId") ?? undefined,
+        topicId: urlParams.get("topicId") ?? undefined,
+      });
+
+      expect(result.subjectId).toBe(originalSubjectId);
+      expect(result.topicId).toBe(originalTopicId);
     });
 
     it("drops unknown topic IDs with special characters", () => {

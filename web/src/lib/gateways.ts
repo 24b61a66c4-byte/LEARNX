@@ -6,6 +6,7 @@ import {
   ONBOARDED_COOKIE,
   ONBOARDING_STORAGE_KEY,
   PRACTICE_HISTORY_KEY,
+  PRACTICE_LATEST_RESULT_KEY,
   SESSION_COOKIE,
   SESSION_STORAGE_KEY,
   TOPIC_NOTES_KEY,
@@ -14,14 +15,14 @@ import {
 } from "@/lib/constants";
 import {
   getLessonByTopicId,
-  getQuestions,
   getSubjectById,
   getSubjects,
   getTopicById,
   getTopicsBySubject,
   searchCatalog,
 } from "@/lib/data/catalog";
-import { getPublicLearnHref } from "@/lib/public-routes";
+import { getPublicLearnHref, getPublicPracticeHref } from "@/lib/public-routes";
+import { buildAdaptivePracticeSet, getPracticeFocusTopics } from "@/lib/practice-engine";
 import {
   clearCookie,
   clearLocalStorage,
@@ -107,6 +108,7 @@ export interface PracticeGateway {
     answers: PracticeSubmission[];
   }): PracticeResult;
   getHistory(): PracticeResult[];
+  getLatestResult(): PracticeResult | null;
 }
 
 export const defaultSession: AppSession = {
@@ -176,6 +178,13 @@ function getPreferredSubjectId(preferredSubjectId?: SubjectId) {
   }
 
   const onboarding = getStoredOnboardingProfile();
+  const preferredTopicSubjectId = onboarding?.preferredTopicIds?.[0]
+    ? getTopicById(onboarding.preferredTopicIds[0])?.subjectId
+    : null;
+  if (preferredTopicSubjectId) {
+    return preferredTopicSubjectId;
+  }
+
   return getRecommendedSubjectId(onboarding?.age, onboarding?.cognitiveGroup, onboarding?.interests);
 }
 
@@ -185,6 +194,10 @@ function getHistory() {
 
 function getThreads() {
   return readLocalStorage<TutorThread[]>(TUTOR_THREADS_KEY, []);
+}
+
+function getLatestPracticeResult() {
+  return readLocalStorage<PracticeResult | null>(PRACTICE_LATEST_RESULT_KEY, null);
 }
 
 function getStoredNotes() {
@@ -436,7 +449,7 @@ export function getServerDashboard(preferredSubjectId?: SubjectId): DashboardVie
         href: getPublicLearnHref(fallbackTopic.subjectId, fallbackTopic.id),
       }
       : null,
-    quickPracticeHref: "/app/practice",
+    quickPracticeHref: fallbackTopic ? getPublicPracticeHref(fallbackTopic.subjectId, fallbackTopic.id) : "/app/practice",
     rewards,
     todayAttempts: 0,
     dailyGoalTarget: DAILY_PRACTICE_TARGET,
@@ -472,6 +485,7 @@ export const sessionGateway: SessionGateway = {
     clearLocalStorage(SESSION_STORAGE_KEY);
     clearLocalStorage(ONBOARDING_STORAGE_KEY);
     clearLocalStorage(PRACTICE_HISTORY_KEY);
+    clearLocalStorage(PRACTICE_LATEST_RESULT_KEY);
     clearLocalStorage(TOPIC_NOTES_KEY);
     clearLocalStorage(TUTOR_THREADS_KEY);
     clearLocalStorage(LAST_TOPIC_KEY);
@@ -494,37 +508,29 @@ export const learnerStateGateway: LearnerStateGateway = {
   },
   getRecommendation(preferredSubjectId) {
     const history = getHistory();
+    const onboarding = getStoredOnboardingProfile();
     const targetSubject = getPreferredSubjectId(preferredSubjectId);
-    const candidateTopics = getTopicsBySubject(targetSubject);
-
-    const ranked = candidateTopics
-      .map((topic) => {
-        const attempts = history.filter((result) => result.topicId === topic.id);
-        const average =
-          attempts.length === 0
-            ? 0
-            : attempts.reduce((sum, result) => sum + result.scorePercent, 0) / attempts.length;
-        return { topic, average, attempts: attempts.length };
-      })
-      .sort((left, right) => {
-        if (left.attempts === 0 && right.attempts !== 0) {
-          return -1;
-        }
-        if (right.attempts === 0 && left.attempts !== 0) {
-          return 1;
-        }
-        return left.average - right.average;
-      });
-
-    const next = ranked[0]?.topic;
+    const candidateTopics = getPracticeFocusTopics({
+      subjectId: targetSubject,
+      onboarding,
+      history,
+    });
+    const next = candidateTopics[0];
     if (!next) {
       return null;
     }
 
+    const nextAttempts = history.filter((result) => result.topicId === next.id);
+    const selectedDuringOnboarding = onboarding?.preferredTopicIds?.includes(next.id) ?? false;
+
     return {
       title: next.title,
       reason:
-        ranked[0]?.attempts === 0
+        selectedDuringOnboarding && nextAttempts.length === 0
+          ? "Start with the topic you picked during onboarding."
+          : selectedDuringOnboarding
+            ? "Keep moving in the topic you asked LearnX to prioritize."
+            : nextAttempts.length === 0
           ? "Start the next recommended topic in your selected subject."
           : "This topic still has room to improve based on your latest practice.",
       href: getPublicLearnHref(next.subjectId, next.id),
@@ -537,11 +543,18 @@ export const learnerStateGateway: LearnerStateGateway = {
     const progress = buildProgressSnapshot(history);
     const todayKey = toDayKey(new Date().toISOString());
     const todayAttempts = history.filter((item) => toDayKey(item.completedAt) === todayKey).length;
+    const targetSubject = getPreferredSubjectId(preferredSubjectId);
+    const recommendedTopicId = recommendation?.href.split("/").pop();
 
     return {
       resumeTopic,
       recommendation,
-      quickPracticeHref: "/app/practice",
+      quickPracticeHref:
+        resumeTopic
+          ? getPublicPracticeHref(resumeTopic.subjectId, resumeTopic.id)
+          : recommendedTopicId
+            ? getPublicPracticeHref(targetSubject, recommendedTopicId)
+            : getPublicPracticeHref(targetSubject),
       rewards: progress.rewards,
       todayAttempts,
       dailyGoalTarget: DAILY_PRACTICE_TARGET,
@@ -709,7 +722,13 @@ export const notesGateway: NotesGateway = {
 
 export const practiceGateway: PracticeGateway = {
   getQuickPractice(subjectId, topicId) {
-    return getQuestions(subjectId, topicId).slice(0, 5);
+    const targetSubject = getPreferredSubjectId(subjectId);
+    return buildAdaptivePracticeSet({
+      subjectId: targetSubject,
+      topicId,
+      onboarding: getStoredOnboardingProfile(),
+      history: getHistory(),
+    });
   },
   submit({ subjectId, topicId, answers }) {
     const previousHistory = getHistory();
@@ -720,6 +739,7 @@ export const practiceGateway: PracticeGateway = {
       const result = evaluateAnswer(question, learnerAnswer);
       return {
         questionId: question.id,
+        topicId: question.topicId,
         prompt: question.prompt,
         correct: result.correct,
         score: result.score,
@@ -758,8 +778,10 @@ export const practiceGateway: PracticeGateway = {
     };
 
     writeLocalStorage(PRACTICE_HISTORY_KEY, [persistedResult, ...previousHistory]);
+    writeLocalStorage(PRACTICE_LATEST_RESULT_KEY, persistedResult);
 
     return persistedResult;
   },
   getHistory,
+  getLatestResult: getLatestPracticeResult,
 };
