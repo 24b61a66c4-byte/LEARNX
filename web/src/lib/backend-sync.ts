@@ -190,6 +190,10 @@ async function hydrateUserData(user: User) {
   }
 }
 
+function isAuthRoutePath(pathname: string) {
+  return pathname === "/login" || pathname === "/signup";
+}
+
 export function getSessionProfileForUser(user: User): SessionProfile {
   return {
     displayName: getDisplayName(user),
@@ -206,8 +210,17 @@ export async function syncSessionFromAuthUser(user: User | null) {
     return null;
   }
 
-  await hydrateUserData(user);
-  return sessionGateway.signIn(getSessionProfileForUser(user));
+  const session = sessionGateway.signIn(getSessionProfileForUser(user));
+
+  if (typeof window !== "undefined" && isAuthRoutePath(window.location.pathname)) {
+    return session;
+  }
+
+  void hydrateUserData(user).catch(() => {
+    // Non-blocking hydration: session state should not depend on background profile fetches.
+  });
+
+  return session;
 }
 
 export async function syncOnboardingProfile(profile: OnboardingProfile) {
