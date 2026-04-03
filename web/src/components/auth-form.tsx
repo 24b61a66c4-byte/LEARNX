@@ -38,7 +38,7 @@ function formatAuthErrorMessage(message: string | undefined, mode: "login" | "si
 
 export function AuthForm({ mode }: AuthFormProps) {
   const router = useRouter();
-  const { loading, user } = useAuth();
+  const { user } = useAuth();
   const session = useClientSnapshot(
     () => sessionGateway.getSession(),
     () => sessionGateway.getSession(),
@@ -49,6 +49,7 @@ export function AuthForm({ mode }: AuthFormProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const isAuthenticated = Boolean(user) || session.isAuthenticated;
 
   const title = mode === "login" ? "Enter your LearnX workspace" : "Create your LearnX workspace";
   const submitLabel = submitting
@@ -58,10 +59,18 @@ export function AuthForm({ mode }: AuthFormProps) {
       : "Create account";
 
   useEffect(() => {
-    if (!loading && (user || session.isAuthenticated)) {
+    if (isAuthenticated) {
       router.replace("/app");
     }
-  }, [loading, router, session.isAuthenticated, user]);
+  }, [isAuthenticated, router]);
+
+  if (isAuthenticated) {
+    return (
+      <div className="surface-card w-full px-6 py-8 text-center text-sm text-slate-600 sm:px-8">
+        Redirecting to your workspace...
+      </div>
+    );
+  }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();

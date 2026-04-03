@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export default function NotFoundPage() {
   return (
-    <main className="mx-auto max-w-3xl px-4 py-16 text-center sm:px-6">
+    <section className="mx-auto max-w-3xl px-4 py-16 text-center sm:px-6">
       <div className="surface-card space-y-5 px-6 py-10">
         <p className="eyebrow">Not found</p>
         <h1 className="text-4xl font-bold tracking-tight text-slate-950">That page is not part of the current LearnX launch.</h1>
@@ -18,6 +18,6 @@ export default function NotFoundPage() {
           </Link>
         </div>
       </div>
-    </main>
+    </section>
   );
 }

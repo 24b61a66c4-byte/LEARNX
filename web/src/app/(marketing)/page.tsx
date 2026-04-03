@@ -20,7 +20,7 @@ const workspacePreview = [
 
 export default function LandingPage() {
   return (
-    <main className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
+    <section className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
       <section className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
         <div className="space-y-6">
           <div className="space-y-4">
@@ -81,6 +81,6 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
-    </main>
+    </section>
   );
 }
