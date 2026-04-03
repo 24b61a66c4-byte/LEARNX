@@ -13,9 +13,6 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.learnx.core.service.SubjectEntity;
-import com.learnx.core.repository.SubjectRepository;
-
 /**
  * SubjectService manages the catalog of available subjects.
  * Replaces hardcoded DBMS/EDC logic with configurable subject system.
