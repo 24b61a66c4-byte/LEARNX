@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { syncSessionFromAuthUser } from "@/lib/backend-sync";
@@ -13,6 +13,7 @@ import {
   signInWithEmail,
   signUpWithEmail,
 } from "@/lib/supabase";
+import { useAuth } from "@/lib/auth-context";
 
 interface AuthFormProps {
   mode: "login" | "signup";
@@ -36,6 +37,7 @@ function formatAuthErrorMessage(message: string | undefined, mode: "login" | "si
 
 export function AuthForm({ mode }: AuthFormProps) {
   const router = useRouter();
+  const { loading, user } = useAuth();
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -49,6 +51,12 @@ export function AuthForm({ mode }: AuthFormProps) {
     : mode === "login"
       ? "Enter the app"
       : "Create account";
+
+  useEffect(() => {
+    if (!loading && user) {
+      router.replace("/app");
+    }
+  }, [loading, router, user]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
