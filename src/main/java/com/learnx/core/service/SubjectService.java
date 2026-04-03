@@ -1,12 +1,20 @@
 package com.learnx.core.service;
 
-import com.learnx.core.repository.SubjectRepository;
-import com.learnx.core.entity.SubjectEntity;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.learnx.core.service.SubjectEntity;
+import com.learnx.core.repository.SubjectRepository;
 
 /**
  * SubjectService manages the catalog of available subjects.
