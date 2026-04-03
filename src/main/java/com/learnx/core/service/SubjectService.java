@@ -1,5 +1,7 @@
 package com.learnx.core.service;
 
+import com.learnx.core.repository.SubjectRepository;
+import com.learnx.core.entity.SubjectEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.util.*;
@@ -100,7 +102,9 @@ public class SubjectService {
         if (!cacheInitialized) {
             synchronized (this) {
                 if (!cacheInitialized) {
-                    List<SubjectDTO> subjects = repository.findAllActive();
+                    List<SubjectDTO> subjects = repository.findByIsActiveTrueOrderByDisplayOrderAsc().stream()
+                            .map(this::toDto)
+                            .toList();
                     cache.clear();
                     for (SubjectDTO subject : subjects) {
                         cache.put(subject.id, subject);
@@ -109,6 +113,17 @@ public class SubjectService {
                 }
             }
         }
+    }
+
+    private SubjectDTO toDto(SubjectEntity entity) {
+        return new SubjectDTO(
+                entity.getId(),
+                entity.getName(),
+                entity.getDescription(),
+                entity.getTags(),
+                entity.getAccent(),
+                entity.getBackdrop(),
+                entity.getDisplayOrder());
     }
 
     private String mapLegacyId(String id) {
