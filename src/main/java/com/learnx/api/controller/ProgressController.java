@@ -2,7 +2,7 @@ package com.learnx.api.controller;
 
 import com.learnx.api.security.AuthContextService;
 import com.learnx.api.service.AuditService;
-import com.learnx.persistence.model.ProgressSnapshot;
+import com.learnx.persistence.entity.ProgressSnapshotEntity;
 import com.learnx.persistence.service.ProgressSnapshotService;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
@@ -52,12 +52,12 @@ public class ProgressController {
     }
 
     @PostMapping
-    public ResponseEntity<?> updateProgress(@Valid @RequestBody ProgressSnapshot progress,
+    public ResponseEntity<?> updateProgress(@Valid @RequestBody ProgressSnapshotEntity progress,
             Authentication authentication) {
         try {
             UUID authenticatedUserId = authContextService.requireAuthenticatedUser(authentication);
             progress.setUserId(authenticatedUserId);
-            ProgressSnapshot saved = progressService.saveSnapshot(progress);
+            ProgressSnapshotEntity saved = progressService.saveSnapshot(progress);
             auditService.logMutation("PROGRESS_UPSERT", authenticatedUserId, "progress-snapshot",
                     String.valueOf(saved.getId()), "Updated progress snapshot");
             return ResponseEntity.ok(saved);
@@ -75,7 +75,7 @@ public class ProgressController {
         try {
             UUID authenticatedUserId = authContextService.requireAuthenticatedUser(authentication);
             UUID parsedUserId = authContextService.parseAndRequireMatch(authenticatedUserId, userId);
-            ProgressSnapshot progress = progressService.getOrCreateProgress(parsedUserId, subjectId);
+            ProgressSnapshotEntity progress = progressService.getOrCreateProgress(parsedUserId, subjectId);
             auditService.logMutation("PROGRESS_INITIALIZE", authenticatedUserId, "progress-snapshot",
                     String.valueOf(progress.getId()), "Initialized progress snapshot");
             return ResponseEntity.ok(progress);

@@ -1,6 +1,6 @@
 package com.learnx.persistence.service;
 
-import com.learnx.persistence.model.QuizResult;
+import com.learnx.persistence.entity.QuizResultEntity;
 import com.learnx.persistence.repository.QuizResultRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -18,7 +18,7 @@ public class QuizResultService {
         this.repository = repository;
     }
 
-    public QuizResult saveResult(QuizResult result) {
+    public QuizResultEntity saveResult(QuizResultEntity result) {
         normalizeResult(result);
         if (result.getCompletedAt() == null) {
             result.setCompletedAt(LocalDateTime.now());
@@ -26,7 +26,7 @@ public class QuizResultService {
         return repository.save(result);
     }
 
-    private void normalizeResult(QuizResult result) {
+    private void normalizeResult(QuizResultEntity result) {
         if (result == null) {
             return;
         }
@@ -41,15 +41,15 @@ public class QuizResultService {
                 .toList());
     }
 
-    public List<QuizResult> getUserResults(UUID userId) {
+    public List<QuizResultEntity> getUserResults(UUID userId) {
         return repository.findByUserId(userId);
     }
 
-    public List<QuizResult> getUserResultsBySubject(UUID userId, String subjectId) {
+    public List<QuizResultEntity> getUserResultsBySubject(UUID userId, String subjectId) {
         return repository.findByUserIdAndSubjectId(userId, subjectId);
     }
 
-    public List<QuizResult> getUserResultsByTopic(UUID userId, String topicId) {
+    public List<QuizResultEntity> getUserResultsByTopic(UUID userId, String topicId) {
         return repository.findByUserIdAndTopicId(userId, topicId);
     }
 

@@ -29,7 +29,7 @@ describe("AppShell", () => {
         render(<AppShell>Test content</AppShell>);
         const subjectsLinks = screen.getAllByText("Subjects");
         subjectsLinks.forEach((link) => {
-            expect(link).toHaveClass("bg-slate-950", "text-white");
+            expect(link.closest("a")).toHaveAttribute("aria-current", "page");
         });
     });
 });

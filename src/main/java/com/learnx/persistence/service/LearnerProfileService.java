@@ -1,6 +1,6 @@
 package com.learnx.persistence.service;
 
-import com.learnx.persistence.model.LearnerProfile;
+import com.learnx.persistence.entity.LearnerProfileEntity;
 import com.learnx.persistence.repository.LearnerProfileRepository;
 import com.learnx.core.service.SubjectService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,23 +22,23 @@ public class LearnerProfileService {
         this.subjectService = subjectService;
     }
 
-    public LearnerProfile saveProfile(LearnerProfile profile) {
+    public LearnerProfileEntity saveProfile(LearnerProfileEntity profile) {
         normalizeProfile(profile);
         profile.setUpdatedAt(LocalDateTime.now());
         return repository.save(profile);
     }
 
-    public Optional<LearnerProfile> getProfileByUserId(UUID userId) {
+    public Optional<LearnerProfileEntity> getProfileByUserId(UUID userId) {
         return repository.findByUserId(userId);
     }
 
-    public LearnerProfile getOrCreateProfile(UUID userId, String displayName) {
-        Optional<LearnerProfile> existing = repository.findByUserId(userId);
+    public LearnerProfileEntity getOrCreateProfile(UUID userId, String displayName) {
+        Optional<LearnerProfileEntity> existing = repository.findByUserId(userId);
         if (existing.isPresent()) {
             return existing.get();
         }
 
-        LearnerProfile newProfile = new LearnerProfile();
+        LearnerProfileEntity newProfile = new LearnerProfileEntity();
         newProfile.setUserId(userId);
         newProfile.setDisplayName(displayName);
         newProfile.setCreatedAt(LocalDateTime.now());
@@ -48,7 +48,7 @@ public class LearnerProfileService {
     }
 
     public void deleteProfile(UUID userId) {
-        Optional<LearnerProfile> profile = repository.findByUserId(userId);
+        Optional<LearnerProfileEntity> profile = repository.findByUserId(userId);
         profile.ifPresent(p -> {
             Long profileId = p.getId();
             if (profileId != null) {
@@ -57,7 +57,7 @@ public class LearnerProfileService {
         });
     }
 
-    private void normalizeProfile(LearnerProfile profile) {
+    private void normalizeProfile(LearnerProfileEntity profile) {
         if (profile == null) {
             return;
         }

@@ -158,10 +158,6 @@ function isActivePath(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-function formatStudyGoal(goal?: OnboardingProfile["studyGoal"]) {
-  return goal ? goal.replaceAll("-", " ") : "steady daily practice";
-}
-
 function formatShortDate(value: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {
@@ -207,12 +203,12 @@ function NavLink({
   return (
     <Link
       aria-current={active ? "page" : undefined}
-      className={`group relative inline-flex items-center gap-2.5 rounded-2xl border text-sm font-semibold transition ${compactMode
+      className={`group relative inline-flex items-center gap-3 rounded-[20px] text-sm font-semibold transition ${compactMode
         ? "justify-center px-2.5 py-2.5"
-        : "w-full px-3.5 py-2.5"
+        : "w-full px-3 py-3"
         } ${active
-          ? "border-teal-700/20 bg-slate-950 text-white shadow-[0_8px_24px_rgba(15,23,42,0.18)]"
-          : "border-transparent text-slate-600 hover:border-black/10 hover:bg-white/80 hover:text-slate-900"
+          ? "bg-white/12 text-white shadow-[0_12px_28px_rgba(15,23,42,0.28)]"
+          : "text-white/65 hover:bg-white/7 hover:text-white"
         }`}
       href={href}
       onClick={onNavigate}
@@ -220,14 +216,14 @@ function NavLink({
     >
       <span
         aria-hidden="true"
-        className={`inline-flex h-7 w-7 items-center justify-center rounded-full text-[0.65rem] font-bold tracking-[0.1em] transition ${active
-          ? "bg-white/15 text-white"
-          : "bg-slate-200/70 text-slate-700 group-hover:bg-slate-300/70"
+        className={`inline-flex h-8 w-8 items-center justify-center rounded-full text-[0.65rem] font-bold tracking-[0.1em] transition ${active
+          ? "bg-white/14 text-white"
+          : "bg-white/8 text-white/75 group-hover:bg-white/12"
           }`}
       >
         <Icon className="h-4 w-4" />
       </span>
-      {compactMode ? null : <span className={active ? "bg-slate-950 text-white" : undefined}>{label}</span>}
+      {compactMode ? null : <span>{label}</span>}
       {active && !compactMode ? <span className="nav-active-rail" /> : null}
     </Link>
   );
@@ -308,7 +304,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     ? getSubjectById(activeOnboarding.preferredSubjectId)?.name ?? "Selected subject"
     : "your first subject";
   const focusLine = activeOnboarding
-    ? `${preferredSubjectLabel} • ${formatStudyGoal(activeOnboarding.studyGoal)}`
+    ? `${preferredSubjectLabel} • ask, quiz, and review in one flow`
     : "Ask the tutor, search a topic, or start a quick drill.";
   const fallbackSubjectId = activeOnboarding?.preferredSubjectId;
   const tutorHref = dashboard.resumeTopic
@@ -357,7 +353,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const profileHref = "/app/profile";
   const activeNavLabel = navItems.find((item) => isActivePath(pathname, item.href))?.label ?? "Workspace";
 
-  const desktopSidebarWidthClass = sidebarCollapsed ? "w-24" : "w-72";
+  const desktopSidebarWidthClass = sidebarCollapsed ? "w-24" : "w-80";
 
   async function handleSignOut() {
     await signOut();
@@ -366,7 +362,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   if (isOnboardingRoute) {
     return (
-      <div className="mx-auto flex min-h-[calc(100vh-77px)] w-full max-w-4xl px-4 py-6 sm:px-6 lg:px-8">
+      <div className="mx-auto flex min-h-[100svh] w-full max-w-4xl px-4 py-6 sm:px-6 lg:px-8">
         <div className="w-full">{children}</div>
       </div>
     );
@@ -375,134 +371,144 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <>
       {paletteOpen ? <CommandPalette onClose={() => setPaletteOpen(false)} open={paletteOpen} /> : null}
-      <div className="mx-auto flex min-h-[calc(100vh-77px)] w-full max-w-7xl gap-6 px-4 py-6 sm:px-6 lg:px-8">
+      <div className="mx-auto flex min-h-[100svh] w-full max-w-[92rem] gap-6 px-4 py-6 sm:px-6 lg:px-8">
         <aside
-          className={`surface-card sticky top-6 hidden h-[calc(100vh-7rem)] shrink-0 flex-col justify-between overflow-y-auto px-4 py-5 transition-[width,padding] duration-300 lg:flex ${desktopSidebarWidthClass}`}
+          className={`sticky top-4 hidden h-[calc(100svh-2rem)] shrink-0 overflow-hidden rounded-[36px] border border-slate-900/80 bg-slate-950 text-white shadow-[0_28px_70px_rgba(15,23,42,0.18)] transition-[width,padding] duration-300 lg:flex ${desktopSidebarWidthClass}`}
         >
-          <div className="space-y-6">
-            <div className={`flex items-center gap-3 ${sidebarCollapsed ? "justify-center" : "justify-between"}`}>
-              <LearnxLogo />
-              <button
-                aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-black/10 bg-white/85 text-slate-700 transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-slate-950 focus:ring-offset-2"
-                onClick={() => setSidebarCollapsed((current) => !current)}
-                type="button"
-              >
-                {sidebarCollapsed ? ">" : "<"}
-              </button>
-            </div>
-
-            <div className="space-y-2">
-              <p
-                className={`px-1 text-[0.68rem] font-semibold uppercase tracking-[0.2em] text-slate-500 ${sidebarCollapsed ? "text-center" : ""
-                  }`}
-              >
-                Nav
-              </p>
-              {navItems.map((item) => (
-                <NavLink
-                  active={isActivePath(pathname, item.href)}
-                  collapsed={sidebarCollapsed}
-                  href={item.href}
-                  icon={item.icon}
-                  key={item.href}
-                  label={item.label}
-                />
-              ))}
-            </div>
-
-            <div className={`space-y-3 ${sidebarCollapsed ? "hidden" : "block"}`}>
-              <div className="flex items-center justify-between gap-3 px-1">
-                <div className="flex items-center gap-2">
-                  <HistoryIcon className="h-4 w-4 text-slate-500" />
-                  <p className="eyebrow">Recent activity</p>
-                </div>
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(45,212,191,0.18),transparent_28%),radial-gradient(circle_at_bottom_left,rgba(245,158,11,0.14),transparent_30%)]" />
+          <div className={`relative flex h-full flex-col justify-between ${sidebarCollapsed ? "px-3 py-4" : "px-4 py-5"}`}>
+            <div className="space-y-6">
+              <div className={`flex items-center gap-3 ${sidebarCollapsed ? "justify-center" : "justify-between"}`}>
+                <LearnxLogo />
                 <button
-                  className="text-xs font-semibold text-slate-600"
-                  onClick={() => setHistoryPanelOpen((current) => !current)}
+                  aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/6 text-white/70 transition hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/70 focus:ring-offset-2 focus:ring-offset-slate-950"
+                  onClick={() => setSidebarCollapsed((current) => !current)}
                   type="button"
                 >
-                  {historyPanelOpen ? "Hide" : "Show"}
+                  {sidebarCollapsed ? ">" : "<"}
                 </button>
               </div>
-              {historyPanelOpen ? (
-                visibleRecentWork.length === 0 ? (
-                  <div className="surface-panel px-4 py-4 text-sm leading-6 text-slate-500">
-                    Drills, notes, and tutor threads will appear here once the learner starts studying.
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {visibleRecentWork.map((item) => (
-                      <Link
-                        className="surface-panel block px-4 py-4 transition hover:-translate-y-0.5 hover:shadow-[0_16px_36px_rgba(15,23,42,0.08)]"
-                        href={item.href}
-                        key={`${item.label}-${item.title}`}
-                      >
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{item.label}</p>
-                        <p className="mt-2 font-semibold text-slate-950">{item.title}</p>
-                        <p className="mt-1 text-sm leading-6 text-slate-600">{item.detail}</p>
-                      </Link>
-                    ))}
-                  </div>
-                )
-              ) : (
-                <div className="surface-panel px-4 py-4 text-sm leading-6 text-slate-500">
-                  Keep this hidden until you want a quick look at recent drills, notes, and tutor threads.
-                </div>
-              )}
-            </div>
-          </div>
 
-          <div className={`surface-panel space-y-3 p-4 ${sidebarCollapsed ? "items-center" : ""}`}>
-            <div className={`flex items-center gap-3 ${sidebarCollapsed ? "justify-center" : ""}`}>
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-950 text-sm font-bold text-white">
-                {avatarInitials}
-              </div>
               {sidebarCollapsed ? null : (
-                <div className="min-w-0">
-                  <p className="truncate font-semibold text-slate-950">{displayName}</p>
-                  <p className="truncate text-sm text-slate-500">Profile details and learner settings live in account.</p>
+                <div className="rounded-[24px] border border-white/8 bg-white/6 px-4 py-4">
+                  <p className="text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-white/45">Workspace</p>
+                  <p className="mt-3 text-lg font-semibold tracking-tight text-white">{preferredSubjectLabel}</p>
+                  <p className="mt-2 text-sm leading-6 text-white/60">{focusLine}</p>
                 </div>
               )}
+
+              <div className="space-y-2">
+                <p
+                  className={`px-1 text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-white/40 ${sidebarCollapsed ? "text-center" : ""
+                    }`}
+                >
+                  Navigate
+                </p>
+                {navItems.map((item) => (
+                  <NavLink
+                    active={isActivePath(pathname, item.href)}
+                    collapsed={sidebarCollapsed}
+                    href={item.href}
+                    icon={item.icon}
+                    key={item.href}
+                    label={item.label}
+                  />
+                ))}
+              </div>
+
+              <div className={`space-y-3 ${sidebarCollapsed ? "hidden" : "block"}`}>
+                <div className="flex items-center justify-between gap-3 px-1">
+                  <div className="flex items-center gap-2">
+                    <HistoryIcon className="h-4 w-4 text-white/45" />
+                    <p className="text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-white/40">Recent</p>
+                  </div>
+                  <button
+                    className="text-xs font-semibold text-white/55 transition hover:text-white"
+                    onClick={() => setHistoryPanelOpen((current) => !current)}
+                    type="button"
+                  >
+                    {historyPanelOpen ? "Hide" : "Show"}
+                  </button>
+                </div>
+                {historyPanelOpen ? (
+                  visibleRecentWork.length === 0 ? (
+                    <div className="rounded-[24px] border border-white/8 bg-white/6 px-4 py-4 text-sm leading-6 text-white/55">
+                      Recent drills, notes, and tutor threads will show up here once the learner starts moving.
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {visibleRecentWork.map((item) => (
+                        <Link
+                          className="block rounded-[22px] border border-white/8 bg-white/6 px-4 py-4 transition hover:bg-white/10"
+                          href={item.href}
+                          key={`${item.label}-${item.title}`}
+                        >
+                          <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-white/40">{item.label}</p>
+                          <p className="mt-2 font-semibold text-white">{item.title}</p>
+                          <p className="mt-1 text-sm leading-6 text-white/55">{item.detail}</p>
+                        </Link>
+                      ))}
+                    </div>
+                  )
+                ) : (
+                  <div className="rounded-[24px] border border-white/8 bg-white/6 px-4 py-4 text-sm leading-6 text-white/50">
+                    Keep this rail quiet until you want a quick look at recent activity.
+                  </div>
+                )}
+              </div>
             </div>
-            <div className={`grid gap-2 ${sidebarCollapsed ? "grid-cols-1" : "grid-cols-2"}`}>
-              <Link className="button-secondary w-full gap-2" href={profileHref}>
-                <SettingsIcon className="h-4 w-4" />
-                Account
-              </Link>
-              <button
-                aria-label="Sign out of LearnX and return to login"
-                className="button-secondary w-full gap-2"
-                onClick={() => {
-                  void handleSignOut();
-                }}
-                type="button"
-              >
-                <LogOutIcon className="h-4 w-4" />
-                Sign out
-              </button>
+
+            <div className={`border-t border-white/8 pt-4 ${sidebarCollapsed ? "space-y-3" : "space-y-4"}`}>
+              <div className={`flex items-center gap-3 ${sidebarCollapsed ? "justify-center" : ""}`}>
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 text-sm font-bold text-white">
+                  {avatarInitials}
+                </div>
+                {sidebarCollapsed ? null : (
+                  <div className="min-w-0">
+                    <p className="truncate font-semibold text-white">{firstName}</p>
+                    <p className="truncate text-sm text-white/45">Profile and sign-out</p>
+                  </div>
+                )}
+              </div>
+
+              <div className={`grid gap-2 ${sidebarCollapsed ? "grid-cols-1" : "grid-cols-2"}`}>
+                <Link
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/6 px-4 py-3 font-semibold text-white transition hover:bg-white/10"
+                  href={profileHref}
+                >
+                  <SettingsIcon className="h-4 w-4" />
+                  {sidebarCollapsed ? null : "Profile"}
+                </Link>
+                <button
+                  aria-label="Sign out of LearnX and return to login"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/6 px-4 py-3 font-semibold text-white transition hover:bg-white/10"
+                  onClick={() => {
+                    void handleSignOut();
+                  }}
+                  type="button"
+                >
+                  <LogOutIcon className="h-4 w-4" />
+                  {sidebarCollapsed ? null : "Sign out"}
+                </button>
+              </div>
             </div>
           </div>
         </aside>
 
         <div className="min-w-0 flex-1 safe-bottom">
-          <div className="surface-card mb-5 overflow-hidden px-4 py-4 sm:px-5 sm:py-5">
-            <div className="space-y-4">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <p className="eyebrow">Study cockpit</p>
-                    <span className="pill">Streak: {dashboard.rewards.streakDays} day{dashboard.rewards.streakDays === 1 ? "" : "s"}</span>
-                    <span className="pill">Level {dashboard.rewards.level}</span>
-                    <span className="pill">Today: {dashboard.todayAttempts}/{dashboard.dailyGoalTarget} drills</span>
-                  </div>
-                  <h1 className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
-                    Welcome back, {firstName}
-                  </h1>
-                  <p className="max-w-2xl text-sm leading-6 text-slate-600">{focusLine}</p>
-                </div>
-
-              </div>
+          <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div className="space-y-2">
+              <p className="eyebrow">Study</p>
+              <h1 className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
+                Welcome back, {firstName}
+              </h1>
+              <p className="max-w-2xl text-sm leading-6 text-slate-600">{focusLine}</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <span className="pill">Streak: {dashboard.rewards.streakDays} day{dashboard.rewards.streakDays === 1 ? "" : "s"}</span>
+              <span className="pill">Level {dashboard.rewards.level}</span>
+              <span className="pill">Today: {dashboard.todayAttempts}/{dashboard.dailyGoalTarget} drills</span>
             </div>
           </div>
           <div className="mb-5 flex flex-wrap gap-3 lg:hidden">

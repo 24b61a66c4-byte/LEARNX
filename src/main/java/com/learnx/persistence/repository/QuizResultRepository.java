@@ -1,6 +1,6 @@
 package com.learnx.persistence.repository;
 
-import com.learnx.persistence.model.QuizResult;
+import com.learnx.persistence.entity.QuizResultEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -10,13 +10,13 @@ import java.util.List;
 import java.util.UUID;
 
 @Repository
-public interface QuizResultRepository extends JpaRepository<QuizResult, Long> {
-    List<QuizResult> findByUserId(UUID userId);
+public interface QuizResultRepository extends JpaRepository<QuizResultEntity, Long> {
+    List<QuizResultEntity> findByUserId(UUID userId);
 
-    List<QuizResult> findByUserIdAndSubjectId(UUID userId, String subjectId);
+    List<QuizResultEntity> findByUserIdAndSubjectId(UUID userId, String subjectId);
 
-    List<QuizResult> findByUserIdAndTopicId(UUID userId, String topicId);
+    List<QuizResultEntity> findByUserIdAndTopicId(UUID userId, String topicId);
 
-    @Query("SELECT AVG(q.scorePercent) FROM QuizResult q WHERE q.userId = :userId AND q.subjectId = :subjectId")
+    @Query("SELECT AVG(q.scorePercent) FROM QuizResultEntity q WHERE q.userId = :userId AND q.subjectId = :subjectId")
     Double getAverageScoreForSubject(@Param("userId") UUID userId, @Param("subjectId") String subjectId);
 }

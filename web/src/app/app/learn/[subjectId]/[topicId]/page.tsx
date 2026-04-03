@@ -1,16 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { LessonBlock } from "@/components/lesson-block";
-import { PracticeWorkspace } from "@/components/practice-workspace";
 import { ResumeTracker } from "@/components/resume-tracker";
-import { SearchLane } from "@/components/search-lane";
-import { StudySupportDock } from "@/components/study-support-dock";
-import { TopicNotesPanel } from "@/components/topic-notes-panel";
-import { TopicStudioOverview } from "@/components/topic-studio-overview";
 import { TutorPanel } from "@/components/tutor-panel";
 import { getSubjectById } from "@/lib/data/catalog";
-import { getPublicAskHref, getPublicPracticeHref, resolveSubjectIdFromSegment, resolveTopicIdFromSegment } from "@/lib/public-routes";
+import { getPublicPracticeHref, resolveSubjectIdFromSegment, resolveTopicIdFromSegment } from "@/lib/public-routes";
 import { getTopicWorkspaceContext } from "@/lib/topic-workspace";
 
 export default async function TopicPage({
@@ -30,53 +24,43 @@ export default async function TopicPage({
     notFound();
   }
 
+  const previewBlocks = (lesson?.blocks ?? []).slice(0, 3);
+
   return (
     <section className="space-y-6">
       <ResumeTracker topicId={topic.id} />
 
-      <div className="surface-card overflow-hidden p-6">
-        <div className={`rounded-[32px] bg-gradient-to-br ${subject.accent} p-6 sm:p-7`}>
-          <div className="grid gap-6 xl:grid-cols-[1.3fr_0.9fr]">
-            <div className="space-y-4">
-              <p className="eyebrow">{subject.name} studio</p>
-              <h1 className="text-4xl font-bold tracking-tight text-slate-950 sm:text-5xl">{topic.title}</h1>
-              <p className="max-w-3xl text-sm leading-7 text-slate-700 sm:text-base">{topic.summary}</p>
-              <div className="flex flex-wrap gap-2">
-                {topic.tags.map((tag) => (
-                  <span className={`pill ${subject.backdrop}`} key={tag}>
-                    {tag}
-                  </span>
-                ))}
-              </div>
-              <div className="flex flex-wrap gap-3">
-                <Link className="button-primary" href={getPublicAskHref(resolvedSubjectId, resolvedTopicId)}>
-                  Open ask studio
-                </Link>
-                <Link className="button-secondary" href={getPublicPracticeHref(resolvedSubjectId, resolvedTopicId)}>
-                  Open drill mode
-                </Link>
-              </div>
+      <div className={`overflow-hidden rounded-[36px] border border-black/10 bg-gradient-to-br ${subject.accent} px-6 py-7 shadow-[0_24px_70px_rgba(15,23,42,0.1)] sm:px-7`}>
+        <div className="grid gap-5 lg:grid-cols-[1.2fr_0.8fr]">
+          <div className="space-y-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="eyebrow">{subject.name}</p>
+              {topic.tags.map((tag) => (
+                <span className={`pill ${subject.backdrop}`} key={tag}>
+                  {tag}
+                </span>
+              ))}
             </div>
+            <h1 className="text-4xl font-bold tracking-tight text-slate-950 sm:text-5xl">{topic.title}</h1>
+            <p className="max-w-3xl text-sm leading-7 text-slate-700 sm:text-base">{topic.summary}</p>
+          </div>
 
-            <div className="rounded-[28px] border border-white/40 bg-white/78 p-5 shadow-sm">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Topic flight plan</p>
-              <div className="mt-4 grid gap-3 sm:grid-cols-3 xl:grid-cols-1">
-                <div className="rounded-[22px] bg-white/86 px-4 py-4 shadow-sm">
-                  <p className="text-sm text-slate-500">Lesson map</p>
-                  <p className="mt-2 text-3xl font-bold tracking-tight text-slate-950">{lesson?.blocks.length ?? 0}</p>
-                  <p className="mt-1 text-sm text-slate-600">guided blocks</p>
-                </div>
-                <div className="rounded-[22px] bg-white/86 px-4 py-4 shadow-sm">
-                  <p className="text-sm text-slate-500">Search cues</p>
-                  <p className="mt-2 text-3xl font-bold tracking-tight text-slate-950">{workspaceContext.searchSuggestions.length}</p>
-                  <p className="mt-1 text-sm text-slate-600">web prompts ready</p>
-                </div>
-                <div className="rounded-[22px] bg-slate-950 px-4 py-4 text-white shadow-[0_20px_40px_rgba(15,23,42,0.12)]">
-                  <p className="text-sm text-slate-300">Closeout</p>
-                  <p className="mt-2 text-2xl font-bold tracking-tight">Note + drill</p>
-                  <p className="mt-1 text-sm text-slate-300">Do not leave the topic cold.</p>
-                </div>
+          <div className="rounded-[28px] border border-white/40 bg-white/76 p-5 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Study loop</p>
+            <div className="mt-4 grid gap-3">
+              <div className="rounded-[22px] bg-white/84 px-4 py-4 shadow-sm">
+                <p className="text-sm text-slate-500">Step 1</p>
+                <p className="mt-2 text-lg font-semibold text-slate-950">Ask until it clicks</p>
+                <p className="mt-1 text-sm text-slate-600">Keep the explanation and follow-up questions in one thread.</p>
               </div>
+              <div className="rounded-[22px] bg-white/84 px-4 py-4 shadow-sm">
+                <p className="text-sm text-slate-500">Step 2</p>
+                <p className="mt-2 text-lg font-semibold text-slate-950">Take the quiz</p>
+                <p className="mt-1 text-sm text-slate-600">Move to the topic quiz while the idea is still fresh.</p>
+              </div>
+              <Link className="button-primary w-full" href={getPublicPracticeHref(resolvedSubjectId, resolvedTopicId)}>
+                Go to topic quiz
+              </Link>
             </div>
           </div>
         </div>
@@ -91,71 +75,40 @@ export default async function TopicPage({
         showSupportLanes={false}
       />
 
-      <div className="grid gap-6 xl:grid-cols-[0.82fr_1.18fr]">
-        <div className="space-y-6">
-          <TopicStudioOverview
-            lessonBlockCount={lesson?.blocks.length ?? 0}
-            topicId={topic.id}
-            topicTitle={topic.title}
-          />
-        </div>
-
-        <div className="space-y-5">
-          <div className="surface-card scroll-mt-28 p-6" id="topic-lesson">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <p className="eyebrow">Lesson center</p>
-                <h2 className="mt-2 text-3xl font-bold tracking-tight text-slate-950">
-                  Stay with one topic until it actually clicks
-                </h2>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <span className="pill">Read</span>
-                <span className="pill">Search</span>
-                <span className="pill">Notes</span>
-                <span className="pill">Drill</span>
-              </div>
+      {previewBlocks.length > 0 ? (
+        <section className="rounded-[34px] border border-black/10 bg-white/82 p-6 shadow-[0_18px_48px_rgba(15,23,42,0.08)]">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <p className="eyebrow">Lesson snapshot</p>
+              <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-950">Use these anchors while chatting</h2>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+                Keep the chat as the main workspace. These blocks are just enough grounding before the quiz.
+              </p>
             </div>
-            <p className="mt-3 text-sm leading-6 text-slate-600">
-              Read first, then clarify, save, and test. The whole point of this page is to stop the study flow from
-              breaking into tabs and disconnected tools.
-            </p>
+            <Link className="button-secondary" href={getPublicPracticeHref(resolvedSubjectId, resolvedTopicId)}>
+              Ready for the quiz
+            </Link>
           </div>
 
-          <div className="space-y-4">
-            {lesson?.blocks?.map((block) => (
-              <LessonBlock block={block} key={block.id} />
+          <div className="mt-5 grid gap-4 lg:grid-cols-3">
+            {previewBlocks.map((block) => (
+              <article className="rounded-[24px] border border-black/10 bg-white p-5 shadow-sm" key={block.id}>
+                <p className="text-[0.68rem] font-semibold uppercase tracking-[0.2em] text-slate-500">
+                  {block.kind.replace(/-/g, " ")}
+                </p>
+                <h3 className="mt-2 text-lg font-semibold tracking-tight text-slate-950">{block.title}</h3>
+                <div className="mt-3 space-y-2">
+                  {block.content.slice(0, 2).map((item) => (
+                    <p className="text-sm leading-6 text-slate-600" key={item}>
+                      {item}
+                    </p>
+                  ))}
+                </div>
+              </article>
             ))}
           </div>
-
-          <StudySupportDock
-            defaultTab="search"
-            description="Search examples or capture notes without pulling attention away from the lesson."
-            notes={
-              <TopicNotesPanel
-                key={`notes-${topic.id}`}
-                seedNotes={workspaceContext.noteSeeds}
-                subjectId={resolvedSubjectId}
-                topicId={topic.id}
-                topicTitle={topic.title}
-              />
-            }
-            search={
-              <SearchLane
-                sectionId="search-lane"
-                key={`search-${topic.id}`}
-                searchSuggestions={workspaceContext.searchSuggestions}
-                tags={topic.tags}
-                topicSummary={topic.summary}
-                topicTitle={topic.title}
-                watchLane={workspaceContext.watchLane}
-              />
-            }
-            title="Search & notes"
-          />
-          <PracticeWorkspace defaultSubjectId={resolvedSubjectId} defaultTopicId={topic.id} />
-        </div>
-      </div>
+        </section>
+      ) : null}
     </section>
   );
 }

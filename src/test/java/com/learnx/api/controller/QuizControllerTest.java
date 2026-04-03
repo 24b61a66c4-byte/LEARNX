@@ -2,8 +2,8 @@ package com.learnx.api.controller;
 
 import com.learnx.api.security.AuthContextService;
 import com.learnx.api.service.AuditService;
+import com.learnx.persistence.entity.QuizResultEntity;
 import com.learnx.persistence.model.QuizAnswerDetail;
-import com.learnx.persistence.model.QuizResult;
 import com.learnx.persistence.service.QuizResultService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -55,7 +55,7 @@ class QuizControllerTest {
         detail.setScore(100);
         detail.setExplanation("Joins combine related records.");
 
-        QuizResult request = new QuizResult();
+        QuizResultEntity request = new QuizResultEntity();
         request.setSubjectId("dbms");
         request.setTopicId("dbms-joins");
         request.setTotalQuestions(1);
@@ -63,7 +63,7 @@ class QuizControllerTest {
         request.setScorePercent(100.0);
         request.setAnswers(List.of(detail));
 
-        QuizResult saved = new QuizResult();
+        QuizResultEntity saved = new QuizResultEntity();
         saved.setId(22L);
         saved.setUserId(userId);
         saved.setSubjectId("dbms");
@@ -74,18 +74,18 @@ class QuizControllerTest {
         saved.setAnswers(List.of(detail));
 
         when(authContextService.requireAuthenticatedUser(authentication)).thenReturn(userId);
-        when(quizService.saveResult(any(QuizResult.class))).thenReturn(saved);
+        when(quizService.saveResult(any(QuizResultEntity.class))).thenReturn(saved);
 
         ResponseEntity<?> response = controller.submitQuiz(request, authentication);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        QuizResult body = (QuizResult) response.getBody();
+        QuizResultEntity body = (QuizResultEntity) response.getBody();
         assertNotNull(body);
         assertNotNull(body.getAnswers());
         assertEquals(1, body.getAnswers().size());
         assertEquals("q-1", body.getAnswers().get(0).getQuestionId());
 
-        ArgumentCaptor<QuizResult> captor = ArgumentCaptor.forClass(QuizResult.class);
+        ArgumentCaptor<QuizResultEntity> captor = ArgumentCaptor.forClass(QuizResultEntity.class);
         verify(quizService).saveResult(captor.capture());
         assertEquals(userId, captor.getValue().getUserId());
         assertEquals(1, captor.getValue().getAnswers().size());
@@ -100,7 +100,7 @@ class QuizControllerTest {
         detail.setCorrect(false);
         detail.setScore(0);
 
-        QuizResult result = new QuizResult();
+        QuizResultEntity result = new QuizResultEntity();
         result.setId(30L);
         result.setUserId(userId);
         result.setSubjectId("dbms");
@@ -121,7 +121,7 @@ class QuizControllerTest {
         assertNotNull(body);
         assertEquals(1, body.size());
 
-        QuizResult first = (QuizResult) body.get(0);
+        QuizResultEntity first = (QuizResultEntity) body.get(0);
         assertEquals(1, first.getAnswers().size());
         assertEquals("q-2", first.getAnswers().get(0).getQuestionId());
     }

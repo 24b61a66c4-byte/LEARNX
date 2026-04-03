@@ -2,7 +2,7 @@ package com.learnx.api.controller;
 
 import com.learnx.api.security.AuthContextService;
 import com.learnx.api.service.AuditService;
-import com.learnx.persistence.model.LearnerProfile;
+import com.learnx.persistence.entity.LearnerProfileEntity;
 import com.learnx.persistence.service.LearnerProfileService;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
@@ -44,11 +44,11 @@ public class ProfileController {
     }
 
     @PostMapping
-    public ResponseEntity<?> saveProfile(@Valid @RequestBody LearnerProfile profile, Authentication authentication) {
+    public ResponseEntity<?> saveProfile(@Valid @RequestBody LearnerProfileEntity profile, Authentication authentication) {
         try {
             UUID authenticatedUserId = authContextService.requireAuthenticatedUser(authentication);
             profile.setUserId(authenticatedUserId);
-            LearnerProfile saved = profileService.saveProfile(profile);
+            LearnerProfileEntity saved = profileService.saveProfile(profile);
             auditService.logMutation("PROFILE_UPSERT", authenticatedUserId, "profile", String.valueOf(saved.getId()),
                     "Saved profile details");
             return ResponseEntity.ok(saved);
@@ -61,13 +61,13 @@ public class ProfileController {
     @PostMapping("/onboarding")
     public ResponseEntity<?> completeOnboarding(
             @RequestParam String userId,
-            @Valid @RequestBody LearnerProfile profile,
+            @Valid @RequestBody LearnerProfileEntity profile,
             Authentication authentication) {
         try {
             UUID authenticatedUserId = authContextService.requireAuthenticatedUser(authentication);
             UUID parsedUserId = authContextService.parseAndRequireMatch(authenticatedUserId, userId);
             profile.setUserId(parsedUserId);
-            LearnerProfile saved = profileService.saveProfile(profile);
+            LearnerProfileEntity saved = profileService.saveProfile(profile);
             auditService.logMutation("PROFILE_ONBOARDING", authenticatedUserId, "profile",
                     String.valueOf(saved.getId()), "Completed onboarding");
             return ResponseEntity.ok(saved);

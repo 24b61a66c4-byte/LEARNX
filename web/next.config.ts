@@ -4,11 +4,13 @@ import nextPwa from "next-pwa";
 const withPWA = nextPwa({
     dest: "public",
     register: true,
-    disable: process.env.NODE_ENV === "development",
 });
 
-const nextConfig: NextConfig = withPWA({
+const baseConfig: NextConfig = {
     devIndicators: false,
-});
+};
+
+const nextConfig: NextConfig =
+    process.env.NODE_ENV === "development" ? baseConfig : withPWA(baseConfig);
 
 export default nextConfig;

@@ -1,17 +1,8 @@
-package com.learnx.core.service;
+package com.learnx.core.entity;
 
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.List;
-
-import jakarta.persistence.CollectionTable;
-import jakarta.persistence.Column;
-import jakarta.persistence.ElementCollection;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
-import jakarta.persistence.Table;
 
 /**
  * Subject entity representing a configurable subject/domain.
@@ -65,6 +56,7 @@ public class SubjectEntity {
         updatedAt = LocalDateTime.now();
     }
 
+    // Constructors
     public SubjectEntity() {
     }
 
@@ -75,6 +67,7 @@ public class SubjectEntity {
         this.isActive = true;
     }
 
+    // Getters and Setters
     public String getId() {
         return id;
     }

@@ -1,6 +1,6 @@
 package com.learnx.persistence.service;
 
-import com.learnx.persistence.model.StudyNote;
+import com.learnx.persistence.entity.StudyNoteEntity;
 import com.learnx.persistence.repository.StudyNoteRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.lang.NonNull;
@@ -20,24 +20,24 @@ public class StudyNoteService {
         this.repository = repository;
     }
 
-    public StudyNote saveNote(StudyNote note) {
+    public StudyNoteEntity saveNote(StudyNoteEntity note) {
         note.setUpdatedAt(LocalDateTime.now());
         return repository.save(note);
     }
 
-    public Optional<StudyNote> getNoteById(@NonNull Long id) {
+    public Optional<StudyNoteEntity> getNoteById(@NonNull Long id) {
         return repository.findById(id);
     }
 
-    public List<StudyNote> getUserNotes(UUID userId) {
+    public List<StudyNoteEntity> getUserNotes(UUID userId) {
         return repository.findByUserId(userId);
     }
 
-    public List<StudyNote> getUserNotesByTopic(UUID userId, String topicId) {
+    public List<StudyNoteEntity> getUserNotesByTopic(UUID userId, String topicId) {
         return repository.findByUserIdAndTopicId(userId, topicId);
     }
 
-    public List<StudyNote> getUserNotesBySubject(UUID userId, String subjectId) {
+    public List<StudyNoteEntity> getUserNotesBySubject(UUID userId, String subjectId) {
         return repository.findByUserIdAndSubjectId(userId, subjectId);
     }
 

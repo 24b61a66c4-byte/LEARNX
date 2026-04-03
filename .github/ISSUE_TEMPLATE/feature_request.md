@@ -28,5 +28,5 @@ Describe the behavior, UX, and any API/data implications.
 ## Alternatives considered
 List alternatives and why they are less suitable.
 
-## Additional context
-Add references, mockups, or screenshots.
+## Delivery notes
+Add references, mockups, screenshots, rollout constraints, or migration concerns.

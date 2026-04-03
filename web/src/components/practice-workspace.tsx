@@ -39,6 +39,7 @@ export function PracticeWorkspace({
         .filter((topic): topic is Topic => Boolean(topic)),
     [questions],
   );
+  const isTopicLocked = Boolean(defaultTopicId);
   const hasQuestions = questions.length > 0;
   const answeredCount = questions.filter((question) => Boolean(answers[question.id]?.trim())).length;
   const selectedTopic = topicOptions.find((topic) => topic.id === topicId);
@@ -65,11 +66,10 @@ export function PracticeWorkspace({
     <section className="surface-card scroll-mt-28 space-y-5 p-5" id="drill-dock">
       <div className="space-y-3">
         <div>
-          <p className="eyebrow">Drill dock</p>
-          <h3 className="text-2xl font-bold tracking-tight text-slate-950">Practice the exact topic while it is still fresh</h3>
+          <p className="eyebrow">Quiz</p>
+          <h3 className="text-2xl font-bold tracking-tight text-slate-950">Test the topic while it is still fresh</h3>
           <p className="text-sm leading-6 text-slate-600">
-            This drill now builds an adaptive question set from the current topic, lesson blocks, and learner context
-            instead of falling back to a tiny static bank.
+            Answer the full set, then LearnX will show what to retry, what to save, and what to study next.
           </p>
         </div>
 
@@ -77,9 +77,9 @@ export function PracticeWorkspace({
           <div className="rounded-2xl border border-white/35 bg-white/70 px-4 py-4">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="text-sm font-semibold text-slate-900">Session progress</p>
+                <p className="text-sm font-semibold text-slate-900">Quiz progress</p>
                 <p className="mt-1 text-xs text-slate-500">
-                  Finish every answer to unlock the full results page and follow-up recommendations.
+                  Finish every answer to unlock the result and next-step recommendation.
                 </p>
               </div>
               <span className="reward-chip">
@@ -94,7 +94,7 @@ export function PracticeWorkspace({
           </div>
 
           <div className="rounded-2xl border border-white/35 bg-white/70 px-4 py-4">
-            <p className="text-sm font-semibold text-slate-900">Topics covered</p>
+            <p className="text-sm font-semibold text-slate-900">Focus</p>
             <p className="mt-2 text-sm leading-6 text-slate-600">{focusLabel}</p>
             <div className="mt-3 flex flex-wrap gap-2">
               {focusTopics.map((topic) => (
@@ -107,47 +107,55 @@ export function PracticeWorkspace({
         </div>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2">
-        <label className="space-y-2 text-sm font-semibold text-slate-800">
-          Subject
-          <select
-            className="field"
-            onChange={(event) => {
-              setSubjectId(event.target.value as SubjectId);
-              setTopicId("");
-              setAnswers({});
-              setScoring(false);
-            }}
-            value={subjectId}
-          >
-            {subjects.map((subject) => (
-              <option key={subject.id} value={subject.id}>
-                {subject.name}
-              </option>
-            ))}
-          </select>
-        </label>
+      {isTopicLocked ? (
+        <div className="flex flex-wrap gap-2">
+          <span className="pill">Subject: {subjectName}</span>
+          {selectedTopic ? <span className="pill">Topic: {selectedTopic.title}</span> : null}
+          <span className="pill">{questions.length || PRACTICE_QUESTION_TARGET} questions</span>
+        </div>
+      ) : (
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="space-y-2 text-sm font-semibold text-slate-800">
+            Subject
+            <select
+              className="field"
+              onChange={(event) => {
+                setSubjectId(event.target.value as SubjectId);
+                setTopicId("");
+                setAnswers({});
+                setScoring(false);
+              }}
+              value={subjectId}
+            >
+              {subjects.map((subject) => (
+                <option key={subject.id} value={subject.id}>
+                  {subject.name}
+                </option>
+              ))}
+            </select>
+          </label>
 
-        <label className="space-y-2 text-sm font-semibold text-slate-800">
-          Topic
-          <select
-            className="field"
-            onChange={(event) => {
-              setTopicId(event.target.value);
-              setAnswers({});
-              setScoring(false);
-            }}
-            value={topicId}
-          >
-            <option value="">Adaptive mix from this subject</option>
-            {topicOptions.map((topic) => (
-              <option key={topic.id} value={topic.id}>
-                {topic.title}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
+          <label className="space-y-2 text-sm font-semibold text-slate-800">
+            Topic
+            <select
+              className="field"
+              onChange={(event) => {
+                setTopicId(event.target.value);
+                setAnswers({});
+                setScoring(false);
+              }}
+              value={topicId}
+            >
+              <option value="">Adaptive mix from this subject</option>
+              {topicOptions.map((topic) => (
+                <option key={topic.id} value={topic.id}>
+                  {topic.title}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+      )}
 
       {hasQuestions ? (
         <div className="space-y-4">
@@ -241,24 +249,24 @@ export function PracticeWorkspace({
               ? "Finish all answers to unlock results"
               : scoring
                 ? "Opening your results"
-                : "See full results and next steps"}
+                : "Submit quiz and see results"}
           </button>
           <p className="text-center text-xs text-slate-500">
             {answeredCount < questions.length
               ? "Scoring unlocks after every question has an answer."
-              : "LearnX will open a dedicated results page with revision, notes, and follow-up links."}
+              : "LearnX will open a results page with fixes, notes, and follow-up links."}
           </p>
         </div>
       ) : null}
 
       {selectedTopic ? (
         <div className="surface-panel p-5">
-          <p className="eyebrow">Need a quick explanation first?</p>
+          <p className="eyebrow">Need help before submitting?</p>
           <p className="mt-2 text-sm leading-6 text-slate-600">
-            Open the tutor for {selectedTopic.title} and ask for a short repair pass before you retry the drill.
+            Open the study assistant for {selectedTopic.title} and ask for a short repair pass before you finish the quiz.
           </p>
           <Link className="button-secondary mt-4" href={getPublicAskHref(subjectId, selectedTopic.id)}>
-            Ask tutor about {selectedTopic.title}
+            Back to study assistant
           </Link>
         </div>
       ) : null}

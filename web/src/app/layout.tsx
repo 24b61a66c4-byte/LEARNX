@@ -1,12 +1,10 @@
 import type { Metadata } from "next";
 import { IBM_Plex_Sans, Space_Grotesk } from "next/font/google";
-import Link from "next/link";
 import type { ReactNode } from "react";
 
 import "./globals.css";
 
-import { LearnxLogo } from "@/components/learnx-logo";
-import { SiteHeader } from "@/components/site-header";
+import { LayoutHeader } from "@/components/layout-header";
 import { Providers } from "@/app/providers";
 
 const displayFont = Space_Grotesk({
@@ -43,17 +41,7 @@ export default function RootLayout({
             >
               Skip to content
             </a>
-            <header className="sticky top-0 z-40 border-b border-black/5 bg-[rgba(246,241,232,0.82)] backdrop-blur-md">
-              <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
-                <Link
-                  href="/"
-                  className="inline-flex items-center gap-3 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
-                >
-                  <LearnxLogo />
-                </Link>
-                <SiteHeader />
-              </div>
-            </header>
+            <LayoutHeader />
             <main id="main-content">{children}</main>
           </div>
         </Providers>

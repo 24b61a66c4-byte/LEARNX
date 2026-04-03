@@ -1,5 +1,6 @@
-package com.learnx.persistence.model;
+package com.learnx.persistence.entity;
 
+import com.learnx.persistence.model.QuizAnswerDetail;
 import jakarta.persistence.*;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
@@ -14,7 +15,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "quiz_results")
-public class QuizResult {
+public class QuizResultEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

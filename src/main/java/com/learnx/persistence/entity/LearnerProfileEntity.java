@@ -1,4 +1,4 @@
-package com.learnx.persistence.model;
+package com.learnx.persistence.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
@@ -10,7 +10,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "learner_profiles")
-public class LearnerProfile {
+public class LearnerProfileEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

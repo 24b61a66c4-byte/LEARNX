@@ -1,4 +1,4 @@
-package com.learnx.persistence.model;
+package com.learnx.persistence.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
@@ -10,7 +10,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "progress_snapshots")
-public class ProgressSnapshot {
+public class ProgressSnapshotEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: LearnX Getting Started Guide
+    url: https://github.com/24b61a66c4-byte/LEARNX/blob/main/docs/guides/GETTING_STARTED.md
+    about: Start here for local setup and verification steps.
+  - name: LearnX Environment Guide
+    url: https://github.com/24b61a66c4-byte/LEARNX/blob/main/docs/guides/ENVIRONMENT.md
+    about: Review required variables and platform configuration before opening an issue.

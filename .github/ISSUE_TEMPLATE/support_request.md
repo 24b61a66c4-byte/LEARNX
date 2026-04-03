@@ -7,8 +7,8 @@ assignees: ''
 
 ---
 
-## What do you need help with?
-Describe the issue or question clearly.
+## Summary
+Describe the problem or question clearly.
 
 ## Area
 - [ ] Core engine (Java)
@@ -16,6 +16,9 @@ Describe the issue or question clearly.
 - [ ] API layer
 - [ ] Web app (Next.js)
 - [ ] CI/CD or repository setup
+
+## What have you already tried?
+List the commands, docs, or debugging steps you already used.
 
 ## Steps to reproduce (if this is a bug)
 1.
@@ -37,7 +40,7 @@ What happened instead?
 ## Logs / screenshots
 Paste relevant logs or attach screenshots.
 
-## Additional context
-Anything else that helps us diagnose faster.
+## Desired outcome
+What would unblock you?
 
 

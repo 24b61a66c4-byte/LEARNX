@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
 import { useClientSnapshot } from "@/lib/client-snapshot";
-import { getTopicById } from "@/lib/data/catalog";
+import { getSubjectById, getTopicById } from "@/lib/data/catalog";
 import { catalogGateway, getServerDashboard, learnerStateGateway } from "@/lib/gateways";
 import { getPublicAskHref, getPublicLearnHref, getPublicPracticeHref } from "@/lib/public-routes";
 import { OnboardingProfile, SubjectId, Topic } from "@/lib/types";
@@ -58,6 +58,15 @@ export function DashboardPanel() {
     : workspaceState.dashboard.quickPracticeHref;
   const promptSubjectId: SubjectId | undefined = continueTopic?.subjectId ?? workspaceState.onboarding?.preferredSubjectId;
   const promptTopicId = continueTopic?.id;
+  const heroSubjectLabel =
+    (continueTopic ? getSubjectById(continueTopic.subjectId)?.name : null) ??
+    activeSubject.name;
+  const focusTopics =
+    selectedTopics.length > 0
+      ? selectedTopics.slice(0, 3)
+      : continueTopic
+        ? [continueTopic]
+        : [];
   const todayRemaining = Math.max(
     0,
     workspaceState.dashboard.dailyGoalTarget - workspaceState.dashboard.todayAttempts,
@@ -80,52 +89,75 @@ export function DashboardPanel() {
 
   return (
     <section className="space-y-6">
-      <div className="surface-card overflow-hidden p-5 sm:p-6">
-        <div className={`rounded-[32px] bg-gradient-to-br ${activeSubject.accent} p-5 sm:p-6`}>
-          <div className="grid gap-5 lg:grid-cols-[1.2fr_0.8fr]">
-            <div className="space-y-4">
-              <div className="space-y-3">
-                <p className="eyebrow">Today focus</p>
-                <h1 className="max-w-4xl text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
-                  {continueTitle}
-                </h1>
-                <p className="max-w-3xl text-sm leading-7 text-slate-700 sm:text-base">{continueReason}</p>
-                {selectedTopics.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {selectedTopics.map((topic) => (
-                      <span className="pill" key={topic.id}>
-                        {topic.title}
-                      </span>
-                    ))}
-                  </div>
-                ) : null}
-              </div>
+      <section
+        className={`relative overflow-hidden rounded-[40px] border border-black/10 bg-gradient-to-br ${activeSubject.accent} px-5 py-6 shadow-[0_26px_70px_rgba(15,23,42,0.12)] sm:px-7 sm:py-8`}
+      >
+        <div className="absolute left-[-4rem] top-[-5rem] h-48 w-48 rounded-full bg-white/45 blur-3xl" />
+        <div className="absolute bottom-[-5rem] right-[-3rem] h-72 w-72 rounded-full bg-slate-950/10 blur-3xl" />
 
-              <form className="surface-panel space-y-4 p-4 sm:p-5" onSubmit={submitQuickPrompt}>
+        <div className="relative grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+          <div className="space-y-6">
+            <div className="space-y-4">
+              <div className="flex flex-wrap items-center gap-3">
+                <p className="eyebrow text-slate-700">Today focus</p>
+                <span className={`pill ${activeSubject.backdrop}`}>{heroSubjectLabel}</span>
+              </div>
+              <h1 className="max-w-4xl text-4xl font-bold tracking-[-0.04em] text-slate-950 sm:text-5xl xl:text-6xl">
+                {continueTitle}
+              </h1>
+              <p className="max-w-2xl text-sm leading-7 text-slate-700 sm:text-base">{continueReason}</p>
+              {focusTopics.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {focusTopics.map((topic) => (
+                    <span className="pill border-white/60 bg-white/72" key={topic.id}>
+                      {topic.title}
+                    </span>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+
+            <form
+              className="relative overflow-hidden rounded-[34px] border border-slate-900/10 bg-slate-950 px-5 py-5 text-white shadow-[0_30px_90px_rgba(15,23,42,0.25)]"
+              onSubmit={submitQuickPrompt}
+            >
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(45,212,191,0.3),transparent_32%),radial-gradient(circle_at_bottom_left,rgba(245,158,11,0.22),transparent_34%)]" />
+
+              <div className="relative space-y-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <p className="eyebrow">Ask anything</p>
-                    <p className="mt-2 text-sm leading-6 text-slate-600">
-                      Ask a question first. LearnX can keep the answer open-ended, or tie it to {continueTopic?.title ?? activeSubject.name} when you already have context.
+                    <p className="text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-teal-100/80">
+                      Ask LearnX
+                    </p>
+                    <p className="mt-2 max-w-xl text-sm leading-6 text-slate-300">
+                      Start with a question, then branch into notes or practice without leaving the thread.
                     </p>
                   </div>
-                  <span className="reward-chip">{promptSubjectId ? activeSubject.name : "Open-ended"}</span>
+                  <span className="inline-flex items-center rounded-full border border-white/12 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-white/80">
+                    {promptSubjectId ? heroSubjectLabel : "Open-ended"}
+                  </span>
                 </div>
 
-                <div className="rounded-[30px] border border-black/10 bg-white px-4 py-3 shadow-[0_18px_40px_rgba(15,23,42,0.08)]">
+                <label className="block rounded-[30px] border border-white/10 bg-white/8 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
+                  <span className="flex items-center gap-2 text-[0.7rem] font-semibold uppercase tracking-[0.24em] text-slate-400">
+                    <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/8 text-sm text-white/80">
+                      ?
+                    </span>
+                    Prompt
+                  </span>
                   <textarea
                     aria-label="Ask LearnX what you want to learn"
-                    className="min-h-[108px] w-full resize-none border-0 bg-transparent p-0 text-sm text-slate-950 placeholder:text-slate-400 focus:outline-none focus:ring-0"
+                    className="mt-4 min-h-[140px] w-full resize-none border-0 bg-transparent p-0 text-lg leading-8 text-white placeholder:text-slate-500 focus:outline-none focus:ring-0"
                     onChange={(event) => setQuickPrompt(event.target.value)}
-                    placeholder="What do you want to learn today?"
+                    placeholder="Ask about a concept, request a short answer, or turn a topic into notes."
                     value={quickPrompt}
                   />
-                </div>
+                </label>
 
                 <div className="flex flex-wrap gap-2">
                   {promptSuggestions.map((item) => (
                     <button
-                      className="pill border border-black/10 bg-white/70 text-slate-700 transition hover:bg-white"
+                      className="inline-flex items-center rounded-full border border-white/10 bg-white/8 px-4 py-2 text-sm font-medium text-slate-200 transition hover:bg-white/14"
                       key={item}
                       onClick={() => setQuickPrompt(item)}
                       type="button"
@@ -135,97 +167,102 @@ export function DashboardPanel() {
                   ))}
                 </div>
 
-                <button
-                  className="button-primary w-full disabled:cursor-not-allowed disabled:opacity-50"
-                  disabled={!quickPrompt.trim()}
-                  type="submit"
-                >
-                  Ask tutor
-                </button>
-              </form>
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  <button
+                    className="inline-flex flex-1 items-center justify-center rounded-2xl bg-white px-5 py-3 font-semibold text-slate-950 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+                    disabled={!quickPrompt.trim()}
+                    type="submit"
+                  >
+                    Start study chat
+                  </button>
+                  <Link
+                    className="inline-flex flex-1 items-center justify-center rounded-2xl border border-white/12 bg-white/8 px-5 py-3 font-semibold text-white transition hover:bg-white/14"
+                    href={continueHref}
+                  >
+                    Open current topic
+                  </Link>
+                </div>
+              </div>
+            </form>
+          </div>
+
+          <div className="grid content-start gap-3">
+            <div className="rounded-[30px] border border-black/10 bg-white/72 p-5 backdrop-blur-sm shadow-[0_18px_48px_rgba(15,23,42,0.08)]">
+              <p className="eyebrow">Daily target</p>
+              <div className="mt-4 flex items-end justify-between gap-4">
+                <p className="text-5xl font-black tracking-[-0.06em] text-slate-950">
+                  {workspaceState.dashboard.todayAttempts}
+                  <span className="text-2xl font-semibold text-slate-500">
+                    /{workspaceState.dashboard.dailyGoalTarget}
+                  </span>
+                </p>
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Drills</p>
+              </div>
+              <div className="momentum-meter mt-4">
+                {todaySegments.map((active, index) => (
+                  <span data-active={active} key={index} />
+                ))}
+              </div>
+              <p className="mt-4 text-sm leading-6 text-slate-600">
+                {todayRemaining > 0
+                  ? `${todayRemaining} more drill${todayRemaining === 1 ? "" : "s"} to hit the daily target.`
+                  : "Daily target complete. Add one more run if a weak topic still feels shaky."}
+              </p>
             </div>
 
-            <div className="space-y-3">
-              <div className="shell-stat-card">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Today&apos;s drill target</p>
-                <p className="mt-2 text-2xl font-bold tracking-tight text-slate-950">
-                  {workspaceState.dashboard.todayAttempts}/{workspaceState.dashboard.dailyGoalTarget}
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
+              <div className="rounded-[28px] border border-black/10 bg-white/62 p-5 backdrop-blur-sm">
+                <p className="text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-slate-500">Current level</p>
+                <p className="mt-3 text-3xl font-bold tracking-tight text-slate-950">
+                  Level {workspaceState.dashboard.rewards.level}
                 </p>
-                <div className="momentum-meter mt-3">
-                  {todaySegments.map((active, index) => (
-                    <span data-active={active} key={index} />
-                  ))}
-                </div>
-                <p className="mt-3 text-sm leading-6 text-slate-600">
-                  {todayRemaining > 0
-                    ? `${todayRemaining} more drill${todayRemaining === 1 ? "" : "s"} to hit the daily target.`
-                    : "Daily target complete. Add one more run if a weak topic still feels shaky."}
-                </p>
-              </div>
-
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
-                <div className="shell-stat-card">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Current level</p>
-                  <p className="mt-2 text-2xl font-bold tracking-tight text-slate-950">
-                    Level {workspaceState.dashboard.rewards.level}
-                  </p>
-                  <p className="mt-2 text-sm font-semibold text-slate-800">
-                    {workspaceState.dashboard.rewards.xp} XP total
-                  </p>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">
-                    {workspaceState.dashboard.rewards.xpToNextLevel} XP left to the next level.
-                  </p>
-                </div>
-
-                <div className="shell-stat-card">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Next reward</p>
-                  <p className="mt-2 text-lg font-semibold tracking-tight text-slate-950">
-                    {workspaceState.dashboard.rewards.nextBadgeLabel}
-                  </p>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">
-                    Keep the learner on one topic long enough to turn practice into momentum.
-                  </p>
-                </div>
-              </div>
-
-              <div className="shell-stat-card">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Focus track</p>
-                <p className="mt-2 text-lg font-semibold tracking-tight text-slate-950">
-                  {selectedTopics[0]?.title ?? activeSubject.name}
+                <p className="mt-2 text-sm font-semibold text-slate-800">
+                  {workspaceState.dashboard.rewards.xp} XP total
                 </p>
                 <p className="mt-2 text-sm leading-6 text-slate-600">
-                  {selectedTopics.length > 1
-                    ? `${selectedTopics.length} starting topics are pinned for the learner right now.`
-                    : "This is the main track LearnX will keep in focus first."}
+                  {workspaceState.dashboard.rewards.xpToNextLevel} XP left to the next level.
                 </p>
+              </div>
+
+              <div className="rounded-[28px] border border-black/10 bg-white/62 p-5 backdrop-blur-sm">
+                <p className="text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-slate-500">Next reward</p>
+                <p className="mt-3 text-lg font-semibold tracking-tight text-slate-950">
+                  {workspaceState.dashboard.rewards.nextBadgeLabel}
+                </p>
+                <p className="mt-2 text-sm leading-6 text-slate-600">Keep momentum on one topic long enough to make the practice stick.</p>
+              </div>
+            </div>
+
+            <div className="rounded-[30px] border border-white/10 bg-slate-950 px-5 py-5 text-white shadow-[0_18px_48px_rgba(15,23,42,0.18)]">
+              <p className="text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-teal-200">Next move</p>
+              <h2 className="mt-3 text-2xl font-bold tracking-tight">Stay inside one thread</h2>
+              <p className="mt-3 text-sm leading-6 text-slate-300">{continueReason}</p>
+              <div className="mt-5 flex flex-col gap-3">
+                <Link
+                  className="inline-flex items-center justify-center rounded-2xl bg-white px-5 py-3 font-semibold text-slate-950 transition hover:bg-slate-100"
+                  href={continueHref}
+                >
+                  Open current topic
+                </Link>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <Link
+                    className="inline-flex items-center justify-center rounded-2xl border border-white/12 bg-white/8 px-5 py-3 font-semibold text-white transition hover:bg-white/14"
+                    href={practiceHref}
+                  >
+                    Run a drill
+                  </Link>
+                  <Link
+                    className="inline-flex items-center justify-center rounded-2xl border border-white/12 bg-white/8 px-5 py-3 font-semibold text-white transition hover:bg-white/14"
+                    href="/app/subjects"
+                  >
+                    Browse subjects
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
-
-      <div className="surface-panel p-5 sm:p-6">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="space-y-2">
-            <p className="eyebrow">Next move</p>
-            <h2 className="text-2xl font-bold tracking-tight text-slate-950">
-              Keep one topic open instead of restarting the session
-            </h2>
-            <p className="max-w-2xl text-sm leading-6 text-slate-600">{continueReason}</p>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <Link className="button-primary" href={continueHref}>
-              Open study studio
-            </Link>
-            <Link className="button-secondary" href={practiceHref}>
-              Run a drill
-            </Link>
-            <Link className="button-secondary" href="/app/subjects">
-              Browse subjects
-            </Link>
-          </div>
-        </div>
-      </div>
+      </section>
     </section>
   );
 }

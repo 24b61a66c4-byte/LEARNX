@@ -55,19 +55,17 @@ export default function LandingPage() {
             <div className="mt-4 space-y-3">
               {workspacePreview.map((lane, index) => (
                 <div
-                  className={`flex items-start justify-between gap-4 rounded-2xl border px-4 py-3 ${
-                    index === 1 ? "border-slate-950 bg-slate-950 text-white" : "border-black/5 bg-slate-50"
-                  }`}
+                  className={`flex items-start justify-between gap-4 rounded-2xl border px-4 py-3 ${index === 1 ? "border-slate-950 bg-slate-950 text-white" : "border-black/5 bg-slate-50"
+                    }`}
                   key={lane.title}
                 >
                   <div className="space-y-1">
-                  <p
-                    className={`text-xs font-semibold uppercase tracking-[0.18em] ${
-                      index === 1 ? "text-slate-300" : "text-slate-500"
-                    }`}
-                  >
-                    {lane.label}
-                  </p>
+                    <p
+                      className={`text-xs font-semibold uppercase tracking-[0.18em] ${index === 1 ? "text-slate-300" : "text-slate-500"
+                        }`}
+                    >
+                      {lane.label}
+                    </p>
                     <p className={`text-sm font-semibold tracking-tight ${index === 1 ? "text-white" : "text-slate-950"}`}>
                       {lane.title}
                     </p>

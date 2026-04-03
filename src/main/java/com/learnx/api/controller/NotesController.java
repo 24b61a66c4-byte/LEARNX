@@ -2,7 +2,7 @@ package com.learnx.api.controller;
 
 import com.learnx.api.security.AuthContextService;
 import com.learnx.api.service.AuditService;
-import com.learnx.persistence.model.StudyNote;
+import com.learnx.persistence.entity.StudyNoteEntity;
 import com.learnx.persistence.service.StudyNoteService;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
@@ -36,11 +36,11 @@ public class NotesController {
     }
 
     @PostMapping
-    public ResponseEntity<?> saveNote(@Valid @RequestBody StudyNote note, Authentication authentication) {
+    public ResponseEntity<?> saveNote(@Valid @RequestBody StudyNoteEntity note, Authentication authentication) {
         try {
             UUID authenticatedUserId = authContextService.requireAuthenticatedUser(authentication);
             note.setUserId(authenticatedUserId);
-            StudyNote saved = notesService.saveNote(note);
+            StudyNoteEntity saved = notesService.saveNote(note);
             auditService.logMutation("NOTE_CREATE", authenticatedUserId, "study-note", String.valueOf(saved.getId()),
                     "Created note");
             return ResponseEntity.ok(saved);
@@ -64,7 +64,7 @@ public class NotesController {
         try {
             UUID authenticatedUserId = authContextService.requireAuthenticatedUser(authentication);
             UUID parsedUserId = authContextService.parseAndRequireMatch(authenticatedUserId, userId);
-            List<StudyNote> notes = notesService.getUserNotes(parsedUserId);
+            List<StudyNoteEntity> notes = notesService.getUserNotes(parsedUserId);
             return ResponseEntity.ok(notes);
         } catch (Exception e) {
             LOGGER.error("Error fetching notes for userId={}", userId, e);
@@ -80,7 +80,7 @@ public class NotesController {
         try {
             UUID authenticatedUserId = authContextService.requireAuthenticatedUser(authentication);
             UUID parsedUserId = authContextService.parseAndRequireMatch(authenticatedUserId, userId);
-            List<StudyNote> notes = notesService.getUserNotesByTopic(parsedUserId, topicId);
+            List<StudyNoteEntity> notes = notesService.getUserNotesByTopic(parsedUserId, topicId);
             return ResponseEntity.ok(notes);
         } catch (Exception e) {
             LOGGER.error("Error fetching notes for userId={} topicId={}", userId, topicId, e);
@@ -91,7 +91,7 @@ public class NotesController {
     @PutMapping("/{noteId}")
     public ResponseEntity<?> updateNote(
             @PathVariable Long noteId,
-            @Valid @RequestBody StudyNote updatedNote,
+            @Valid @RequestBody StudyNoteEntity updatedNote,
             Authentication authentication) {
         try {
             UUID authenticatedUserId = authContextService.requireAuthenticatedUser(authentication);
@@ -102,7 +102,7 @@ public class NotesController {
                         }
                         existing.setTitle(updatedNote.getTitle());
                         existing.setContent(updatedNote.getContent());
-                        StudyNote saved = notesService.saveNote(existing);
+                        StudyNoteEntity saved = notesService.saveNote(existing);
                         auditService.logMutation("NOTE_UPDATE", authenticatedUserId, "study-note",
                                 String.valueOf(saved.getId()), "Updated note content");
                         return ResponseEntity.ok(saved);

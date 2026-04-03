@@ -11,7 +11,7 @@ export const TOPIC_NOTES_KEY = "learnx.topicNotes";
 export const TUTOR_MAX_PROMPT_LENGTH = 1200;
 export const LEVEL_XP_STEP = 160;
 export const DAILY_PRACTICE_TARGET = 2;
-export const PRACTICE_QUESTION_TARGET = 8;
+export const PRACTICE_QUESTION_TARGET = 10;
 
 export const TUTOR_MODE_LABELS = {
     explain: "Explain",

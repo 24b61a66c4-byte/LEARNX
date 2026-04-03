@@ -22,7 +22,7 @@ class SubjectServiceTest {
 
     @Test
     void resolvesCodingInterestsToCodingSubject() {
-        when(repository.findAllActive()).thenReturn(List.of(
+        when(repository.findByIsActiveTrueOrderByDisplayOrderAsc()).thenReturn(List.of(
                 subject("dbms", List.of("math", "patterns"), 1),
                 subject("edc", List.of("science", "experiments"), 2),
                 subject("coding", List.of("coding", "programming", "logic"), 3)
@@ -40,15 +40,16 @@ class SubjectServiceTest {
         assertEquals("coding", subjectService.normalizeSubjectId("programming"));
     }
 
-    private SubjectService.SubjectDTO subject(String id, List<String> tags, int displayOrder) {
-        return new SubjectService.SubjectDTO(
-                id,
-                id.toUpperCase(),
-                "Test subject",
-                tags,
-                "",
-                "",
-                displayOrder
-        );
+    private SubjectEntity subject(String id, List<String> tags, int displayOrder) {
+        SubjectEntity subject = new SubjectEntity();
+        subject.setId(id);
+        subject.setName(id.toUpperCase());
+        subject.setDescription("Test subject");
+        subject.setTags(tags);
+        subject.setAccent("");
+        subject.setBackdrop("");
+        subject.setDisplayOrder(displayOrder);
+        subject.setActive(true);
+        return subject;
     }
 }

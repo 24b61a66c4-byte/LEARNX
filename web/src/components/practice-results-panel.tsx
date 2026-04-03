@@ -134,10 +134,10 @@ export function PracticeResultsPanel() {
           <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
             <div className="space-y-4">
               <div>
-                <p className="eyebrow">Results</p>
+                <p className="eyebrow">Quiz result</p>
                 <h1 className="mt-2 text-4xl font-bold tracking-tight text-slate-950">{result.scorePercent}% on this drill</h1>
                 <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-700">
-                  {tone?.detail} This round scored {result.correctCount} out of {result.totalCount} adaptive questions.
+                  {tone?.detail} You got {result.correctCount} out of {result.totalCount} questions right.
                 </p>
               </div>
 
@@ -172,12 +172,12 @@ export function PracticeResultsPanel() {
               <div className="shell-stat-card">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Questions answered</p>
                 <p className="mt-2 text-2xl font-bold tracking-tight text-slate-950">{result.totalCount}</p>
-                <p className="mt-2 text-sm leading-6 text-slate-600">This run was long enough to surface a real pattern, not just a one-question guess.</p>
+                <p className="mt-2 text-sm leading-6 text-slate-600">Enough to show whether the topic is landing or still needs repair.</p>
               </div>
               <div className="shell-stat-card">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Needs review</p>
                 <p className="mt-2 text-2xl font-bold tracking-tight text-slate-950">{wrongAnswers.length}</p>
-                <p className="mt-2 text-sm leading-6 text-slate-600">Use these misses to drive the next tutor prompt and the next note card.</p>
+                <p className="mt-2 text-sm leading-6 text-slate-600">Use the misses to drive the next tutor prompt and note card.</p>
               </div>
               <div className="shell-stat-card">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Next move</p>
@@ -194,8 +194,8 @@ export function PracticeResultsPanel() {
       <div className="grid gap-6 xl:grid-cols-[1fr_0.95fr]">
         <div className="space-y-6">
           <div className="surface-panel p-6">
-            <p className="eyebrow">Revision plan</p>
-            <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-950">Turn the misses into the next study loop</h2>
+            <p className="eyebrow">Fix next</p>
+            <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-950">Turn the misses into your next study step</h2>
             {wrongAnswers.length > 0 ? (
               <div className="mt-4 space-y-3">
                 {wrongAnswers.slice(0, 4).map((answer) => (
@@ -219,8 +219,8 @@ export function PracticeResultsPanel() {
           </div>
 
           <div className="surface-panel p-6">
-            <p className="eyebrow">Note prompts</p>
-            <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-950">Quick notes worth saving</h2>
+            <p className="eyebrow">Notes to save</p>
+            <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-950">Quick revision cards worth keeping</h2>
             <div className="mt-4 grid gap-3">
               {(wrongAnswers.length > 0 ? wrongAnswers : result.answers.slice(0, 2)).map((answer) => (
                 <div className="rounded-[24px] border border-black/10 bg-white/84 px-4 py-4 shadow-sm" key={`note-${answer.questionId}`}>
@@ -237,8 +237,8 @@ export function PracticeResultsPanel() {
 
         <div className="space-y-6">
           <div className="surface-panel p-6">
-            <p className="eyebrow">Reference links</p>
-            <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-950">Keep the repair pass grounded in real sources</h2>
+            <p className="eyebrow">Watch and search</p>
+            <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-950">Use real sources for the repair pass</h2>
             <div className="mt-4 space-y-3">
               {searchLinks.map((link) => (
                 <a

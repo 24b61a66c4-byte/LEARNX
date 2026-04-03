@@ -1,29 +1,22 @@
 # Branching Strategy
 
-## Protected branches
+The authoritative branch workflow lives in [`CONTRIBUTING.md`](../../CONTRIBUTING.md). This document is a short reference for coordination discussions.
 
-- `main`: stable LEARNX baseline
-- `learnx-clean`: clean integration branch that tracks the production-grade refactor line
+## Branch Roles
 
-## Working branches
+- `main`: stable public branch
+- `learnx-clean`: integration branch for active development
+- `feat/<name>`, `fix/<name>`, `chore/<name>`: short-lived working branches created from `learnx-clean`
 
-Use prefixed short-lived branches from `learnx-clean`:
+## Flow
 
-- `feat/<name>` for features
-- `fix/<name>` for bug fixes
-- `chore/<name>` for repo/documentation/devex work
+1. Update `learnx-clean`
+2. Branch from `learnx-clean`
+3. Open PRs back into `learnx-clean`
+4. Promote validated changes from `learnx-clean` into `main`
 
-## Workflow
+## Coordination Notes
 
-1. `git switch learnx-clean`
-2. `git pull`
-3. `git switch -c feat/<name>`
-4. Implement + test
-5. Open PR into `learnx-clean`
-6. Periodically promote from `learnx-clean` to `main`
-
-## Safety rules
-
-- Never merge unrelated histories into `main`.
-- If accidental merge starts, create backup and abort merge.
-- Keep uncommitted generated files out of commits.
+- Keep generated artifacts and local-only files out of commits.
+- Use small, focused PRs when possible.
+- Update docs when branch policy or delivery flow changes.

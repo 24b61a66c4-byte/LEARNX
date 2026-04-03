@@ -5,76 +5,10 @@ import { useRouter } from "next/navigation";
 
 import { syncOnboardingProfile } from "@/lib/backend-sync";
 import { getSubjectById, getSubjects, getTopicById, getTopicsBySubject } from "@/lib/data/catalog";
+import { getPublicAskHref } from "@/lib/public-routes";
 import { sessionGateway } from "@/lib/gateways";
 import { getCognitiveGroup, getRecommendedTopicIds } from "@/lib/profile-preferences";
-import { CognitiveGroup, ExamTarget, LaunchMode, StudyGoal, SubjectId, Topic } from "@/lib/types";
-
-const studyGoals: { value: StudyGoal; label: string; description: string }[] = [
-  {
-    value: "understand-concepts",
-    label: "Understand a topic",
-    description: "Take it step by step with simple explanations, examples, and a calm study flow.",
-  },
-  {
-    value: "prepare-exams",
-    label: "Get ready for a test",
-    description: "Focus on likely questions, quick revision, and answer-ready explanations.",
-  },
-  {
-    value: "improve-problem-solving",
-    label: "Practice solving",
-    description: "Use guided drills and tutor help to get faster and more confident.",
-  },
-  {
-    value: "revise-weak-topics",
-    label: "Fix weak spots",
-    description: "Jump back into the topics that still feel shaky and repair them quickly.",
-  },
-];
-
-const launchModes: Array<{ id: LaunchMode; title: string; detail: string; outcome: string }> = [
-  {
-    id: "lesson",
-    title: "Start with a lesson",
-    detail: "Read the topic first, then branch into tutor help and a drill when you need it.",
-    outcome: "Best when the learner wants a clear path before answering questions.",
-  },
-  {
-    id: "coach",
-    title: "Talk it through first",
-    detail: "Open with the tutor, get unstuck fast, and then lock it in with practice.",
-    outcome: "Best when questions come before confidence.",
-  },
-  {
-    id: "streak",
-    title: "Quick daily win",
-    detail: "Keep sessions short and steady so the learner can stay consistent without pressure.",
-    outcome: "Best when routine matters more than long study blocks.",
-  },
-];
-
-const examTargets: { value: ExamTarget; label: string; description: string }[] = [
-  {
-    value: "semester-exam",
-    label: "Semester exam",
-    description: "Prioritize the highest-value topics and compact revision loops.",
-  },
-  {
-    value: "internal-assessment",
-    label: "Class test or internal",
-    description: "Stay sharp on the next short assessment with focused cleanup.",
-  },
-  {
-    value: "lab-viva",
-    label: "Lab or viva",
-    description: "Practice saying answers clearly and connecting ideas out loud.",
-  },
-  {
-    value: "interview-prep",
-    label: "Interview or oral prep",
-    description: "Build clear, confident explanations instead of memorized lines.",
-  },
-];
+import { CognitiveGroup, LaunchMode, StudyGoal, SubjectId, Topic } from "@/lib/types";
 
 const interestPresets = [
   { id: "numbers", label: "Numbers", detail: "Foundations and confidence", topicIds: ["dbms-sql-basics"] },
@@ -100,6 +34,10 @@ const ageSuggestions: Record<CognitiveGroup, string[]> = {
   adults: ["Structured study", "Answer-ready notes", "Practical revision"],
 };
 
+const DEFAULT_STUDY_GOAL: StudyGoal = "understand-concepts";
+const DEFAULT_LAUNCH_MODE: LaunchMode = "coach";
+const TOTAL_STEPS = 3;
+
 function uniqueValues(values: string[]) {
   return [...new Set(values.filter(Boolean))];
 }
@@ -123,9 +61,6 @@ function resolveSubjectIdFromTopics(topicIds: string[]): SubjectId {
 export function OnboardingForm() {
   const router = useRouter();
   const [step, setStep] = useState(0);
-  const [studyGoal, setStudyGoal] = useState<StudyGoal>("understand-concepts");
-  const [examTarget, setExamTarget] = useState<ExamTarget>("semester-exam");
-  const [launchMode, setLaunchMode] = useState<LaunchMode>("lesson");
   const [age, setAge] = useState<number | "">("");
   const [selectedInterestIds, setSelectedInterestIds] = useState<string[]>([]);
   const [selectedTopicIds, setSelectedTopicIds] = useState<string[]>([]);
@@ -140,29 +75,32 @@ export function OnboardingForm() {
     [selectedInterestIds],
   );
   const selectedInterestLabels = selectedInterestPresets.map((preset) => preset.label);
+  const presetTopicIds = useMemo(
+    () => uniqueValues(selectedInterestPresets.flatMap((preset) => preset.topicIds)),
+    [selectedInterestPresets],
+  );
   const cognitiveGroup = age !== "" ? getCognitiveGroup(age) : "teens";
   const ageHint = age !== "" ? ageSuggestions[cognitiveGroup] : ["Age can be set later", "LearnX will start with balanced suggestions", "You can still change everything in settings"];
   const recommendedTopicIds = useMemo(() => {
-    const presetTopicIds = selectedInterestPresets.flatMap((preset) => preset.topicIds);
-    return uniqueValues([
-      ...presetTopicIds,
-      ...getRecommendedTopicIds(age === "" ? undefined : age, cognitiveGroup, selectedInterestLabels),
-    ]).slice(0, 3);
-  }, [age, cognitiveGroup, selectedInterestLabels, selectedInterestPresets]);
+    const adaptiveTopicIds = getRecommendedTopicIds(age === "" ? undefined : age, cognitiveGroup, selectedInterestLabels);
+    if (presetTopicIds.length === 0) {
+      return uniqueValues(adaptiveTopicIds).slice(0, 3);
+    }
+
+    const presetSubjectId = resolveSubjectIdFromTopics(presetTopicIds);
+    const matchingAdaptiveTopicIds = adaptiveTopicIds.filter(
+      (topicId) => getTopicById(topicId)?.subjectId === presetSubjectId,
+    );
+
+    return uniqueValues([...presetTopicIds, ...matchingAdaptiveTopicIds]).slice(0, 3);
+  }, [age, cognitiveGroup, presetTopicIds, selectedInterestLabels]);
   const effectiveTopicIds = selectedTopicIds.length > 0 ? selectedTopicIds : recommendedTopicIds;
-  const effectiveSubjectId = resolveSubjectIdFromTopics(effectiveTopicIds);
-  const selectedGoal = useMemo(
-    () => studyGoals.find((goal) => goal.value === studyGoal) ?? studyGoals[0],
-    [studyGoal],
-  );
-  const selectedLaunchMode = useMemo(
-    () => launchModes.find((mode) => mode.id === launchMode) ?? launchModes[0],
-    [launchMode],
-  );
-  const selectedExamTarget = useMemo(
-    () => examTargets.find((target) => target.value === examTarget) ?? examTargets[0],
-    [examTarget],
-  );
+  const effectiveSubjectId =
+    selectedTopicIds.length > 0
+      ? resolveSubjectIdFromTopics(selectedTopicIds)
+      : presetTopicIds.length > 0
+        ? resolveSubjectIdFromTopics(presetTopicIds)
+        : resolveSubjectIdFromTopics(effectiveTopicIds);
   const visibleTopics = useMemo(() => {
     const normalized = topicSearch.trim().toLowerCase();
     if (!normalized) {
@@ -188,8 +126,7 @@ export function OnboardingForm() {
     [effectiveTopicIds],
   );
   const selectedSubject = getSubjectById(effectiveSubjectId);
-  const progressPercent = Math.round(((step + 1) / 4) * 100);
-  const isExamFlow = studyGoal === "prepare-exams";
+  const progressPercent = Math.round(((step + 1) / TOTAL_STEPS) * 100);
 
   function toggleInterest(interestId: string) {
     setSelectedInterestIds((current) =>
@@ -216,9 +153,9 @@ export function OnboardingForm() {
     return {
       preferredSubjectId: effectiveSubjectId,
       preferredTopicIds: effectiveTopicIds,
-      studyGoal,
-      examTarget: isExamFlow ? examTarget : undefined,
-      launchMode,
+      studyGoal: DEFAULT_STUDY_GOAL,
+      examTarget: undefined,
+      launchMode: DEFAULT_LAUNCH_MODE,
       age: age !== "" ? age : undefined,
       cognitiveGroup: age !== "" ? cognitiveGroup : undefined,
       interests: interestLabels.length > 0 ? interestLabels : undefined,
@@ -234,29 +171,28 @@ export function OnboardingForm() {
     const profile = buildOnboardingProfile();
     sessionGateway.completeOnboarding(profile);
     void syncOnboardingProfile(profile).catch(() => undefined);
-    router.push("/app");
+    router.push(getPublicAskHref(profile.preferredSubjectId, profile.preferredTopicIds?.[0]));
   }
 
   return (
     <section className="mx-auto max-w-5xl space-y-6">
       <div className="surface-card space-y-6 px-6 py-8 sm:px-8">
-        <div className="space-y-2">
-          <p className="eyebrow">First-time setup</p>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-950">Build a study path that fits the learner</h1>
-          <p className="muted max-w-3xl text-sm leading-6">
-            LearnX only needs a few signals to choose a strong starting topic, a better tutor flow, and the right kind
-            of practice.
-          </p>
-        </div>
-
-        <div className="space-y-2">
-          <div className="flex items-center justify-between gap-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-            <span>Step {step + 1} of 4</span>
-            <span>{progressPercent}% complete</span>
+          <div className="space-y-2">
+            <p className="eyebrow">First-time setup</p>
+            <h1 className="text-3xl font-bold tracking-tight text-slate-950">Set up your study path</h1>
+            <p className="muted max-w-3xl text-sm leading-6">
+              Keep it simple: choose an age if you want, pick a topic, and jump straight into the study assistant.
+            </p>
           </div>
-          <div className="h-2 overflow-hidden rounded-full bg-slate-200">
-            <div
-              className="h-full rounded-full bg-[linear-gradient(90deg,rgba(15,118,110,0.9),rgba(245,158,11,0.88))]"
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-between gap-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+              <span>Step {step + 1} of {TOTAL_STEPS}</span>
+              <span>{progressPercent}% complete</span>
+            </div>
+            <div className="h-2 overflow-hidden rounded-full bg-slate-200">
+              <div
+                className="h-full rounded-full bg-[linear-gradient(90deg,rgba(15,118,110,0.9),rgba(245,158,11,0.88))]"
               style={{ width: `${progressPercent}%` }}
             />
           </div>
@@ -270,8 +206,7 @@ export function OnboardingForm() {
                   <p className="eyebrow">Step 1</p>
                   <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-950">Who is this plan for?</h2>
                   <p className="mt-2 text-sm leading-6 text-slate-600">
-                    Age is optional. Add it now if you want more tailored wording and pacing, or leave it blank and
-                    adjust later in account settings.
+                    Age is optional. Add it if you want simpler wording and pacing, or skip it and adjust later.
                   </p>
                 </div>
                 <label className="space-y-2">
@@ -304,20 +239,17 @@ export function OnboardingForm() {
             <div className="surface-panel space-y-4 p-5">
               <div>
                 <p className="eyebrow">Preview</p>
-                <h3 className="mt-2 text-xl font-bold tracking-tight text-slate-950">
-                  {age === "" ? "Balanced study setup" : `${cognitiveGroup.charAt(0).toUpperCase()}${cognitiveGroup.slice(1)} study setup`}
-                </h3>
+                <h3 className="mt-2 text-xl font-bold tracking-tight text-slate-950">{age === "" ? "Balanced study setup" : `${cognitiveGroup.charAt(0).toUpperCase()}${cognitiveGroup.slice(1)} study setup`}</h3>
                 <p className="mt-2 text-sm leading-6 text-slate-600">
-                  LearnX will keep the copy friendly, choose a sensible starter topic, and stay flexible while you tune
-                  the rest of the setup.
+                  LearnX will keep the language friendly, open in study chat, and guide the learner toward one focused quiz.
                 </p>
               </div>
-              <div className="rounded-[22px] border border-black/10 bg-white/84 px-4 py-4 shadow-sm">
-                <p className="text-sm font-semibold text-slate-950">You can still change this later</p>
-                <p className="mt-2 text-sm leading-6 text-slate-600">
-                  The learner profile, topic choices, accessibility settings, and study style all live in account
-                  settings after onboarding.
-                </p>
+              <div className="grid gap-2">
+                {["Study chat first", "Topic quiz next", "Results with notes and video links"].map((item) => (
+                  <div className="rounded-[22px] border border-black/10 bg-white/84 px-4 py-3 shadow-sm" key={item}>
+                    <p className="text-sm font-semibold text-slate-950">{item}</p>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
@@ -328,26 +260,25 @@ export function OnboardingForm() {
             <div className="space-y-3">
               <div>
                 <p className="eyebrow">Step 2</p>
-                <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-950">What should LearnX start with?</h2>
+                <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-950">Pick a starting point</h2>
                 <p className="mt-2 text-sm leading-6 text-slate-600">
-                  Pick broad interests, search actual topics, or do both. LearnX will keep up to three starting topics
-                  in focus.
+                  Choose up to three topics, or tap one broad interest and let LearnX suggest the rest.
                 </p>
               </div>
               <label className="space-y-2">
-                <span className="text-sm font-semibold text-slate-800">Search topics</span>
+                <span className="text-sm font-semibold text-slate-800">Search</span>
                 <input
                   aria-label="Search available topics"
                   className="field"
                   onChange={(event) => setTopicSearch(event.target.value)}
-                  placeholder="Search by topic, summary, or tag"
+                  placeholder="Search topics"
                   value={topicSearch}
                 />
               </label>
             </div>
 
             <div className="space-y-3">
-              <p className="text-sm font-semibold text-slate-800">Interest shortcuts</p>
+              <p className="text-sm font-semibold text-slate-800">Quick interests</p>
               <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
                 {interestPresets.map((preset) => {
                   const active = selectedInterestIds.includes(preset.id);
@@ -371,7 +302,7 @@ export function OnboardingForm() {
 
             <div className="grid gap-6 lg:grid-cols-[1.25fr_0.75fr]">
               <div className="space-y-3">
-                <p className="text-sm font-semibold text-slate-800">Choose starting topics</p>
+                <p className="text-sm font-semibold text-slate-800">Topics</p>
                 <div className="grid gap-3 sm:grid-cols-2">
                   {visibleTopics.map((topic) => {
                     const active = selectedTopicIds.includes(topic.id);
@@ -399,12 +330,10 @@ export function OnboardingForm() {
 
               <div className="space-y-4">
                 <div className="surface-panel p-5">
-                  <p className="eyebrow">Suggested start</p>
-                  <p className="mt-2 text-lg font-semibold text-slate-950">
-                    {selectedSubject?.name ?? "Starter track"} track
-                  </p>
+                  <p className="eyebrow">Start here</p>
+                  <p className="mt-2 text-lg font-semibold text-slate-950">{selectedSubject?.name ?? "Starter track"}</p>
                   <p className="mt-2 text-sm leading-6 text-slate-600">
-                    LearnX will start with the live subject that best matches the chosen interests and topics.
+                    LearnX will open the study chat with this track in focus.
                   </p>
                   <div className="mt-4 flex flex-wrap gap-2">
                     {suggestedTopics.map((topic) => (
@@ -416,7 +345,7 @@ export function OnboardingForm() {
                 </div>
 
                 <div className="surface-panel p-5">
-                  <p className="eyebrow">Selected now</p>
+                  <p className="eyebrow">Chosen topics</p>
                   {selectedTopics.length > 0 ? (
                     <div className="mt-3 space-y-3">
                       {selectedTopics.map((topic) => (
@@ -428,7 +357,7 @@ export function OnboardingForm() {
                     </div>
                   ) : (
                     <p className="mt-3 text-sm leading-6 text-slate-600">
-                      No topic selected yet, so LearnX will use the suggested topic set above.
+                      No topic selected yet, so LearnX will use the suggested topics above.
                     </p>
                   )}
                 </div>
@@ -438,118 +367,58 @@ export function OnboardingForm() {
         ) : null}
 
         {step === 2 ? (
-          <div className="space-y-5">
-            <div>
-              <p className="eyebrow">Step 3</p>
-              <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-950">What is the goal right now?</h2>
-              <p className="mt-2 text-sm leading-6 text-slate-600">
-                LearnX only asks for test details when the learner actually wants exam prep.
-              </p>
-            </div>
-
-            <div className="grid gap-3">
-              {studyGoals.map((goal) => (
-                <button
-                  aria-pressed={studyGoal === goal.value}
-                  className={`rounded-[24px] border px-5 py-4 text-left transition ${
-                    studyGoal === goal.value ? "border-teal-500 bg-teal-50 shadow-sm" : "border-black/10 bg-white hover:bg-slate-50"
-                  }`}
-                  key={goal.value}
-                  onClick={() => setStudyGoal(goal.value)}
-                  type="button"
-                >
-                  <p className="font-semibold text-slate-950">{goal.label}</p>
-                  <p className="mt-1 text-sm leading-6 text-slate-600">{goal.description}</p>
-                </button>
-              ))}
-            </div>
-
-            {isExamFlow ? (
-              <div className="surface-panel space-y-4 p-5">
-                <div>
-                  <p className="eyebrow">Exam goal</p>
-                  <h3 className="mt-2 text-xl font-bold tracking-tight text-slate-950">
-                    Which kind of test are we preparing for?
-                  </h3>
-                </div>
-                <label className="space-y-2">
-                  <span className="text-sm font-semibold text-slate-800">Choose one</span>
-                  <select
-                    aria-label="Select exam target"
-                    className="field"
-                    onChange={(event) => setExamTarget(event.target.value as ExamTarget)}
-                    value={examTarget}
-                  >
-                    {examTargets.map((target) => (
-                      <option key={target.value} value={target.value}>
-                        {target.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <div className="rounded-[22px] border border-black/10 bg-white/84 px-4 py-4 shadow-sm">
-                  <p className="font-semibold text-slate-950">{selectedExamTarget.label}</p>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">{selectedExamTarget.description}</p>
-                </div>
-              </div>
-            ) : (
-              <div className="surface-panel p-5">
-                <p className="eyebrow">No extra test setup needed</p>
-                <p className="mt-2 text-sm leading-6 text-slate-600">
-                  LearnX will focus on the chosen topics and keep the flow simple until the learner switches to exam
-                  prep later.
-                </p>
-              </div>
-            )}
-          </div>
-        ) : null}
-
-        {step === 3 ? (
           <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
             <div className="space-y-4">
               <div>
-                <p className="eyebrow">Step 4</p>
-                <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-950">How should each session begin?</h2>
+                <p className="eyebrow">Step 3</p>
+                <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-950">Ready to start studying?</h2>
                 <p className="mt-2 text-sm leading-6 text-slate-600">
-                  This is not a personality quiz. It only changes the first move LearnX suggests when the learner opens
-                  the app.
+                  LearnX will open in the study assistant first, then guide the learner into a focused quiz and a simple review pass.
                 </p>
               </div>
 
               <div className="grid gap-3">
-                {launchModes.map((mode) => (
-                  <button
-                    aria-pressed={launchMode === mode.id}
-                    className={`rounded-[24px] border px-5 py-4 text-left transition ${
-                      launchMode === mode.id ? "border-teal-500 bg-teal-50 shadow-sm" : "border-black/10 bg-white hover:bg-slate-50"
-                    }`}
-                    key={mode.id}
-                    onClick={() => setLaunchMode(mode.id)}
-                    type="button"
-                  >
-                    <p className="font-semibold text-slate-950">{mode.title}</p>
-                    <p className="mt-1 text-sm leading-6 text-slate-600">{mode.detail}</p>
-                    <p className="mt-2 text-sm font-medium text-slate-800">{mode.outcome}</p>
-                  </button>
+                {[
+                  {
+                    stepLabel: "1",
+                    title: "Study in chat",
+                    detail: "Ask like ChatGPT, clarify, and keep the topic in one clean thread.",
+                  },
+                  {
+                    stepLabel: "2",
+                    title: "Take the quiz",
+                    detail: "Move to a 10-question topic quiz when the explanation feels clear enough.",
+                  },
+                  {
+                    stepLabel: "3",
+                    title: "Review the result",
+                    detail: "See what to fix, what notes to keep, and which videos or links to open next.",
+                  },
+                ].map((item) => (
+                  <div className="rounded-[24px] border border-black/10 bg-white px-5 py-4 shadow-sm" key={item.stepLabel}>
+                    <p className="text-sm font-semibold text-slate-500">Step {item.stepLabel}</p>
+                    <p className="mt-2 font-semibold text-slate-950">{item.title}</p>
+                    <p className="mt-1 text-sm leading-6 text-slate-600">{item.detail}</p>
+                  </div>
                 ))}
               </div>
             </div>
 
             <div className="surface-panel space-y-4 p-5">
               <div>
-                <p className="eyebrow">Starting plan</p>
-                <h3 className="mt-2 text-2xl font-bold tracking-tight text-slate-950">
-                  {selectedTopics[0]?.title ?? "Starter topic"} first
-                </h3>
-                <p className="mt-2 text-sm leading-6 text-slate-600">{selectedGoal.description}</p>
+                <p className="eyebrow">Study start</p>
+                <h3 className="mt-2 text-2xl font-bold tracking-tight text-slate-950">{selectedTopics[0]?.title ?? "Starter topic"} first</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  The first screen after this will be the study assistant, already pointed at the chosen topic.
+                </p>
               </div>
               <div className="rounded-[22px] border border-black/10 bg-white/84 px-4 py-4 shadow-sm">
                 <p className="text-sm font-semibold text-slate-950">Subject</p>
                 <p className="mt-1 text-sm leading-6 text-slate-600">{selectedSubject?.name ?? "Starter track"}</p>
               </div>
               <div className="rounded-[22px] border border-black/10 bg-white/84 px-4 py-4 shadow-sm">
-                <p className="text-sm font-semibold text-slate-950">Session opening</p>
-                <p className="mt-1 text-sm leading-6 text-slate-600">{selectedLaunchMode.detail}</p>
+                <p className="text-sm font-semibold text-slate-950">Age profile</p>
+                <p className="mt-1 text-sm leading-6 text-slate-600">{age === "" ? "Balanced default" : `${age} years old`}</p>
               </div>
               <div className="rounded-[22px] border border-black/10 bg-white/84 px-4 py-4 shadow-sm">
                 <p className="text-sm font-semibold text-slate-950">Topics in focus</p>
@@ -557,6 +426,16 @@ export function OnboardingForm() {
                   {selectedTopics.map((topic) => (
                     <span className="pill" key={topic.id}>
                       {topic.title}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <div className="rounded-[22px] border border-black/10 bg-white/84 px-4 py-4 shadow-sm">
+                <p className="text-sm font-semibold text-slate-950">Built-in tools</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {["Voice input", "Video demo", "Quiz feedback", "Revision links"].map((item) => (
+                    <span className="pill" key={item}>
+                      {item}
                     </span>
                   ))}
                 </div>
@@ -578,11 +457,11 @@ export function OnboardingForm() {
               </button>
             ) : null}
             <button className="button-secondary" onClick={completeOnboarding} type="button">
-              Skip and start
+              Use defaults
             </button>
           </div>
 
-          {step < 3 ? (
+          {step < TOTAL_STEPS - 1 ? (
             <button
               aria-label={`Continue to step ${step + 2}`}
               className="button-primary"
@@ -593,7 +472,7 @@ export function OnboardingForm() {
             </button>
           ) : (
             <button aria-label="Complete onboarding and launch LearnX" className="button-primary" onClick={completeOnboarding} type="button">
-              Start LearnX
+              Start studying
             </button>
           )}
         </div>
