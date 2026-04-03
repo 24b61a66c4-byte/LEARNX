@@ -18,15 +18,6 @@ interface AuthFormProps {
   mode: "login" | "signup";
 }
 
-function isEmailRateLimitError(message: string): boolean {
-  const normalized = message.toLowerCase();
-  return (
-    normalized.includes("rate limit")
-    || normalized.includes("too many requests")
-    || normalized.includes("over_email_send_rate_limit")
-  );
-}
-
 function isUserAlreadyExistsError(message: string): boolean {
   const normalized = message.toLowerCase();
   return (
@@ -39,9 +30,6 @@ function isUserAlreadyExistsError(message: string): boolean {
 function formatAuthErrorMessage(message: string | undefined, mode: "login" | "signup"): string {
   if (!message) {
     return mode === "login" ? "Login failed. Please try again." : "Signup failed. Please try again.";
-  }
-  if (isEmailRateLimitError(message)) {
-    return "Too many attempts right now. Please wait about a minute and try again.";
   }
   return message;
 }
