@@ -14,6 +14,7 @@ import {
   signUpWithEmail,
 } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
+import { useClientSnapshot } from "@/lib/client-snapshot";
 
 interface AuthFormProps {
   mode: "login" | "signup";
@@ -38,6 +39,10 @@ function formatAuthErrorMessage(message: string | undefined, mode: "login" | "si
 export function AuthForm({ mode }: AuthFormProps) {
   const router = useRouter();
   const { loading, user } = useAuth();
+  const session = useClientSnapshot(
+    () => sessionGateway.getSession(),
+    () => sessionGateway.getSession(),
+  );
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -53,10 +58,10 @@ export function AuthForm({ mode }: AuthFormProps) {
       : "Create account";
 
   useEffect(() => {
-    if (!loading && user) {
+    if (!loading && (user || session.isAuthenticated)) {
       router.replace("/app");
     }
-  }, [loading, router, user]);
+  }, [loading, router, session.isAuthenticated, user]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
