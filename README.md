@@ -81,6 +81,7 @@ Pull requests should target `learnx-clean`. Promotions into `main` should happen
 - [Getting Started](docs/guides/GETTING_STARTED.md)
 - [Environment Guide](docs/guides/ENVIRONMENT.md)
 - [Deployment Guide](docs/guides/DEPLOYMENT.md)
+- [Multi-Device Sync Guide](docs/guides/MULTI_DEVICE_SYNC.md)
 - [Docs Index](docs/README.md)
 - [Contributing Guide](CONTRIBUTING.md)
 
