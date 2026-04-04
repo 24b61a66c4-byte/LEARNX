@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 
 import { useAuth } from "@/lib/auth-context";
@@ -11,11 +10,10 @@ import { sessionGateway } from "@/lib/gateways";
 export function SiteHeader() {
   const pathname = usePathname();
   const { loading, user } = useAuth();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useClientSnapshot(
+    () => true,
+    () => false,
+  );
 
   const session = useClientSnapshot(
     () => sessionGateway.getSession(),
