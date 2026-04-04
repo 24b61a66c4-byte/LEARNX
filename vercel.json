@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "installCommand": "node -e \"const fs=require('fs');const {spawnSync}=require('child_process');const cwd=fs.existsSync('web/package.json')?'web':'.';const isWin=process.platform==='win32';const result=isWin?spawnSync('npm install',{cwd,stdio:'inherit',shell:true}):spawnSync('npm',['install'],{cwd,stdio:'inherit'});process.exit(result.status??1);\"",
-  "buildCommand": "node -e \"const fs=require('fs');const path=require('path');const {spawnSync}=require('child_process');const hasWeb=fs.existsSync('web/package.json');const cwd=hasWeb?'web':'.';const isWin=process.platform==='win32';const result=isWin?spawnSync('npm run build',{cwd,stdio:'inherit',shell:true}):spawnSync('npm',['run','build'],{cwd,stdio:'inherit'});if((result.status??1)!==0){process.exit(result.status??1);}if(hasWeb){const src=path.join(cwd,'.next');const dest='.next';fs.rmSync(dest,{recursive:true,force:true});fs.cpSync(src,dest,{recursive:true});}\"",
-  "devCommand": "node -e \"const fs=require('fs');const {spawnSync}=require('child_process');const cwd=fs.existsSync('web/package.json')?'web':'.';const isWin=process.platform==='win32';const result=isWin?spawnSync('npm run dev',{cwd,stdio:'inherit',shell:true}):spawnSync('npm',['run','dev'],{cwd,stdio:'inherit'});process.exit(result.status??1);\""
+  "installCommand": "npm install",
+  "buildCommand": "npm run build",
+  "devCommand": "npm run dev"
 }
