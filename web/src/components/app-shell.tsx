@@ -120,6 +120,40 @@ const navItems = [
 const SIDEBAR_COLLAPSED_STORAGE_KEY = "learnx-shell-sidebar-collapsed";
 const SIDEBAR_HISTORY_STORAGE_KEY = "learnx-shell-history-open";
 
+function safeGetLocalStorageItem(key: string): string | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  const storage = window.localStorage;
+  if (!storage || typeof storage.getItem !== "function") {
+    return null;
+  }
+
+  try {
+    return storage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function safeSetLocalStorageItem(key: string, value: string) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  const storage = window.localStorage;
+  if (!storage || typeof storage.setItem !== "function") {
+    return;
+  }
+
+  try {
+    storage.setItem(key, value);
+  } catch {
+    // Ignore storage write failures in restricted or mocked environments.
+  }
+}
+
 function getShellState(): {
   session: AppSession;
   dashboard: DashboardView;
@@ -239,14 +273,14 @@ export function AppShell({ children }: { children: ReactNode }) {
       return false;
     }
 
-    return window.localStorage.getItem(SIDEBAR_COLLAPSED_STORAGE_KEY) === "1";
+    return safeGetLocalStorageItem(SIDEBAR_COLLAPSED_STORAGE_KEY) === "1";
   });
   const [historyPanelOpen, setHistoryPanelOpen] = useState(() => {
     if (typeof window === "undefined") {
       return false;
     }
 
-    return window.localStorage.getItem(SIDEBAR_HISTORY_STORAGE_KEY) === "1";
+    return safeGetLocalStorageItem(SIDEBAR_HISTORY_STORAGE_KEY) === "1";
   });
   const [mobileNavRoute, setMobileNavRoute] = useState<string | null>(null);
   const shellState = useClientSnapshot(getShellState, getServerShellState);
@@ -273,7 +307,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       return;
     }
 
-    window.localStorage.setItem(SIDEBAR_COLLAPSED_STORAGE_KEY, sidebarCollapsed ? "1" : "0");
+    safeSetLocalStorageItem(SIDEBAR_COLLAPSED_STORAGE_KEY, sidebarCollapsed ? "1" : "0");
   }, [sidebarCollapsed]);
 
   useEffect(() => {
@@ -281,7 +315,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       return;
     }
 
-    window.localStorage.setItem(SIDEBAR_HISTORY_STORAGE_KEY, historyPanelOpen ? "1" : "0");
+    safeSetLocalStorageItem(SIDEBAR_HISTORY_STORAGE_KEY, historyPanelOpen ? "1" : "0");
   }, [historyPanelOpen]);
 
   const { dashboard, onboarding, session, history, threads, notes } = shellState;
