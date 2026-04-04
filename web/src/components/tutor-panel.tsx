@@ -130,10 +130,10 @@ export function TutorPanel({
   const samplePrompts = subjectId
     ? SUBJECT_SAMPLE_PROMPTS[subjectId] ?? []
     : [
-        "Explain this topic simply",
-        "Give me one real-life example",
-        "Teach it like a short class",
-      ];
+      "Explain this topic simply",
+      "Give me one real-life example",
+      "Teach it like a short class",
+    ];
   const latestAssistantMessage = [...(thread?.messages ?? [])]
     .reverse()
     .find((message) => message.role === "assistant");
@@ -400,11 +400,10 @@ export function TutorPanel({
               {(Object.keys(TUTOR_MODE_LABELS) as TutorMode[]).map((item) => (
                 <button
                   aria-pressed={mode === item}
-                  className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
-                    mode === item
+                  className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${mode === item
                       ? "border-slate-950 bg-slate-950 text-white"
                       : "border-black/10 bg-white text-slate-700 hover:bg-slate-50"
-                  }`}
+                    }`}
                   key={item}
                   onClick={() => setMode(item)}
                   type="button"
@@ -425,11 +424,10 @@ export function TutorPanel({
                 {thread?.messages?.length ? (
                   thread.messages.map((message) => (
                     <article
-                      className={`max-w-[90%] rounded-[24px] px-4 py-3 text-sm leading-7 ${
-                        message.role === "assistant"
+                      className={`max-w-[90%] rounded-[24px] px-4 py-3 text-sm leading-7 ${message.role === "assistant"
                           ? "border border-white/10 bg-white/8 text-slate-100"
                           : "ml-auto bg-teal-400/18 text-white"
-                      }`}
+                        }`}
                       key={message.id}
                     >
                       <p className="mb-1 text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-white/45">
@@ -517,11 +515,10 @@ export function TutorPanel({
                   </button>
                   {practiceHref ? (
                     <Link
-                      className={`inline-flex items-center rounded-2xl px-4 py-3 text-sm font-semibold transition ${
-                        hasAssistantReply
+                      className={`inline-flex items-center rounded-2xl px-4 py-3 text-sm font-semibold transition ${hasAssistantReply
                           ? "bg-slate-950 text-white hover:bg-slate-800"
                           : "cursor-not-allowed border border-black/10 bg-white text-slate-400"
-                      }`}
+                        }`}
                       href={hasAssistantReply ? practiceHref : "#"}
                       onClick={(event) => {
                         if (!hasAssistantReply) {
@@ -552,12 +549,12 @@ export function TutorPanel({
         <aside className="space-y-4">
           <section className="rounded-[30px] border border-white/10 bg-slate-950 p-5 text-white shadow-[0_20px_56px_rgba(15,23,42,0.2)]">
             <p className="text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-teal-200">Study flow</p>
-            <h3 className="mt-2 text-2xl font-bold tracking-tight">Keep the next step obvious</h3>
+            <h3 className="mt-2 text-2xl font-bold tracking-tight">Simple flow</h3>
             <div className="mt-5 space-y-3">
               <div className="rounded-[22px] border border-white/10 bg-white/6 px-4 py-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/45">Step 1</p>
                 <p className="mt-2 font-semibold text-white">Learn with the assistant</p>
-                <p className="mt-1 text-sm leading-6 text-white/60">Ask until the topic feels clear enough to test.</p>
+                <p className="mt-1 text-sm leading-6 text-white/60">Ask one clear question.</p>
               </div>
               <div className={`rounded-[22px] border px-4 py-4 ${hasAssistantReply ? "border-teal-300/30 bg-teal-400/12" : "border-white/10 bg-white/6"}`}>
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/45">Step 2</p>
@@ -565,15 +562,15 @@ export function TutorPanel({
                 <p className="mt-1 text-sm leading-6 text-white/60">
                   {practiceHref
                     ? hasAssistantReply
-                      ? "You have an explanation now. Move to the quiz while the idea is still fresh."
-                      : "Ask one question first, then the quiz button unlocks."
+                      ? "You are ready. Open quiz now."
+                      : "Ask first, then quiz unlocks."
                     : "Pick a topic first if you want a linked topic quiz."}
                 </p>
               </div>
               <div className="rounded-[22px] border border-white/10 bg-white/6 px-4 py-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/45">Step 3</p>
                 <p className="mt-2 font-semibold text-white">Review the result</p>
-                <p className="mt-1 text-sm leading-6 text-white/60">See what to retry, what to save, and what to watch next.</p>
+                <p className="mt-1 text-sm leading-6 text-white/60">Retry only weak areas.</p>
               </div>
             </div>
           </section>
@@ -608,7 +605,7 @@ export function TutorPanel({
 
           <section className="rounded-[30px] border border-black/10 bg-white/78 p-5 backdrop-blur-sm shadow-[0_18px_48px_rgba(15,23,42,0.08)]">
             <p className="eyebrow">Quick tools</p>
-            <h3 className="mt-2 text-xl font-bold tracking-tight text-slate-950">Search, watch, or turn it into notes</h3>
+            <h3 className="mt-2 text-xl font-bold tracking-tight text-slate-950">Need extra help?</h3>
             <div className="mt-4 space-y-3">
               <a
                 className="block rounded-[22px] border border-black/10 bg-white px-4 py-4 transition hover:bg-slate-50"
@@ -617,7 +614,7 @@ export function TutorPanel({
                 target="_blank"
               >
                 <p className="font-semibold text-slate-950">Search the topic</p>
-                <p className="mt-2 text-sm leading-6 text-slate-600">Open a focused Google search with a better study query.</p>
+                <p className="mt-2 text-sm leading-6 text-slate-600">Open a quick Google explanation.</p>
               </a>
               <a
                 className="block rounded-[22px] border border-black/10 bg-white px-4 py-4 transition hover:bg-slate-50"
@@ -626,7 +623,7 @@ export function TutorPanel({
                 target="_blank"
               >
                 <p className="font-semibold text-slate-950">Watch a recap</p>
-                <p className="mt-2 text-sm leading-6 text-slate-600">Open YouTube results when you want a classroom-style explanation.</p>
+                <p className="mt-2 text-sm leading-6 text-slate-600">Open a short YouTube recap.</p>
               </a>
               <a
                 className="block rounded-[22px] border border-black/10 bg-white px-4 py-4 transition hover:bg-slate-50"
@@ -635,7 +632,7 @@ export function TutorPanel({
                 target="_blank"
               >
                 <p className="font-semibold text-slate-950">Find exam wording</p>
-                <p className="mt-2 text-sm leading-6 text-slate-600">Search for viva questions, short answers, and answer framing.</p>
+                <p className="mt-2 text-sm leading-6 text-slate-600">Find answer patterns for exams.</p>
               </a>
             </div>
 

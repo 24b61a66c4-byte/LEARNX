@@ -41,7 +41,7 @@ export default async function AskPage({
               <p className="eyebrow">Open study mode</p>
               <h2 className="mt-2 text-3xl font-bold tracking-tight text-slate-950">Ask anything and study in one thread</h2>
               <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-                Start with a question, then move to notes, video recap, or a topic quiz when you are ready.
+                Start with one question and continue from there.
               </p>
             </div>
           </div>
@@ -53,7 +53,7 @@ export default async function AskPage({
               <p className="eyebrow">Subject study mode</p>
               <h2 className="mt-2 text-3xl font-bold tracking-tight text-slate-950">Ask about {subject.name}</h2>
               <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-                Start broad if you want, or connect one topic from the switcher for a more focused study chat.
+                Pick a topic for focused help or ask broadly.
               </p>
             </div>
             <Link className="button-secondary" href={getPublicSubjectHref(subject.id)}>
@@ -77,9 +77,9 @@ export default async function AskPage({
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <p className="eyebrow">Next step</p>
-              <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-950">When it feels clear, go straight to the quiz</h2>
+              <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-950">Ready? Try the quiz</h2>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-                Stay in this topic thread until the explanation clicks, then take the topic quiz while it is still fresh.
+                Take a quick quiz on this topic.
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
                 {workspaceContext.topic.tags.map((tag) => (
@@ -90,7 +90,7 @@ export default async function AskPage({
               </div>
             </div>
             <Link className="button-primary" href={getPublicPracticeHref(subject.id, workspaceContext.topic.id)}>
-              Start topic quiz
+              Open quiz
             </Link>
           </div>
         </div>

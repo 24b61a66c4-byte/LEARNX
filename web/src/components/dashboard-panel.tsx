@@ -32,24 +32,27 @@ export function DashboardPanel() {
   );
 
   const subjects = catalogGateway.getSubjects();
-  const activeSubject =
-    subjects.find((subject) => subject.id === workspaceState.onboarding?.preferredSubjectId) ?? subjects[0] ?? null;
+  const continueTopic = workspaceState.dashboard.resumeTopic;
+  const visualSubject =
+    subjects.find((subject) => subject.id === continueTopic?.subjectId) ??
+    subjects.find((subject) => subject.id === workspaceState.onboarding?.preferredSubjectId) ??
+    subjects[0] ??
+    null;
   const selectedTopics =
     workspaceState.onboarding?.preferredTopicIds
       ?.map((topicId) => getTopicById(topicId))
       .filter((topic): topic is Topic => Boolean(topic)) ?? [];
 
-  if (!activeSubject) {
+  if (!visualSubject) {
     return null;
   }
 
-  const continueTopic = workspaceState.dashboard.resumeTopic;
   const continueTitle =
-    continueTopic?.title ?? workspaceState.dashboard.recommendation?.title ?? "Open your first study studio";
+    continueTopic?.title ?? workspaceState.dashboard.recommendation?.title ?? "Pick your first topic";
   const continueReason = continueTopic
-    ? workspaceState.dashboard.recommendation?.reason ?? "Resume the next topic while the context is still warm."
+    ? workspaceState.dashboard.recommendation?.reason ?? "Continue where you left off."
     : workspaceState.dashboard.recommendation?.reason ??
-      "Open one topic, keep the tutor nearby, and close with a drill.";
+    "Start one topic, ask questions, then do a quick quiz.";
   const continueHref = continueTopic
     ? getPublicLearnHref(continueTopic.subjectId, continueTopic.id)
     : workspaceState.dashboard.recommendation?.href ?? "/app/subjects";
@@ -60,7 +63,7 @@ export function DashboardPanel() {
   const promptTopicId = continueTopic?.id;
   const heroSubjectLabel =
     (continueTopic ? getSubjectById(continueTopic.subjectId)?.name : null) ??
-    activeSubject.name;
+    visualSubject.name;
   const focusTopics =
     selectedTopics.length > 0
       ? selectedTopics.slice(0, 3)
@@ -90,7 +93,7 @@ export function DashboardPanel() {
   return (
     <section className="space-y-6">
       <section
-        className={`relative overflow-hidden rounded-[40px] border border-black/10 bg-gradient-to-br ${activeSubject.accent} px-5 py-6 shadow-[0_26px_70px_rgba(15,23,42,0.12)] sm:px-7 sm:py-8`}
+        className={`relative overflow-hidden rounded-[40px] border border-black/10 bg-gradient-to-br ${visualSubject.accent} px-5 py-6 shadow-[0_26px_70px_rgba(15,23,42,0.12)] sm:px-7 sm:py-8`}
       >
         <div className="absolute left-[-4rem] top-[-5rem] h-48 w-48 rounded-full bg-white/45 blur-3xl" />
         <div className="absolute bottom-[-5rem] right-[-3rem] h-72 w-72 rounded-full bg-slate-950/10 blur-3xl" />
@@ -99,8 +102,8 @@ export function DashboardPanel() {
           <div className="space-y-6">
             <div className="space-y-4">
               <div className="flex flex-wrap items-center gap-3">
-                <p className="eyebrow text-slate-700">Today focus</p>
-                <span className={`pill ${activeSubject.backdrop}`}>{heroSubjectLabel}</span>
+                <p className="eyebrow text-slate-700">Today</p>
+                <span className={`pill ${visualSubject.backdrop}`}>{heroSubjectLabel}</span>
               </div>
               <h1 className="max-w-4xl text-4xl font-bold tracking-[-0.04em] text-slate-950 sm:text-5xl xl:text-6xl">
                 {continueTitle}
@@ -130,7 +133,7 @@ export function DashboardPanel() {
                       Ask LearnX
                     </p>
                     <p className="mt-2 max-w-xl text-sm leading-6 text-slate-300">
-                      Start with a question, then branch into notes or practice without leaving the thread.
+                      Ask one question to begin.
                     </p>
                   </div>
                   <span className="inline-flex items-center rounded-full border border-white/12 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-white/80">
@@ -179,7 +182,7 @@ export function DashboardPanel() {
                     className="inline-flex flex-1 items-center justify-center rounded-2xl border border-white/12 bg-white/8 px-5 py-3 font-semibold text-white transition hover:bg-white/14"
                     href={continueHref}
                   >
-                    Open current topic
+                    Open topic
                   </Link>
                 </div>
               </div>
@@ -229,20 +232,20 @@ export function DashboardPanel() {
                 <p className="mt-3 text-lg font-semibold tracking-tight text-slate-950">
                   {workspaceState.dashboard.rewards.nextBadgeLabel}
                 </p>
-                <p className="mt-2 text-sm leading-6 text-slate-600">Keep momentum on one topic long enough to make the practice stick.</p>
+                <p className="mt-2 text-sm leading-6 text-slate-600">Do one quiz to move this forward.</p>
               </div>
             </div>
 
             <div className="rounded-[30px] border border-white/10 bg-slate-950 px-5 py-5 text-white shadow-[0_18px_48px_rgba(15,23,42,0.18)]">
-              <p className="text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-teal-200">Next move</p>
-              <h2 className="mt-3 text-2xl font-bold tracking-tight">Stay inside one thread</h2>
+              <p className="text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-teal-200">Next</p>
+              <h2 className="mt-3 text-2xl font-bold tracking-tight">One clear step</h2>
               <p className="mt-3 text-sm leading-6 text-slate-300">{continueReason}</p>
               <div className="mt-5 flex flex-col gap-3">
                 <Link
                   className="inline-flex items-center justify-center rounded-2xl bg-white px-5 py-3 font-semibold text-slate-950 transition hover:bg-slate-100"
                   href={continueHref}
                 >
-                  Open current topic
+                  Open topic
                 </Link>
                 <div className="grid gap-3 sm:grid-cols-2">
                   <Link

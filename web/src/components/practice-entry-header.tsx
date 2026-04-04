@@ -16,7 +16,7 @@ export function PracticeEntryHeader({ subjectName, topicTitle }: PracticeEntryHe
             Quiz yourself on {topicTitle || "this topic"}
           </h1>
           <p className="max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
-            Finish one focused quiz, then use the results page to decide whether to retry, save notes, or watch a recap.
+            Answer all questions, then review what to improve.
           </p>
         </div>
 
@@ -33,7 +33,7 @@ export function PracticeEntryHeader({ subjectName, topicTitle }: PracticeEntryHe
             </div>
             <div className="rounded-[20px] bg-white/84 px-4 py-4 shadow-sm">
               <p className="text-sm text-slate-500">Next</p>
-              <p className="mt-2 text-lg font-semibold text-slate-950">Results and next step</p>
+              <p className="mt-2 text-lg font-semibold text-slate-950">Review results</p>
             </div>
           </div>
         </div>

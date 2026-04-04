@@ -529,10 +529,10 @@ export const learnerStateGateway: LearnerStateGateway = {
         selectedDuringOnboarding && nextAttempts.length === 0
           ? "Start with the topic you picked during onboarding."
           : selectedDuringOnboarding
-            ? "Keep moving in the topic you asked LearnX to prioritize."
+            ? "Continue your chosen topic."
             : nextAttempts.length === 0
-              ? "Start the next recommended topic in your selected subject."
-              : "This topic still has room to improve based on your latest practice.",
+              ? "Start this recommended topic."
+              : "Retry this topic to improve your score.",
       href: getPublicLearnHref(next.subjectId, next.id),
     };
   },

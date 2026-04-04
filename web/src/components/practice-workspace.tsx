@@ -69,7 +69,7 @@ export function PracticeWorkspace({
           <p className="eyebrow">Quiz</p>
           <h3 className="text-2xl font-bold tracking-tight text-slate-950">Test the topic while it is still fresh</h3>
           <p className="text-sm leading-6 text-slate-600">
-            Answer the full set, then LearnX will show what to retry, what to save, and what to study next.
+            Finish the quiz and get a simple fix list.
           </p>
         </div>
 
@@ -79,7 +79,7 @@ export function PracticeWorkspace({
               <div>
                 <p className="text-sm font-semibold text-slate-900">Quiz progress</p>
                 <p className="mt-1 text-xs text-slate-500">
-                  Finish every answer to unlock the result and next-step recommendation.
+                  Answer every question to submit.
                 </p>
               </div>
               <span className="reward-chip">
@@ -253,8 +253,8 @@ export function PracticeWorkspace({
           </button>
           <p className="text-center text-xs text-slate-500">
             {answeredCount < questions.length
-              ? "Scoring unlocks after every question has an answer."
-              : "LearnX will open a results page with fixes, notes, and follow-up links."}
+              ? "Submit is enabled when all answers are filled."
+              : "Results page is ready."}
           </p>
         </div>
       ) : null}
@@ -263,7 +263,7 @@ export function PracticeWorkspace({
         <div className="surface-panel p-5">
           <p className="eyebrow">Need help before submitting?</p>
           <p className="mt-2 text-sm leading-6 text-slate-600">
-            Open the study assistant for {selectedTopic.title} and ask for a short repair pass before you finish the quiz.
+            Open the study assistant for {selectedTopic.title} and ask one quick doubt.
           </p>
           <Link className="button-secondary mt-4" href={getPublicAskHref(subjectId, selectedTopic.id)}>
             Back to study assistant
