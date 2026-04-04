@@ -8,6 +8,7 @@
 /.settings/
 /web/node_modules/
 /web/.next/
+/\.next/
 /web/out/
 /web/.turbo/
 /web/.vercel/
