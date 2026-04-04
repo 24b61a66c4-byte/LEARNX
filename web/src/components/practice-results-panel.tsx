@@ -63,6 +63,19 @@ export function PracticeResultsPanel() {
   );
   const result = resultState.latest ?? resultState.history[0] ?? null;
 
+  function getSafeLearnHrefForTopic(topicId?: string) {
+    if (!topicId) {
+      return getPublicSubjectHref(subjectId);
+    }
+
+    const topic = getTopicById(topicId);
+    if (!topic) {
+      return getPublicSubjectHref(subjectId);
+    }
+
+    return getPublicLearnHref(topic.subjectId, topic.id);
+  }
+
   const focusTopicIds = useMemo(() => {
     if (!result) {
       return fallbackTopicId ? [fallbackTopicId] : [];
@@ -82,22 +95,22 @@ export function PracticeResultsPanel() {
     primaryTopic && subjectId ? getTopicWorkspaceContext(subjectId, primaryTopic.id) : null;
   const searchLinks = workspaceContext
     ? [
-        {
-          label: "Web explainer",
-          detail: "Open a plain-language explainer for the same topic.",
-          href: buildSearchHref(workspaceContext.searchSuggestions[0]),
-        },
-        {
-          label: "Worked examples",
-          detail: "Find examples and mistake patterns for the same concept.",
-          href: buildSearchHref(workspaceContext.searchSuggestions[1] ?? `${primaryTopic?.title} examples and mistakes`),
-        },
-        {
-          label: "Video recap",
-          detail: "Watch a short visual recap if reading alone did not make it click.",
-          href: buildVideoHref(`${primaryTopic?.title ?? subject?.name} lecture with examples`),
-        },
-      ]
+      {
+        label: "Web explainer",
+        detail: "Open a plain-language explainer for the same topic.",
+        href: buildSearchHref(workspaceContext.searchSuggestions[0]),
+      },
+      {
+        label: "Worked examples",
+        detail: "Find examples and mistake patterns for the same concept.",
+        href: buildSearchHref(workspaceContext.searchSuggestions[1] ?? `${primaryTopic?.title} examples and mistakes`),
+      },
+      {
+        label: "Video recap",
+        detail: "Watch a short visual recap if reading alone did not make it click.",
+        href: buildVideoHref(`${primaryTopic?.title ?? subject?.name} lecture with examples`),
+      },
+    ]
     : [];
   const tutorPrompt =
     wrongAnswers.length > 0
@@ -118,7 +131,7 @@ export function PracticeResultsPanel() {
             <Link className="button-primary" href={getPublicPracticeHref(subjectId, fallbackTopicId)}>
               Start a drill
             </Link>
-            <Link className="button-secondary" href={fallbackTopicId ? getPublicLearnHref(subjectId, fallbackTopicId) : getPublicSubjectHref(subjectId)}>
+            <Link className="button-secondary" href={getSafeLearnHrefForTopic(fallbackTopicId)}>
               Open study track
             </Link>
           </div>
@@ -161,7 +174,7 @@ export function PracticeResultsPanel() {
                 </Link>
                 <Link
                   className="button-secondary"
-                  href={primaryTopic ? getPublicLearnHref(subjectId, primaryTopic.id) : getPublicSubjectHref(subjectId)}
+                  href={getSafeLearnHrefForTopic(primaryTopic?.id)}
                 >
                   Return to topic studio
                 </Link>
@@ -260,9 +273,8 @@ export function PracticeResultsPanel() {
             <div className="mt-4 space-y-3">
               {result.answers.map((answer) => (
                 <article
-                  className={`rounded-[24px] border px-4 py-4 shadow-sm ${
-                    answer.correct ? "border-emerald-200 bg-emerald-50" : "border-rose-200 bg-rose-50"
-                  }`}
+                  className={`rounded-[24px] border px-4 py-4 shadow-sm ${answer.correct ? "border-emerald-200 bg-emerald-50" : "border-rose-200 bg-rose-50"
+                    }`}
                   key={answer.questionId}
                 >
                   <p className="font-semibold text-slate-950">{answer.prompt}</p>

@@ -1,4 +1,4 @@
-import { getTopicById } from "@/lib/data/catalog";
+import { getSubjects, getTopicById, getTopicsBySubject } from "@/lib/data/catalog";
 import { ONBOARDING_STORAGE_KEY } from "@/lib/constants";
 import { readLocalStorage } from "@/lib/storage";
 import { CognitiveGroup, OnboardingProfile, SubjectId } from "@/lib/types";
@@ -41,14 +41,48 @@ export function getRecommendedSubjectId(
   }
 
   if (typeof age === "number") {
-    return age < 18 ? "dbms" : "dbms";
+    return age <= 12 ? "edc" : "coding";
   }
 
   if (cognitiveGroup === "adults") {
-    return "dbms";
+    return "coding";
   }
 
-  return "dbms";
+  if (cognitiveGroup === "kids" || cognitiveGroup === "tweens") {
+    return "edc";
+  }
+
+  return "coding";
+}
+
+function isValidTopicId(topicId: string) {
+  return Boolean(getTopicById(topicId));
+}
+
+function buildSubjectFallbackTopicIds(subjectId: SubjectId) {
+  return getTopicsBySubject(subjectId)
+    .slice(0, 3)
+    .map((topic) => topic.id)
+    .filter(isValidTopicId);
+}
+
+function withFallbackTopics(topicIds: string[], fallbackSubjectId: SubjectId) {
+  const validTopicIds = topicIds.filter(isValidTopicId);
+  if (validTopicIds.length > 0) {
+    return validTopicIds;
+  }
+
+  const bySubject = buildSubjectFallbackTopicIds(fallbackSubjectId);
+  if (bySubject.length > 0) {
+    return bySubject;
+  }
+
+  const firstAvailableSubject = getSubjects()[0]?.id;
+  if (firstAvailableSubject) {
+    return buildSubjectFallbackTopicIds(firstAvailableSubject);
+  }
+
+  return [];
 }
 
 export function getRecommendedTopicIds(
@@ -57,43 +91,50 @@ export function getRecommendedTopicIds(
   interests?: string[] | null,
 ) {
   const normalizedInterests = interests?.map(normalizeInterest) ?? [];
+  const fallbackSubjectId = getRecommendedSubjectId(age, cognitiveGroup, interests);
 
   if (normalizedInterests.some((interest) => interest.includes("coding") || interest.includes("program"))) {
-    return ["coding-logic-basics", "coding-variables", "coding-control-flow"];
+    return withFallbackTopics(["coding-logic-basics", "coding-variables", "coding-control-flow"], fallbackSubjectId);
   }
 
   if (normalizedInterests.some((interest) => interest.includes("science") || interest.includes("experiment"))) {
-    return age !== null && age !== undefined && age <= 9
-      ? ["edc-diode-basics"]
-      : ["edc-diode-basics", "edc-rectifiers"];
+    return withFallbackTopics(
+      age !== null && age !== undefined && age <= 9
+        ? ["edc-diode-basics"]
+        : ["edc-diode-basics", "edc-rectifiers"],
+      fallbackSubjectId,
+    );
   }
 
   if (normalizedInterests.some((interest) => interest.includes("problem") || interest.includes("logic"))) {
-    return ["dbms-normalization", "dbms-joins"];
+    return withFallbackTopics(["dbms-normalization", "dbms-joins"], fallbackSubjectId);
   }
 
   if (typeof age === "number") {
     if (age <= 8) {
-      return ["dbms-sql-basics", "edc-diode-basics"];
+      return withFallbackTopics(["edc-diode-basics", "dbms-sql-basics"], fallbackSubjectId);
     }
 
     if (age <= 12) {
-      return ["dbms-joins", "edc-diode-basics"];
+      return withFallbackTopics(["edc-diode-basics", "dbms-joins"], fallbackSubjectId);
     }
   }
 
   if (cognitiveGroup === "adults") {
-    return ["dbms-normalization", "edc-rectifiers"];
+    return withFallbackTopics(["coding-control-flow", "dbms-normalization"], fallbackSubjectId);
   }
 
-  return ["dbms-joins", "edc-diode-basics"];
+  return withFallbackTopics(["coding-logic-basics", "dbms-joins", "edc-diode-basics"], fallbackSubjectId);
 }
 
 export function normalizeOnboardingProfile(profile: OnboardingProfile): OnboardingProfile {
   const cognitiveGroup = typeof profile.age === "number" ? getCognitiveGroup(profile.age) : profile.cognitiveGroup;
   const preferredTopicIds =
-    profile.preferredTopicIds?.filter((topicId) => Boolean(getTopicById(topicId))) ??
-    getRecommendedTopicIds(profile.age, cognitiveGroup, profile.interests);
+    withFallbackTopics(
+      profile.preferredTopicIds?.filter((topicId) => Boolean(getTopicById(topicId))) ??
+      getRecommendedTopicIds(profile.age, cognitiveGroup, profile.interests),
+      getRecommendedSubjectId(profile.age, cognitiveGroup, profile.interests),
+    );
   const preferredSubjectId =
     preferredTopicIds[0] && getTopicById(preferredTopicIds[0])
       ? getTopicById(preferredTopicIds[0])?.subjectId

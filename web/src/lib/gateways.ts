@@ -21,7 +21,7 @@ import {
   getTopicsBySubject,
   searchCatalog,
 } from "@/lib/data/catalog";
-import { getPublicLearnHref, getPublicPracticeHref } from "@/lib/public-routes";
+import { getPublicLearnHref, getPublicPracticeHref, resolveTopicIdFromSegment } from "@/lib/public-routes";
 import { buildAdaptivePracticeSet, getPracticeFocusTopics } from "@/lib/practice-engine";
 import {
   clearCookie,
@@ -531,8 +531,8 @@ export const learnerStateGateway: LearnerStateGateway = {
           : selectedDuringOnboarding
             ? "Keep moving in the topic you asked LearnX to prioritize."
             : nextAttempts.length === 0
-          ? "Start the next recommended topic in your selected subject."
-          : "This topic still has room to improve based on your latest practice.",
+              ? "Start the next recommended topic in your selected subject."
+              : "This topic still has room to improve based on your latest practice.",
       href: getPublicLearnHref(next.subjectId, next.id),
     };
   },
@@ -544,7 +544,7 @@ export const learnerStateGateway: LearnerStateGateway = {
     const todayKey = toDayKey(new Date().toISOString());
     const todayAttempts = history.filter((item) => toDayKey(item.completedAt) === todayKey).length;
     const targetSubject = getPreferredSubjectId(preferredSubjectId);
-    const recommendedTopicId = recommendation?.href.split("/").pop();
+    const recommendedTopicId = resolveTopicIdFromSegment(recommendation?.href.split("/").pop() ?? null);
 
     return {
       resumeTopic,

@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 
 import { useAuth } from "@/lib/auth-context";
@@ -11,11 +10,6 @@ import { sessionGateway } from "@/lib/gateways";
 export function SiteHeader() {
   const pathname = usePathname();
   const { loading, user } = useAuth();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   const session = useClientSnapshot(
     () => sessionGateway.getSession(),
@@ -29,14 +23,6 @@ export function SiteHeader() {
     session.profile?.displayName ??
     "LearnX Student";
   const isInsideWorkspace = pathname.startsWith("/app");
-
-  if (!mounted) {
-    return (
-      <div className="hidden items-center gap-3 text-sm sm:flex">
-        <span className="pill bg-white/70 text-slate-600">Checking session</span>
-      </div>
-    );
-  }
 
   if (loading && !isAuthenticated) {
     return (

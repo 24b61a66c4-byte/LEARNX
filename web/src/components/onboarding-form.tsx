@@ -7,7 +7,7 @@ import { syncOnboardingProfile } from "@/lib/backend-sync";
 import { getSubjectById, getSubjects, getTopicById, getTopicsBySubject } from "@/lib/data/catalog";
 import { getPublicAskHref } from "@/lib/public-routes";
 import { sessionGateway } from "@/lib/gateways";
-import { getCognitiveGroup, getRecommendedTopicIds } from "@/lib/profile-preferences";
+import { getCognitiveGroup, getRecommendedSubjectId, getRecommendedTopicIds } from "@/lib/profile-preferences";
 import { CognitiveGroup, LaunchMode, StudyGoal, SubjectId, Topic } from "@/lib/types";
 
 const interestPresets = [
@@ -38,11 +38,22 @@ const DEFAULT_STUDY_GOAL: StudyGoal = "understand-concepts";
 const DEFAULT_LAUNCH_MODE: LaunchMode = "coach";
 const TOTAL_STEPS = 3;
 
+const VALID_INTEREST_PRESETS = interestPresets.map((preset) => ({
+  ...preset,
+  topicIds: preset.topicIds.filter((topicId) => Boolean(getTopicById(topicId))),
+}));
+
 function uniqueValues(values: string[]) {
   return [...new Set(values.filter(Boolean))];
 }
 
-function resolveSubjectIdFromTopics(topicIds: string[]): SubjectId {
+function getFallbackTopicIds(subjectId: SubjectId) {
+  return getTopicsBySubject(subjectId)
+    .slice(0, 3)
+    .map((topic) => topic.id);
+}
+
+function resolveSubjectIdFromTopics(topicIds: string[], fallbackSubjectId: SubjectId): SubjectId {
   const counts = new Map<SubjectId, number>();
 
   topicIds.forEach((topicId) => {
@@ -55,7 +66,7 @@ function resolveSubjectIdFromTopics(topicIds: string[]): SubjectId {
   });
 
   const ranked = [...counts.entries()].sort((left, right) => right[1] - left[1]);
-  return ranked[0]?.[0] ?? "dbms";
+  return ranked[0]?.[0] ?? fallbackSubjectId;
 }
 
 export function OnboardingForm() {
@@ -65,13 +76,16 @@ export function OnboardingForm() {
   const [selectedInterestIds, setSelectedInterestIds] = useState<string[]>([]);
   const [selectedTopicIds, setSelectedTopicIds] = useState<string[]>([]);
   const [topicSearch, setTopicSearch] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [warningMessage, setWarningMessage] = useState<string | null>(null);
 
   const allTopics = useMemo(
     () => getSubjects().flatMap((subject) => getTopicsBySubject(subject.id)),
     [],
   );
   const selectedInterestPresets = useMemo(
-    () => interestPresets.filter((preset) => selectedInterestIds.includes(preset.id)),
+    () => VALID_INTEREST_PRESETS.filter((preset) => selectedInterestIds.includes(preset.id)),
     [selectedInterestIds],
   );
   const selectedInterestLabels = selectedInterestPresets.map((preset) => preset.label);
@@ -80,27 +94,39 @@ export function OnboardingForm() {
     [selectedInterestPresets],
   );
   const cognitiveGroup = age !== "" ? getCognitiveGroup(age) : "teens";
+  const fallbackSubjectId = getRecommendedSubjectId(age === "" ? undefined : age, cognitiveGroup, selectedInterestLabels);
   const ageHint = age !== "" ? ageSuggestions[cognitiveGroup] : ["Age can be set later", "LearnX will start with balanced suggestions", "You can still change everything in settings"];
   const recommendedTopicIds = useMemo(() => {
-    const adaptiveTopicIds = getRecommendedTopicIds(age === "" ? undefined : age, cognitiveGroup, selectedInterestLabels);
+    const adaptiveTopicIds = uniqueValues(
+      getRecommendedTopicIds(age === "" ? undefined : age, cognitiveGroup, selectedInterestLabels)
+        .filter((topicId) => Boolean(getTopicById(topicId))),
+    );
+
     if (presetTopicIds.length === 0) {
-      return uniqueValues(adaptiveTopicIds).slice(0, 3);
+      return adaptiveTopicIds.length > 0 ? adaptiveTopicIds.slice(0, 3) : getFallbackTopicIds(fallbackSubjectId);
     }
 
-    const presetSubjectId = resolveSubjectIdFromTopics(presetTopicIds);
+    const presetSubjectId = resolveSubjectIdFromTopics(presetTopicIds, fallbackSubjectId);
     const matchingAdaptiveTopicIds = adaptiveTopicIds.filter(
       (topicId) => getTopicById(topicId)?.subjectId === presetSubjectId,
     );
 
-    return uniqueValues([...presetTopicIds, ...matchingAdaptiveTopicIds]).slice(0, 3);
-  }, [age, cognitiveGroup, presetTopicIds, selectedInterestLabels]);
-  const effectiveTopicIds = selectedTopicIds.length > 0 ? selectedTopicIds : recommendedTopicIds;
+    const mergedTopicIds = uniqueValues([...presetTopicIds, ...matchingAdaptiveTopicIds]).slice(0, 3);
+    return mergedTopicIds.length > 0 ? mergedTopicIds : getFallbackTopicIds(presetSubjectId);
+  }, [age, cognitiveGroup, fallbackSubjectId, presetTopicIds, selectedInterestLabels]);
+  const effectiveTopicIds = useMemo(
+    () =>
+      selectedTopicIds.length > 0
+        ? selectedTopicIds.filter((topicId) => Boolean(getTopicById(topicId)))
+        : recommendedTopicIds,
+    [recommendedTopicIds, selectedTopicIds],
+  );
   const effectiveSubjectId =
     selectedTopicIds.length > 0
-      ? resolveSubjectIdFromTopics(selectedTopicIds)
+      ? resolveSubjectIdFromTopics(selectedTopicIds, fallbackSubjectId)
       : presetTopicIds.length > 0
-        ? resolveSubjectIdFromTopics(presetTopicIds)
-        : resolveSubjectIdFromTopics(effectiveTopicIds);
+        ? resolveSubjectIdFromTopics(presetTopicIds, fallbackSubjectId)
+        : resolveSubjectIdFromTopics(effectiveTopicIds, fallbackSubjectId);
   const visibleTopics = useMemo(() => {
     const normalized = topicSearch.trim().toLowerCase();
     if (!normalized) {
@@ -129,12 +155,16 @@ export function OnboardingForm() {
   const progressPercent = Math.round(((step + 1) / TOTAL_STEPS) * 100);
 
   function toggleInterest(interestId: string) {
+    setErrorMessage(null);
+    setWarningMessage(null);
     setSelectedInterestIds((current) =>
       current.includes(interestId) ? current.filter((item) => item !== interestId) : [...current, interestId],
     );
   }
 
   function toggleTopic(topicId: string) {
+    setErrorMessage(null);
+    setWarningMessage(null);
     setSelectedTopicIds((current) => {
       if (current.includes(topicId)) {
         return current.filter((item) => item !== topicId);
@@ -167,32 +197,51 @@ export function OnboardingForm() {
     };
   }
 
-  function completeOnboarding() {
+  async function completeOnboarding() {
+    if (isSubmitting) {
+      return;
+    }
+
+    setErrorMessage(null);
+    setWarningMessage(null);
+    setIsSubmitting(true);
+
     const profile = buildOnboardingProfile();
-    sessionGateway.completeOnboarding(profile);
-    void syncOnboardingProfile(profile).catch(() => undefined);
-    router.push(getPublicAskHref(profile.preferredSubjectId, profile.preferredTopicIds?.[0]));
+    try {
+      sessionGateway.completeOnboarding(profile);
+
+      try {
+        await syncOnboardingProfile(profile);
+      } catch {
+        setWarningMessage("Saved locally. We could not sync to backend right now, but you can continue studying.");
+      }
+
+      router.push(getPublicAskHref(profile.preferredSubjectId, profile.preferredTopicIds?.[0]));
+    } catch {
+      setErrorMessage("Setup could not be completed. Please try again.");
+      setIsSubmitting(false);
+    }
   }
 
   return (
     <section className="mx-auto max-w-5xl space-y-6">
       <div className="surface-card space-y-6 px-6 py-8 sm:px-8">
-          <div className="space-y-2">
-            <p className="eyebrow">First-time setup</p>
-            <h1 className="text-3xl font-bold tracking-tight text-slate-950">Set up your study path</h1>
-            <p className="muted max-w-3xl text-sm leading-6">
-              Keep it simple: choose an age if you want, pick a topic, and jump straight into the study assistant.
-            </p>
-          </div>
+        <div className="space-y-2">
+          <p className="eyebrow">First-time setup</p>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-950">Set up your study path</h1>
+          <p className="muted max-w-3xl text-sm leading-6">
+            Keep it simple: choose an age if you want, pick a topic, and jump straight into the study assistant.
+          </p>
+        </div>
 
-          <div className="space-y-2">
-            <div className="flex items-center justify-between gap-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-              <span>Step {step + 1} of {TOTAL_STEPS}</span>
-              <span>{progressPercent}% complete</span>
-            </div>
-            <div className="h-2 overflow-hidden rounded-full bg-slate-200">
-              <div
-                className="h-full rounded-full bg-[linear-gradient(90deg,rgba(15,118,110,0.9),rgba(245,158,11,0.88))]"
+        <div className="space-y-2">
+          <div className="flex items-center justify-between gap-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+            <span>Step {step + 1} of {TOTAL_STEPS}</span>
+            <span>{progressPercent}% complete</span>
+          </div>
+          <div className="h-2 overflow-hidden rounded-full bg-slate-200">
+            <div
+              className="h-full rounded-full bg-[linear-gradient(90deg,rgba(15,118,110,0.9),rgba(245,158,11,0.88))]"
               style={{ width: `${progressPercent}%` }}
             />
           </div>
@@ -285,9 +334,8 @@ export function OnboardingForm() {
                   return (
                     <button
                       aria-pressed={active}
-                      className={`rounded-[22px] border px-4 py-4 text-left transition ${
-                        active ? "border-teal-500 bg-teal-50 shadow-sm" : "border-black/10 bg-white hover:bg-slate-50"
-                      }`}
+                      className={`rounded-[22px] border px-4 py-4 text-left transition ${active ? "border-teal-500 bg-teal-50 shadow-sm" : "border-black/10 bg-white hover:bg-slate-50"
+                        }`}
                       key={preset.id}
                       onClick={() => toggleInterest(preset.id)}
                       type="button"
@@ -310,9 +358,8 @@ export function OnboardingForm() {
                     return (
                       <button
                         aria-pressed={active}
-                        className={`rounded-[24px] border px-5 py-5 text-left transition ${
-                          active ? "border-teal-500 bg-teal-50 shadow-sm" : "border-black/10 bg-white hover:bg-slate-50"
-                        }`}
+                        className={`rounded-[24px] border px-5 py-5 text-left transition ${active ? "border-teal-500 bg-teal-50 shadow-sm" : "border-black/10 bg-white hover:bg-slate-50"
+                          }`}
                         key={topic.id}
                         onClick={() => toggleTopic(topic.id)}
                         type="button"
@@ -445,19 +492,31 @@ export function OnboardingForm() {
         ) : null}
 
         <div className="flex flex-col gap-3 sm:flex-row sm:justify-between">
+          {errorMessage ? (
+            <p aria-live="assertive" className="w-full rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700" role="alert">
+              {errorMessage}
+            </p>
+          ) : null}
+          {!errorMessage && warningMessage ? (
+            <p aria-live="polite" className="w-full rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-700" role="status">
+              {warningMessage}
+            </p>
+          ) : null}
+
           <div className="flex gap-3">
             {step > 0 ? (
               <button
                 aria-label="Go back to the previous step"
                 className="button-secondary"
+                disabled={isSubmitting}
                 onClick={() => setStep((current) => current - 1)}
                 type="button"
               >
                 Back
               </button>
             ) : null}
-            <button className="button-secondary" onClick={completeOnboarding} type="button">
-              Use defaults
+            <button className="button-secondary" disabled={isSubmitting} onClick={() => void completeOnboarding()} type="button">
+              {isSubmitting ? "Saving..." : "Use defaults"}
             </button>
           </div>
 
@@ -465,14 +524,15 @@ export function OnboardingForm() {
             <button
               aria-label={`Continue to step ${step + 2}`}
               className="button-primary"
+              disabled={isSubmitting}
               onClick={() => setStep((current) => current + 1)}
               type="button"
             >
               Continue
             </button>
           ) : (
-            <button aria-label="Complete onboarding and launch LearnX" className="button-primary" onClick={completeOnboarding} type="button">
-              Start studying
+            <button aria-label="Complete onboarding and launch LearnX" className="button-primary" disabled={isSubmitting} onClick={() => void completeOnboarding()} type="button">
+              {isSubmitting ? "Starting..." : "Start studying"}
             </button>
           )}
         </div>
