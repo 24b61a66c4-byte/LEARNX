@@ -7,11 +7,11 @@ import { useState, type FormEvent } from "react";
 import { useClientSnapshot } from "@/lib/client-snapshot";
 import { getSubjectById, getTopicById } from "@/lib/data/catalog";
 import { catalogGateway, getServerDashboard, learnerStateGateway } from "@/lib/gateways";
-import { getPublicAskHref, getPublicLearnHref, getPublicPracticeHref } from "@/lib/public-routes";
+import { getPublicAskHref, getPublicLearnHref } from "@/lib/public-routes";
 import { OnboardingProfile, SubjectId, Topic } from "@/lib/types";
 import { getStoredOnboardingProfile } from "@/lib/profile-preferences";
 
-const promptSuggestions = ["Explain this", "Quiz me", "Turn into notes", "Search examples"];
+const promptSuggestions = ["Explain this", "Diagnose me", "Quiz me"];
 
 export function DashboardPanel() {
   const router = useRouter();
@@ -53,9 +53,6 @@ export function DashboardPanel() {
   const continueHref = continueTopic
     ? getPublicLearnHref(continueTopic.subjectId, continueTopic.id)
     : workspaceState.dashboard.recommendation?.href ?? "/app/subjects";
-  const practiceHref = continueTopic
-    ? getPublicPracticeHref(continueTopic.subjectId, continueTopic.id)
-    : workspaceState.dashboard.quickPracticeHref;
   const promptSubjectId: SubjectId | undefined = continueTopic?.subjectId ?? workspaceState.onboarding?.preferredSubjectId;
   const promptTopicId = continueTopic?.id;
   const heroSubjectLabel =
@@ -103,7 +100,7 @@ export function DashboardPanel() {
                 <span className={`pill ${activeSubject.backdrop}`}>{heroSubjectLabel}</span>
               </div>
               <h1 className="max-w-4xl text-4xl font-bold tracking-[-0.04em] text-slate-950 sm:text-5xl xl:text-6xl">
-                {continueTitle}
+                Today&apos;s Study Loop
               </h1>
               <p className="max-w-2xl text-sm leading-7 text-slate-700 sm:text-base">{continueReason}</p>
               {focusTopics.length > 0 ? (
@@ -173,90 +170,37 @@ export function DashboardPanel() {
                     disabled={!quickPrompt.trim()}
                     type="submit"
                   >
-                    Start study chat
+                    Ask and diagnose
                   </button>
-                  <Link
-                    className="inline-flex flex-1 items-center justify-center rounded-2xl border border-white/12 bg-white/8 px-5 py-3 font-semibold text-white transition hover:bg-white/14"
-                    href={continueHref}
-                  >
-                    Open current topic
-                  </Link>
                 </div>
               </div>
             </form>
           </div>
 
-          <div className="grid content-start gap-3">
-            <div className="rounded-[30px] border border-black/10 bg-white/72 p-5 backdrop-blur-sm shadow-[0_18px_48px_rgba(15,23,42,0.08)]">
-              <p className="eyebrow">Daily target</p>
-              <div className="mt-4 flex items-end justify-between gap-4">
-                <p className="text-5xl font-black tracking-[-0.06em] text-slate-950">
-                  {workspaceState.dashboard.todayAttempts}
-                  <span className="text-2xl font-semibold text-slate-500">
-                    /{workspaceState.dashboard.dailyGoalTarget}
-                  </span>
-                </p>
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Drills</p>
-              </div>
-              <div className="momentum-meter mt-4">
-                {todaySegments.map((active, index) => (
-                  <span data-active={active} key={index} />
-                ))}
-              </div>
-              <p className="mt-4 text-sm leading-6 text-slate-600">
-                {todayRemaining > 0
-                  ? `${todayRemaining} more drill${todayRemaining === 1 ? "" : "s"} to hit the daily target.`
-                  : "Daily target complete. Add one more run if a weak topic still feels shaky."}
-              </p>
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
-              <div className="rounded-[28px] border border-black/10 bg-white/62 p-5 backdrop-blur-sm">
-                <p className="text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-slate-500">Current level</p>
-                <p className="mt-3 text-3xl font-bold tracking-tight text-slate-950">
-                  Level {workspaceState.dashboard.rewards.level}
-                </p>
-                <p className="mt-2 text-sm font-semibold text-slate-800">
-                  {workspaceState.dashboard.rewards.xp} XP total
-                </p>
-                <p className="mt-2 text-sm leading-6 text-slate-600">
-                  {workspaceState.dashboard.rewards.xpToNextLevel} XP left to the next level.
-                </p>
-              </div>
-
-              <div className="rounded-[28px] border border-black/10 bg-white/62 p-5 backdrop-blur-sm">
-                <p className="text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-slate-500">Next reward</p>
-                <p className="mt-3 text-lg font-semibold tracking-tight text-slate-950">
-                  {workspaceState.dashboard.rewards.nextBadgeLabel}
-                </p>
-                <p className="mt-2 text-sm leading-6 text-slate-600">Keep momentum on one topic long enough to make the practice stick.</p>
-              </div>
-            </div>
-
+          <div className="content-start">
             <div className="rounded-[30px] border border-white/10 bg-slate-950 px-5 py-5 text-white shadow-[0_18px_48px_rgba(15,23,42,0.18)]">
-              <p className="text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-teal-200">Next move</p>
-              <h2 className="mt-3 text-2xl font-bold tracking-tight">Stay inside one thread</h2>
+              <p className="text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-teal-200">
+                Recommended next action
+              </p>
+              <h2 className="mt-3 text-2xl font-bold tracking-tight">{continueTitle}</h2>
               <p className="mt-3 text-sm leading-6 text-slate-300">{continueReason}</p>
-              <div className="mt-5 flex flex-col gap-3">
-                <Link
-                  className="inline-flex items-center justify-center rounded-2xl bg-white px-5 py-3 font-semibold text-slate-950 transition hover:bg-slate-100"
-                  href={continueHref}
-                >
-                  Open current topic
-                </Link>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <Link
-                    className="inline-flex items-center justify-center rounded-2xl border border-white/12 bg-white/8 px-5 py-3 font-semibold text-white transition hover:bg-white/14"
-                    href={practiceHref}
-                  >
-                    Run a drill
-                  </Link>
-                  <Link
-                    className="inline-flex items-center justify-center rounded-2xl border border-white/12 bg-white/8 px-5 py-3 font-semibold text-white transition hover:bg-white/14"
-                    href="/app/subjects"
-                  >
-                    Browse subjects
-                  </Link>
+              <Link
+                className="mt-5 inline-flex w-full items-center justify-center rounded-2xl bg-white px-5 py-3 font-semibold text-slate-950 transition hover:bg-slate-100"
+                href={continueHref}
+              >
+                Open study loop
+              </Link>
+              <div className="mt-5 rounded-[22px] border border-white/10 bg-white/6 px-4 py-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/45">Today</p>
+                <p className="mt-2 text-sm leading-6 text-white/65">
+                  {todayRemaining > 0
+                    ? `${todayRemaining} drill${todayRemaining === 1 ? "" : "s"} left for today.`
+                    : "Daily drill target complete."}
+                </p>
+                <div className="momentum-meter mt-4">
+                  {todaySegments.map((active, index) => (
+                    <span data-active={active} key={index} />
+                  ))}
                 </div>
               </div>
             </div>

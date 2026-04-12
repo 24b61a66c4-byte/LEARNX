@@ -11,7 +11,8 @@ public record TutorResponse(
         List<String> keyPoints,
         List<SearchResult> citations,
         boolean fallback,
-        AiResponseMeta aiResponse) {
+        AiResponseMeta aiResponse,
+        TutorDiagnosis diagnosis) {
 
     public TutorResponse(
             String explanation,
@@ -20,7 +21,18 @@ public record TutorResponse(
             List<SearchResult> citations,
             boolean fallback) {
         this(explanation, examAnswerOutline, keyPoints, citations, fallback,
-                new AiResponseMeta(explanation, "unknown", "explain", 0));
+                new AiResponseMeta(explanation, "unknown", "explain", 0),
+                null);
+    }
+
+    public TutorResponse(
+            String explanation,
+            String examAnswerOutline,
+            List<String> keyPoints,
+            List<SearchResult> citations,
+            boolean fallback,
+            AiResponseMeta aiResponse) {
+        this(explanation, examAnswerOutline, keyPoints, citations, fallback, aiResponse, null);
     }
 
     public TutorResponse {

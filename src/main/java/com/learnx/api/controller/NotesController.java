@@ -1,19 +1,30 @@
 package com.learnx.api.controller;
 
+import java.util.List;
+import java.util.UUID;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.lang.NonNull;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.learnx.api.security.AuthContextService;
 import com.learnx.api.service.AuditService;
 import com.learnx.persistence.entity.StudyNoteEntity;
 import com.learnx.persistence.service.StudyNoteService;
-import jakarta.validation.Valid;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.Authentication;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-import java.util.UUID;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/v1/notes")
@@ -45,13 +56,16 @@ public class NotesController {
                     "Created note");
             return ResponseEntity.ok(saved);
         } catch (Exception e) {
+            if (e instanceof ResponseStatusException responseStatusException) {
+                throw responseStatusException;
+            }
             LOGGER.error("Error saving note for userId={}", note.getUserId(), e);
             return ResponseEntity.badRequest().body("Error saving note");
         }
     }
 
     @GetMapping("/{noteId}")
-    public ResponseEntity<?> getNote(@PathVariable Long noteId, Authentication authentication) {
+    public ResponseEntity<?> getNote(@PathVariable @NonNull Long noteId, Authentication authentication) {
         UUID authenticatedUserId = authContextService.requireAuthenticatedUser(authentication);
         return notesService.getNoteById(noteId)
                 .filter(note -> authenticatedUserId.equals(note.getUserId()))
@@ -67,6 +81,9 @@ public class NotesController {
             List<StudyNoteEntity> notes = notesService.getUserNotes(parsedUserId);
             return ResponseEntity.ok(notes);
         } catch (Exception e) {
+            if (e instanceof ResponseStatusException responseStatusException) {
+                throw responseStatusException;
+            }
             LOGGER.error("Error fetching notes for userId={}", userId, e);
             return ResponseEntity.badRequest().body("Error fetching notes");
         }
@@ -83,6 +100,9 @@ public class NotesController {
             List<StudyNoteEntity> notes = notesService.getUserNotesByTopic(parsedUserId, topicId);
             return ResponseEntity.ok(notes);
         } catch (Exception e) {
+            if (e instanceof ResponseStatusException responseStatusException) {
+                throw responseStatusException;
+            }
             LOGGER.error("Error fetching notes for userId={} topicId={}", userId, topicId, e);
             return ResponseEntity.badRequest().body("Error fetching notes");
         }
@@ -90,7 +110,7 @@ public class NotesController {
 
     @PutMapping("/{noteId}")
     public ResponseEntity<?> updateNote(
-            @PathVariable Long noteId,
+            @PathVariable @NonNull Long noteId,
             @Valid @RequestBody StudyNoteEntity updatedNote,
             Authentication authentication) {
         try {
@@ -109,13 +129,16 @@ public class NotesController {
                     })
                     .orElseGet(() -> ResponseEntity.notFound().build());
         } catch (Exception e) {
+            if (e instanceof ResponseStatusException responseStatusException) {
+                throw responseStatusException;
+            }
             LOGGER.error("Error updating note noteId={}", noteId, e);
             return ResponseEntity.badRequest().body("Error updating note");
         }
     }
 
     @DeleteMapping("/{noteId}")
-    public ResponseEntity<?> deleteNote(@PathVariable Long noteId, Authentication authentication) {
+    public ResponseEntity<?> deleteNote(@PathVariable @NonNull Long noteId, Authentication authentication) {
         try {
             UUID authenticatedUserId = authContextService.requireAuthenticatedUser(authentication);
             return notesService.getNoteById(noteId)
@@ -130,6 +153,9 @@ public class NotesController {
                     })
                     .orElseGet(() -> ResponseEntity.notFound().build());
         } catch (Exception e) {
+            if (e instanceof ResponseStatusException responseStatusException) {
+                throw responseStatusException;
+            }
             LOGGER.error("Error deleting note noteId={}", noteId, e);
             return ResponseEntity.badRequest().body("Error deleting note");
         }

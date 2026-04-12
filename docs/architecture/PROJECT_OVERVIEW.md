@@ -39,12 +39,15 @@ That means the repo already has:
 - AI tutoring orchestration
 - optional search grounding
 
-This repo does **not** yet contain:
+This repo now contains:
 
-- a production-ready frontend connected to real backend APIs
-- Spring Boot controllers
-- authentication
-- a real MySQL/PostgreSQL persistence layer
+- a Next.js web app connected to authenticated Spring Boot APIs
+- Spring Boot controllers for tutor, drill, quiz, profile, notes, progress, subjects, and health flows
+- Supabase-backed authentication tokens verified by the backend resource server
+- SQL persistence for profiles, quiz results, notes, progress snapshots, subject metadata, and chat history
+
+The main remaining MVP work is product focus: keeping the student experience centered on the loop
+**Ask -> Diagnose weakness -> Targeted drill -> Recovery score** instead of spreading attention across too many panels.
 
 ## 3. Big-Picture Architecture
 
@@ -91,14 +94,15 @@ Recommended frontend direction:
 - responsive design for mobile and desktop browsers
 - PWA-style behavior so the web product feels close to a native app
 
-The frontend is part of the product vision, and the first scaffold now lives in `web/`.
-That means the web layer now has:
+The frontend lives in `web/`.
+The web layer now has:
 
 - a public landing page
 - login and signup screens
 - a protected `/app/*` shell
 - onboarding
-- subject, topic, tutor, practice, progress, and profile routes backed by mock/local frontend adapters
+- subject, topic, tutor, practice, progress, and profile routes backed by a local cache plus authenticated backend sync
+- a focused Study AI loop where tutor diagnosis can hand off into targeted server-scored drills
 
 For LearnX, "web-only" does **not** mean a weak website. The target experience should feel as polished as a consumer app:
 
@@ -111,17 +115,17 @@ For LearnX, "web-only" does **not** mean a weak website. The target experience s
 
 ## 5. Backend Role
 
-A future backend layer would sit between the UI and the LearnX engine.
+The backend layer sits between the UI and the LearnX engine.
 
-Its job would be to:
+Its job is to:
 
 - receive requests from the frontend
-- manage sessions and users
+- verify authenticated users
 - call `LearnxEngine`
 - return formatted responses
-- connect the engine to a real database
+- connect learning state to persisted storage
 
-Spring Boot is the most natural next step for that layer, but this repo intentionally keeps the core logic framework-agnostic so it can be embedded cleanly later.
+Spring Boot wraps the framework-neutral engine, while the core learning logic remains testable outside the web framework.
 
 ## 6. AI Layer
 

@@ -143,7 +143,7 @@ function mapServerResult(result: ServerQuizResult): PracticeResult {
       topicId: answer.topicId,
       prompt: answer.prompt ?? "",
       correct: Boolean(answer.correct),
-      score: answer.score ?? 0,
+      score: Math.max(0, Math.min(1, (answer.score ?? 0) > 1 ? (answer.score ?? 0) / 100 : (answer.score ?? 0))),
       explanation: answer.explanation ?? "",
       learnerAnswer: answer.learnerAnswer ?? "",
       correctAnswer: answer.correctAnswer ?? "",

@@ -3,6 +3,8 @@ package com.learnx.ai.service;
 import com.learnx.ai.model.AiResponseMeta;
 import com.learnx.ai.model.SearchQuery;
 import com.learnx.ai.model.SearchResult;
+import com.learnx.ai.model.SuggestedDrill;
+import com.learnx.ai.model.TutorDiagnosis;
 import com.learnx.ai.model.TutorPrompt;
 import com.learnx.ai.model.TutorRequest;
 import com.learnx.ai.model.TutorResponse;
@@ -21,8 +23,10 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.Set;
 import java.time.Duration;
 import java.time.Instant;
@@ -39,6 +43,11 @@ public class TutorService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TutorService.class);
     private static final Set<String> BLOCKED_TERMS = Set.of("hate", "kill", "abuse", "harass");
+    private static final Set<String> CONCEPT_STOP_WORDS = Set.of(
+            "about", "after", "answer", "before", "class", "clear", "concept", "could", "doubt",
+            "exam", "explain", "from", "give", "help", "idea", "learn", "like", "make", "need",
+            "please", "question", "short", "show", "simple", "study", "teach", "that", "this",
+            "topic", "what", "with");
     private static final List<Pattern> BLOCKED_PATTERNS = BLOCKED_TERMS.stream()
             .map(term -> Pattern.compile("(?i)(^|\\W)" + Pattern.quote(term) + "($|\\W)"))
             .collect(Collectors.toUnmodifiableList());
@@ -108,16 +117,18 @@ public class TutorService {
         }
 
         long start = System.currentTimeMillis();
+        TutorDiagnosis diagnosis = buildDiagnosis(subject, topic, request, performanceSnapshot);
+
         try {
             TutorResponse response = attachCitations(primaryAiProvider.generate(prompt), searchResults, "explain",
-                    System.currentTimeMillis() - start);
+                    System.currentTimeMillis() - start, diagnosis);
             rememberMessage(historyKey, request.userQuestion());
             return response;
         } catch (RuntimeException primaryError) {
             LOGGER.warn("Primary AI provider failed. Falling back.", primaryError);
             try {
                 TutorResponse fallback = attachCitations(fallbackAiProvider.generate(prompt), searchResults, "explain",
-                        System.currentTimeMillis() - start);
+                        System.currentTimeMillis() - start, diagnosis);
                 rememberMessage(historyKey, request.userQuestion());
                 return fallback;
             } catch (RuntimeException fallbackError) {
@@ -127,14 +138,107 @@ public class TutorService {
     }
 
     private TutorResponse attachCitations(TutorResponse response, List<SearchResult> searchResults, String mode,
-            long latencyMs) {
+            long latencyMs, TutorDiagnosis diagnosis) {
         return new TutorResponse(
                 response.explanation(),
                 response.examAnswerOutline(),
                 response.keyPoints(),
                 searchResults,
                 response.fallback(),
-                new AiResponseMeta(response.explanation(), response.aiResponse().model(), mode, latencyMs));
+                new AiResponseMeta(response.explanation(), response.aiResponse().model(), mode, latencyMs),
+                response.diagnosis() == null ? diagnosis : response.diagnosis());
+    }
+
+    private TutorDiagnosis buildDiagnosis(
+            Subject subject,
+            Topic topic,
+            TutorRequest request,
+            PerformanceSnapshot snapshot) {
+        String subjectId = subject != null ? subject.id() : request.subjectId();
+        String topicId = topic != null ? topic.id() : request.topicId();
+        List<String> weakConcepts = buildWeakConcepts(topic, request.userQuestion(), snapshot);
+        double confidence = topic != null ? 0.82 : subject != null ? 0.68 : 0.52;
+        String drillHref = !subjectId.isBlank()
+                ? "/app/practice?subjectId=" + subjectId + (topicId.isBlank() ? "" : "&topicId=" + topicId)
+                : "/app/practice";
+        String focus = weakConcepts.isEmpty() ? "the core idea" : weakConcepts.get(0);
+        SuggestedDrill suggestedDrill = new SuggestedDrill(
+                subjectId,
+                topicId,
+                6,
+                drillHref,
+                "Check " + focus + " while the explanation is fresh.");
+        String nextAction = topic != null
+                ? "Take a short targeted drill on " + topic.title() + " and compare the recovery score."
+                : "Pick the closest topic, then take a short targeted drill.";
+
+        return new TutorDiagnosis(subjectId, topicId, weakConcepts, confidence, suggestedDrill, nextAction);
+    }
+
+    private List<String> buildWeakConcepts(Topic topic, String prompt, PerformanceSnapshot snapshot) {
+        LinkedHashSet<String> concepts = new LinkedHashSet<>();
+
+        if (topic != null && snapshot.weakTopicIds().contains(topic.id())) {
+            concepts.add(topic.title() + " recovery");
+        }
+
+        Set<String> promptTokens = tokenizeConcepts(prompt);
+        if (topic != null) {
+            topic.tags().stream()
+                    .filter(tag -> promptTokens.isEmpty() || promptTokens.contains(normalizeConcept(tag)))
+                    .map(this::humanizeConcept)
+                    .forEach(concepts::add);
+
+            catalogService.getQuestionsForTopic(topic.id()).stream()
+                    .flatMap(question -> question.acceptedKeywords().stream())
+                    .filter(keyword -> promptTokens.contains(normalizeConcept(keyword)))
+                    .map(this::humanizeConcept)
+                    .forEach(concepts::add);
+
+            if (concepts.isEmpty()) {
+                topic.tags().stream().limit(2).map(this::humanizeConcept).forEach(concepts::add);
+            }
+        }
+
+        snapshot.weakTopicIds().stream()
+                .map(catalogService::findTopic)
+                .flatMap(Optional::stream)
+                .map(Topic::title)
+                .forEach(concepts::add);
+
+        if (concepts.isEmpty()) {
+            promptTokens.stream().limit(2).map(this::humanizeConcept).forEach(concepts::add);
+        }
+
+        if (concepts.isEmpty()) {
+            concepts.add("core recall");
+        }
+
+        return concepts.stream().limit(3).toList();
+    }
+
+    private Set<String> tokenizeConcepts(String value) {
+        if (value == null || value.isBlank()) {
+            return Set.of();
+        }
+
+        return Pattern.compile("[^a-zA-Z0-9-]+")
+                .splitAsStream(value.toLowerCase(Locale.ROOT))
+                .map(String::trim)
+                .filter(token -> token.length() > 3)
+                .filter(token -> !CONCEPT_STOP_WORDS.contains(token))
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+    }
+
+    private String normalizeConcept(String value) {
+        return value == null ? "" : value.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9-]", "");
+    }
+
+    private String humanizeConcept(String value) {
+        if (value == null || value.isBlank()) {
+            return "core recall";
+        }
+        return value.trim().replace('-', ' ');
     }
 
     private void validateMessage(String message) {

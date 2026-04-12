@@ -14,12 +14,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -124,5 +126,16 @@ class QuizControllerTest {
         QuizResultEntity first = (QuizResultEntity) body.get(0);
         assertEquals(1, first.getAnswers().size());
         assertEquals("q-2", first.getAnswers().get(0).getQuestionId());
+    }
+
+    @Test
+    void getUserResultsPreservesUnauthorizedStatus() {
+        when(authContextService.requireAuthenticatedUser(authentication))
+                .thenThrow(new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication is required"));
+
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class,
+                () -> controller.getUserResults(UUID.randomUUID().toString(), authentication));
+
+        assertEquals(HttpStatus.UNAUTHORIZED, exception.getStatusCode());
     }
 }

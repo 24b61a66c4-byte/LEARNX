@@ -160,9 +160,11 @@ export interface PracticeAnswerResult {
   explanation: string;
   learnerAnswer: string;
   correctAnswer: string;
+  weakConcepts?: string[];
 }
 
 export interface PracticeResult {
+  serverResultId?: number;
   subjectId: SubjectId;
   topicId?: string;
   scorePercent: number;
@@ -170,6 +172,9 @@ export interface PracticeResult {
   totalCount: number;
   xpEarned: number;
   badgeAwarded?: string | null;
+  weakConcepts?: string[];
+  recoveryScore?: number;
+  nextAction?: string;
   answers: PracticeAnswerResult[];
   completedAt: string;
 }
@@ -195,6 +200,7 @@ export interface TutorMessage {
   mode?: TutorMode;
   text: string;
   createdAt: string;
+  diagnosis?: StudyDiagnosis | null;
 }
 
 export interface TutorResponse {
@@ -206,6 +212,7 @@ export interface TutorResponse {
     mode: TutorMode;
     latencyMs: number;
   };
+  diagnosis?: StudyDiagnosis | null;
 }
 
 export interface TutorThread {
@@ -214,4 +221,21 @@ export interface TutorThread {
   topicId?: string;
   messages: TutorMessage[];
   updatedAt: string;
+}
+
+export interface SuggestedDrill {
+  subjectId: SubjectId | "";
+  topicId: string;
+  questionCount: number;
+  href: string;
+  reason: string;
+}
+
+export interface StudyDiagnosis {
+  subjectId: SubjectId | "";
+  topicId: string;
+  weakConcepts: string[];
+  confidence: number;
+  suggestedDrill: SuggestedDrill;
+  nextAction: string;
 }
