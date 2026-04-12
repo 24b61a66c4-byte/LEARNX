@@ -82,7 +82,11 @@ public class DrillGenerationController {
         }
 
         List<Topic> selectedTopics = pickTopics(subjectTopics, request);
-        int questionCount = Math.max(1, Math.min(request.questionCount == null ? 8 : request.questionCount, 20));
+        int requestedQuestionCount = 8;
+        if (request.questionCount != null) {
+            requestedQuestionCount = request.questionCount;
+        }
+        int questionCount = Math.max(1, Math.min(requestedQuestionCount, 20));
 
         List<Question> candidates = new ArrayList<>();
         for (Topic topic : selectedTopics) {
@@ -159,8 +163,11 @@ public class DrillGenerationController {
                         .add(envelope.submittedAnswer()));
 
         LocalDateTime submittedAt = LocalDateTime.now();
-        LocalDateTime startedAt = submittedAt.minusSeconds(Math.max(0,
-                request.durationSeconds == null ? 0 : request.durationSeconds));
+        int durationSeconds = 0;
+        if (request.durationSeconds != null) {
+            durationSeconds = request.durationSeconds;
+        }
+        LocalDateTime startedAt = submittedAt.minusSeconds(Math.max(0, durationSeconds));
         Map<String, QuestionEvaluation> evaluationsByQuestion = new LinkedHashMap<>();
         answersByTopic.forEach((topicId, submittedAnswers) -> {
             QuizAttempt attempt = new QuizAttempt(

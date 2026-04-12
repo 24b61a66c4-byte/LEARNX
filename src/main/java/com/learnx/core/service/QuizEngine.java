@@ -1,14 +1,14 @@
 package com.learnx.core.service;
 
-import com.learnx.core.model.Question;
-import com.learnx.core.model.QuestionEvaluation;
-import com.learnx.core.model.QuestionType;
-import com.learnx.core.model.QuizAttempt;
-import com.learnx.core.model.QuizEvaluation;
-import com.learnx.core.model.SubmittedAnswer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+
+import com.learnx.core.model.Question;
+import com.learnx.core.model.QuestionEvaluation;
+import com.learnx.core.model.QuizAttempt;
+import com.learnx.core.model.QuizEvaluation;
+import com.learnx.core.model.SubmittedAnswer;
 
 /**
  * Scores learner quiz attempts against the immutable catalog question bank.

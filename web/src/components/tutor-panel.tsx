@@ -134,10 +134,10 @@ export function TutorPanel({
   const samplePrompts = subjectId
     ? SUBJECT_SAMPLE_PROMPTS[subjectId] ?? []
     : [
-        "Explain this topic simply",
-        "Give me one real-life example",
-        "Teach it like a short class",
-      ];
+      "Explain this topic simply",
+      "Give me one real-life example",
+      "Teach it like a short class",
+    ];
   const latestAssistantMessage = [...(thread?.messages ?? [])]
     .reverse()
     .find((message) => message.role === "assistant");
@@ -406,12 +406,10 @@ export function TutorPanel({
             <div className="flex flex-wrap gap-2">
               {(Object.keys(TUTOR_MODE_LABELS) as TutorMode[]).map((item) => (
                 <button
-                  aria-pressed={mode === item}
-                  className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
-                    mode === item
+                  className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${mode === item
                       ? "border-slate-950 bg-slate-950 text-white"
                       : "border-black/10 bg-white text-slate-700 hover:bg-slate-50"
-                  }`}
+                    }`}
                   key={item}
                   onClick={() => setMode(item)}
                   type="button"
@@ -432,11 +430,10 @@ export function TutorPanel({
                 {thread?.messages?.length ? (
                   thread.messages.map((message) => (
                     <article
-                      className={`max-w-[90%] rounded-[24px] px-4 py-3 text-sm leading-7 ${
-                        message.role === "assistant"
+                      className={`max-w-[90%] rounded-[24px] px-4 py-3 text-sm leading-7 ${message.role === "assistant"
                           ? "border border-white/10 bg-white/8 text-slate-100"
                           : "ml-auto bg-teal-400/18 text-white"
-                      }`}
+                        }`}
                       key={message.id}
                     >
                       <p className="mb-1 text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-white/45">
@@ -553,11 +550,10 @@ export function TutorPanel({
                   </button>
                   {targetedPracticeHref ? (
                     <Link
-                      className={`inline-flex items-center rounded-2xl px-4 py-3 text-sm font-semibold transition ${
-                        hasAssistantReply
+                      className={`inline-flex items-center rounded-2xl px-4 py-3 text-sm font-semibold transition ${hasAssistantReply
                           ? "bg-slate-950 text-white hover:bg-slate-800"
                           : "cursor-not-allowed border border-black/10 bg-white text-slate-400"
-                      }`}
+                        }`}
                       href={hasAssistantReply ? targetedPracticeHref : "#"}
                       onClick={(event) => {
                         if (!hasAssistantReply) {
