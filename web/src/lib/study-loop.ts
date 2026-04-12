@@ -119,8 +119,7 @@ export async function scorePracticeOnServer(input: ScorePracticeInput) {
   });
 
   if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(errorText || `Drill scoring failed with ${response.status}`);
+    throw new Error(`Drill scoring failed with ${response.status}`);
   }
 
   const result = mapServerScoreToPracticeResult(await response.json() as ServerScoreDrillResponse);

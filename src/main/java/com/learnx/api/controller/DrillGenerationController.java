@@ -1,5 +1,25 @@
 package com.learnx.api.controller;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.UUID;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.learnx.api.security.AuthContextService;
 import com.learnx.api.service.AuditService;
 import com.learnx.core.model.Question;
@@ -14,24 +34,6 @@ import com.learnx.core.store.JsonCatalogStore;
 import com.learnx.persistence.entity.QuizResultEntity;
 import com.learnx.persistence.model.QuizAnswerDetail;
 import com.learnx.persistence.service.QuizResultService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Objects;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/drills")
@@ -386,13 +388,20 @@ public class DrillGenerationController {
     }
 
     private String resolveResultTopicId(String requestedTopicId, List<ScoredDrillAnswerDto> scoredAnswers) {
-        if (requestedTopicId != null && !requestedTopicId.isBlank()) {
-            return requestedTopicId.trim();
-        }
-
-        return scoredAnswers.stream()
+        Set<String> answeredTopicIds = scoredAnswers.stream()
                 .map(ScoredDrillAnswerDto::topicId)
                 .filter(topicId -> topicId != null && !topicId.isBlank())
+                .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
+
+        if (requestedTopicId != null && !requestedTopicId.isBlank()) {
+            String normalizedRequestedTopicId = requestedTopicId.trim();
+            if (!answeredTopicIds.isEmpty() && !answeredTopicIds.contains(normalizedRequestedTopicId)) {
+                throw new IllegalArgumentException("Requested topicId does not match submitted drill answers");
+            }
+            return normalizedRequestedTopicId;
+        }
+
+        return answeredTopicIds.stream()
                 .findFirst()
                 .orElse(null);
     }

@@ -49,6 +49,27 @@ export function PracticeWorkspace({
   const focusLabel =
     focusTopics.length > 0 ? focusTopics.map((topic) => topic.title).join(" • ") : `${subjectName} adaptive mix`;
 
+  function getFriendlyScoreError(error: unknown) {
+    if (!(error instanceof Error)) {
+      return "LearnX could not score this drill right now. Try again in a moment.";
+    }
+
+    const statusMatch = error.message.match(/Drill scoring failed with\s+(\d{3})/);
+    const statusCode = statusMatch ? Number(statusMatch[1]) : null;
+
+    if (statusCode === 401 || statusCode === 403) {
+      return "Your session expired. Sign in again, then retry this drill.";
+    }
+    if (statusCode === 400) {
+      return "This drill submission was invalid. Refresh and try again.";
+    }
+    if (statusCode !== null && statusCode >= 500) {
+      return "LearnX is having trouble scoring right now. Please try again shortly.";
+    }
+
+    return "LearnX could not score this drill right now. Try again in a moment.";
+  }
+
   async function handleScore() {
     setScoring(true);
     setScoreError(null);
@@ -68,7 +89,7 @@ export function PracticeWorkspace({
     } catch (serverError) {
       if (process.env.NODE_ENV === "production") {
         setScoring(false);
-        setScoreError(serverError instanceof Error ? serverError.message : "LearnX could not score this drill.");
+        setScoreError(getFriendlyScoreError(serverError));
         return;
       }
 
