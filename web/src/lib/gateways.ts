@@ -46,6 +46,7 @@ import {
   RewardBadge,
   RewardSnapshot,
   SessionProfile,
+  StudyDiagnosis,
   StudyNote,
   StudyNoteSource,
   SubjectId,
@@ -565,6 +566,30 @@ export const learnerStateGateway: LearnerStateGateway = {
   },
 };
 
+function buildTutorDiagnosis(subjectId?: SubjectId, topic?: Topic | null): StudyDiagnosis {
+  const weakConcepts = topic?.tags?.length
+    ? topic.tags.slice(0, 3).map((tag) => tag.replace(/-/g, " "))
+    : ["core recall"];
+  const practiceHref = subjectId ? getPublicPracticeHref(subjectId, topic?.id) : "/app/practice";
+
+  return {
+    subjectId: subjectId ?? "",
+    topicId: topic?.id ?? "",
+    weakConcepts,
+    confidence: topic ? 0.72 : 0.5,
+    suggestedDrill: {
+      subjectId: subjectId ?? "",
+      topicId: topic?.id ?? "",
+      questionCount: 6,
+      href: practiceHref,
+      reason: `Check ${weakConcepts[0]} while the explanation is fresh.`,
+    },
+    nextAction: topic
+      ? `Take a short targeted drill on ${topic.title} and compare the recovery score.`
+      : "Pick a topic, then take a short targeted drill.",
+  };
+}
+
 export const tutorGateway: TutorGateway = {
   async ask({ subjectId, topicId, prompt, mode }) {
     const sanitized = prompt.trim();
@@ -610,8 +635,10 @@ export const tutorGateway: TutorGateway = {
           keyPoints: string[];
           fallback: boolean;
           aiResponse: { text: string; model: string; mode: string; latencyMs: number };
+          diagnosis?: StudyDiagnosis | null;
         };
         const answer = data.explanation ?? data.aiResponse?.text ?? "";
+        const diagnosis = data.diagnosis ?? buildTutorDiagnosis(resolvedSubjectId, resolvedTopic);
         return {
           answer,
           followUpPrompt:
@@ -626,6 +653,7 @@ export const tutorGateway: TutorGateway = {
             mode: mode,
             latencyMs: data.aiResponse?.latencyMs ?? 0,
           },
+          diagnosis,
         };
       }
 
@@ -660,6 +688,7 @@ export const tutorGateway: TutorGateway = {
     };
 
     const answer = `${answerMap[mode]} Your prompt was: "${sanitized}".`;
+    const diagnosis = buildTutorDiagnosis(resolvedSubjectId, topic);
     return {
       answer,
       followUpPrompt:
@@ -674,6 +703,7 @@ export const tutorGateway: TutorGateway = {
         mode,
         latencyMs: 200,
       },
+      diagnosis,
     };
   },
   getThreads() {

@@ -265,6 +265,7 @@ describe("Tutor Gateway", () => {
     });
 
     expect(result.answer).toContain("Photosynthesis");
+    expect(result.diagnosis?.weakConcepts.length).toBeGreaterThan(0);
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const requestInit = fetchMock.mock.calls[0]?.[1] as RequestInit;
     const requestBody = JSON.parse(String(requestInit.body));

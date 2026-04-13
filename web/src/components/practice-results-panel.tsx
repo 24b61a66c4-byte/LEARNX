@@ -77,6 +77,11 @@ export function PracticeResultsPanel() {
   const subjectId = result?.subjectId ?? fallbackSubjectId;
   const subject = getSubjectById(subjectId);
   const wrongAnswers = result?.answers.filter((answer) => !answer.correct) ?? [];
+  const weakConcepts =
+    result?.weakConcepts?.length
+      ? result.weakConcepts
+      : [...new Set(wrongAnswers.flatMap((answer) => answer.weakConcepts ?? []))];
+  const recoveryScore = result?.recoveryScore ?? result?.scorePercent ?? null;
   const tone = result ? getResultTone(result) : null;
   const workspaceContext =
     primaryTopic && subjectId ? getTopicWorkspaceContext(subjectId, primaryTopic.id) : null;
@@ -137,13 +142,19 @@ export function PracticeResultsPanel() {
                 <p className="eyebrow">Quiz result</p>
                 <h1 className="mt-2 text-4xl font-bold tracking-tight text-slate-950">{result.scorePercent}% on this drill</h1>
                 <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-700">
-                  {tone?.detail} You got {result.correctCount} out of {result.totalCount} questions right.
+                  {result.nextAction ?? tone?.detail} You got {result.correctCount} out of {result.totalCount} questions right.
                 </p>
               </div>
 
               <div className="flex flex-wrap gap-2">
                 <span className="reward-chip">+{result.xpEarned} XP</span>
+                {recoveryScore !== null ? <span className="reward-chip">Recovery {recoveryScore}%</span> : null}
                 <span className="pill">{tone?.label}</span>
+                {weakConcepts.slice(0, 3).map((concept) => (
+                  <span className="pill" key={concept}>
+                    {concept}
+                  </span>
+                ))}
                 {result.badgeAwarded ? <span className="pill">{result.badgeAwarded}</span> : null}
                 {focusTopics.map((topic) => (
                   <span className="pill" key={topic.id}>
@@ -175,15 +186,19 @@ export function PracticeResultsPanel() {
                 <p className="mt-2 text-sm leading-6 text-slate-600">Enough to show whether the topic is landing or still needs repair.</p>
               </div>
               <div className="shell-stat-card">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Needs review</p>
-                <p className="mt-2 text-2xl font-bold tracking-tight text-slate-950">{wrongAnswers.length}</p>
-                <p className="mt-2 text-sm leading-6 text-slate-600">Use the misses to drive the next tutor prompt and note card.</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Weak concepts</p>
+                <p className="mt-2 text-2xl font-bold tracking-tight text-slate-950">{weakConcepts.length}</p>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  {weakConcepts.length ? weakConcepts.slice(0, 2).join(", ") : "No major weak spot detected."}
+                </p>
               </div>
               <div className="shell-stat-card">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Next move</p>
-                <p className="mt-2 text-lg font-semibold tracking-tight text-slate-950">{tone?.label}</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Recovery score</p>
+                <p className="mt-2 text-2xl font-bold tracking-tight text-slate-950">
+                  {recoveryScore === null ? "New" : `${recoveryScore}%`}
+                </p>
                 <p className="mt-2 text-sm leading-6 text-slate-600">
-                  {wrongAnswers.length > 0 ? "Repair the misses, then retry." : "Move to a harder follow-up or save a revision note."}
+                  {result.nextAction ?? (wrongAnswers.length > 0 ? "Repair the misses, then retry." : "Move to a harder follow-up or save a revision note.")}
                 </p>
               </div>
             </div>

@@ -46,6 +46,11 @@ class TutorServiceTest {
                 assertFalse(response.fallback());
                 assertEquals(1, response.citations().size());
                 assertTrue(response.aiResponse().latencyMs() >= 0);
+                assertEquals("dbms", response.diagnosis().subjectId());
+                assertEquals("dbms-sql-basics", response.diagnosis().topicId());
+                assertFalse(response.diagnosis().weakConcepts().isEmpty());
+                assertEquals("/app/practice?subjectId=dbms&topicId=dbms-sql-basics",
+                                response.diagnosis().suggestedDrill().href());
         }
 
         @Test

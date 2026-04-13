@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.UUID;
 
@@ -53,6 +54,9 @@ public class ProfileController {
                     "Saved profile details");
             return ResponseEntity.ok(saved);
         } catch (Exception e) {
+            if (e instanceof ResponseStatusException responseStatusException) {
+                throw responseStatusException;
+            }
             LOGGER.error("Error saving profile for userId={}", profile.getUserId(), e);
             return ResponseEntity.badRequest().body("Error saving profile");
         }
@@ -72,6 +76,9 @@ public class ProfileController {
                     String.valueOf(saved.getId()), "Completed onboarding");
             return ResponseEntity.ok(saved);
         } catch (Exception e) {
+            if (e instanceof ResponseStatusException responseStatusException) {
+                throw responseStatusException;
+            }
             LOGGER.error("Error completing onboarding for userId={}", userId, e);
             return ResponseEntity.badRequest().body("Error completing onboarding");
         }
@@ -87,6 +94,9 @@ public class ProfileController {
                     "Deleted profile");
             return ResponseEntity.ok().build();
         } catch (Exception e) {
+            if (e instanceof ResponseStatusException responseStatusException) {
+                throw responseStatusException;
+            }
             LOGGER.error("Error deleting profile for userId={}", userId, e);
             return ResponseEntity.badRequest().body("Error deleting profile");
         }

@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -45,6 +46,9 @@ public class QuizController {
                     "Submitted quiz result");
             return ResponseEntity.ok(saved);
         } catch (Exception e) {
+            if (e instanceof ResponseStatusException responseStatusException) {
+                throw responseStatusException;
+            }
             LOGGER.error("Error saving quiz result for userId={}", result.getUserId(), e);
             return ResponseEntity.badRequest().body("Error saving quiz result");
         }
@@ -58,6 +62,9 @@ public class QuizController {
             List<QuizResultEntity> results = quizService.getUserResults(parsedUserId);
             return ResponseEntity.ok(results);
         } catch (Exception e) {
+            if (e instanceof ResponseStatusException responseStatusException) {
+                throw responseStatusException;
+            }
             LOGGER.error("Error fetching quiz results for userId={}", userId, e);
             return ResponseEntity.badRequest().body("Error fetching results");
         }
@@ -74,6 +81,9 @@ public class QuizController {
             List<QuizResultEntity> results = quizService.getUserResultsBySubject(parsedUserId, subjectId);
             return ResponseEntity.ok(results);
         } catch (Exception e) {
+            if (e instanceof ResponseStatusException responseStatusException) {
+                throw responseStatusException;
+            }
             LOGGER.error("Error fetching quiz results for userId={} subjectId={}", userId, subjectId, e);
             return ResponseEntity.badRequest().body("Error fetching results");
         }
@@ -90,6 +100,9 @@ public class QuizController {
             Double average = quizService.getAverageScore(parsedUserId, subjectId);
             return ResponseEntity.ok(average);
         } catch (Exception e) {
+            if (e instanceof ResponseStatusException responseStatusException) {
+                throw responseStatusException;
+            }
             LOGGER.error("Error calculating average score for userId={} subjectId={}", userId, subjectId, e);
             return ResponseEntity.badRequest().body("Error calculating average");
         }

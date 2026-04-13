@@ -15,6 +15,7 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
+    "forceConsistentCasingInFileNames": true,
     "jsx": "preserve",
     "incremental": true,
     "plugins": [
@@ -26,7 +27,6 @@
       "vitest/globals",
       "@testing-library/jest-dom"
     ],
-    "baseUrl": ".",
     "paths": {
       "@/*": [
         "./src/*"

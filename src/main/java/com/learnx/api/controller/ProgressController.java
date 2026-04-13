@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.UUID;
 
@@ -46,6 +47,9 @@ public class ProgressController {
                     .map(ResponseEntity::ok)
                     .orElseGet(() -> ResponseEntity.notFound().build());
         } catch (Exception e) {
+            if (e instanceof ResponseStatusException responseStatusException) {
+                throw responseStatusException;
+            }
             LOGGER.error("Error fetching progress for userId={} subjectId={}", userId, subjectId, e);
             return ResponseEntity.badRequest().body("Error fetching progress");
         }
@@ -62,6 +66,9 @@ public class ProgressController {
                     String.valueOf(saved.getId()), "Updated progress snapshot");
             return ResponseEntity.ok(saved);
         } catch (Exception e) {
+            if (e instanceof ResponseStatusException responseStatusException) {
+                throw responseStatusException;
+            }
             LOGGER.error("Error saving progress for userId={}", progress.getUserId(), e);
             return ResponseEntity.badRequest().body("Error saving progress");
         }
@@ -80,6 +87,9 @@ public class ProgressController {
                     String.valueOf(progress.getId()), "Initialized progress snapshot");
             return ResponseEntity.ok(progress);
         } catch (Exception e) {
+            if (e instanceof ResponseStatusException responseStatusException) {
+                throw responseStatusException;
+            }
             LOGGER.error("Error initializing progress for userId={} subjectId={}", userId, subjectId, e);
             return ResponseEntity.badRequest().body("Error initializing progress");
         }

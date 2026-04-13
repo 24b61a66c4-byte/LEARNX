@@ -13,7 +13,7 @@ import {
 import { getLessonByTopicId } from "@/lib/data/catalog";
 import { catalogGateway, tutorGateway } from "@/lib/gateways";
 import { getPublicPracticeHref } from "@/lib/public-routes";
-import { SubjectId, TutorMode, TutorThread } from "@/lib/types";
+import { StudyDiagnosis, SubjectId, TutorMode, TutorThread } from "@/lib/types";
 
 type SpeechRecognitionResultLike = {
   0?: {
@@ -64,6 +64,10 @@ function buildSearchHref(query: string) {
 
 function buildVideoHref(query: string) {
   return `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
+}
+
+function getDiagnosisConfidenceLabel(diagnosis: StudyDiagnosis) {
+  return `${Math.round(diagnosis.confidence * 100)}% confidence`;
 }
 
 function getSpeechRecognitionConstructor(): SpeechRecognitionConstructor | null {
@@ -130,17 +134,19 @@ export function TutorPanel({
   const samplePrompts = subjectId
     ? SUBJECT_SAMPLE_PROMPTS[subjectId] ?? []
     : [
-        "Explain this topic simply",
-        "Give me one real-life example",
-        "Teach it like a short class",
-      ];
+      "Explain this topic simply",
+      "Give me one real-life example",
+      "Teach it like a short class",
+    ];
   const latestAssistantMessage = [...(thread?.messages ?? [])]
     .reverse()
     .find((message) => message.role === "assistant");
   const latestAssistantText = latestAssistantMessage?.text.replace(/\n\n\(Model:[\s\S]*$/, "").trim() ?? "";
+  const latestDiagnosis = latestAssistantMessage?.diagnosis ?? null;
   const hasAssistantReply = Boolean(latestAssistantText);
   const practiceHref =
     selectedTopic && subjectId ? getPublicPracticeHref(subjectId, selectedTopic.id) : undefined;
+  const targetedPracticeHref = latestDiagnosis?.suggestedDrill?.href || practiceHref;
   const lessonHighlights = (lesson?.blocks ?? []).slice(0, 3);
   const searchQuery = selectedTopic
     ? `${selectedTopic.title} explained with one example`
@@ -219,6 +225,7 @@ export function TutorPanel({
         role: "assistant" as const,
         mode,
         text: `${response.aiResponse.text}\n\n${response.followUpPrompt}`,
+        diagnosis: response.diagnosis ?? null,
         createdAt: new Date().toISOString(),
       };
 
@@ -399,12 +406,10 @@ export function TutorPanel({
             <div className="flex flex-wrap gap-2">
               {(Object.keys(TUTOR_MODE_LABELS) as TutorMode[]).map((item) => (
                 <button
-                  aria-pressed={mode === item}
-                  className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
-                    mode === item
+                  className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${mode === item
                       ? "border-slate-950 bg-slate-950 text-white"
                       : "border-black/10 bg-white text-slate-700 hover:bg-slate-50"
-                  }`}
+                    }`}
                   key={item}
                   onClick={() => setMode(item)}
                   type="button"
@@ -425,11 +430,10 @@ export function TutorPanel({
                 {thread?.messages?.length ? (
                   thread.messages.map((message) => (
                     <article
-                      className={`max-w-[90%] rounded-[24px] px-4 py-3 text-sm leading-7 ${
-                        message.role === "assistant"
+                      className={`max-w-[90%] rounded-[24px] px-4 py-3 text-sm leading-7 ${message.role === "assistant"
                           ? "border border-white/10 bg-white/8 text-slate-100"
                           : "ml-auto bg-teal-400/18 text-white"
-                      }`}
+                        }`}
                       key={message.id}
                     >
                       <p className="mb-1 text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-white/45">
@@ -456,6 +460,35 @@ export function TutorPanel({
                 ) : null}
               </div>
             </div>
+
+            {latestDiagnosis ? (
+              <div className="rounded-[26px] border border-teal-200 bg-teal-50 px-4 py-4 shadow-sm">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="text-[0.68rem] font-semibold uppercase tracking-[0.2em] text-teal-700">
+                      Weakness diagnosis
+                    </p>
+                    <h3 className="mt-2 text-xl font-bold tracking-tight text-slate-950">
+                      Check {latestDiagnosis.weakConcepts[0] ?? "core recall"} next
+                    </h3>
+                    <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-700">
+                      {latestDiagnosis.nextAction}
+                    </p>
+                  </div>
+                  <span className="reward-chip">{getDiagnosisConfidenceLabel(latestDiagnosis)}</span>
+                </div>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {latestDiagnosis.weakConcepts.map((concept) => (
+                    <span className="pill border-teal-200 bg-white text-teal-900" key={concept}>
+                      {concept}
+                    </span>
+                  ))}
+                </div>
+                <Link className="button-primary mt-4 w-full sm:w-auto" href={latestDiagnosis.suggestedDrill.href}>
+                  Start targeted drill
+                </Link>
+              </div>
+            ) : null}
 
             <div className="rounded-[30px] border border-black/10 bg-[rgba(255,255,255,0.7)] p-4 shadow-sm">
               <div className="flex flex-wrap items-center justify-between gap-3">
@@ -515,21 +548,20 @@ export function TutorPanel({
                   >
                     {isSpeaking ? "Stop reading" : "Read reply aloud"}
                   </button>
-                  {practiceHref ? (
+                  {targetedPracticeHref ? (
                     <Link
-                      className={`inline-flex items-center rounded-2xl px-4 py-3 text-sm font-semibold transition ${
-                        hasAssistantReply
+                      className={`inline-flex items-center rounded-2xl px-4 py-3 text-sm font-semibold transition ${hasAssistantReply
                           ? "bg-slate-950 text-white hover:bg-slate-800"
                           : "cursor-not-allowed border border-black/10 bg-white text-slate-400"
-                      }`}
-                      href={hasAssistantReply ? practiceHref : "#"}
+                        }`}
+                      href={hasAssistantReply ? targetedPracticeHref : "#"}
                       onClick={(event) => {
                         if (!hasAssistantReply) {
                           event.preventDefault();
                         }
                       }}
                     >
-                      {hasAssistantReply ? "I’m ready for the quiz" : "Explain first, then quiz"}
+                      {hasAssistantReply ? "Start targeted drill" : "Explain first, then drill"}
                     </Link>
                   ) : null}
                 </div>

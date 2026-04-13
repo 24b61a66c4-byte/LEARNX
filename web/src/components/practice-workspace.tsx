@@ -9,6 +9,7 @@ import { PRACTICE_QUESTION_TARGET } from "@/lib/constants";
 import { getSubjectById, getTopicById } from "@/lib/data/catalog";
 import { catalogGateway, practiceGateway } from "@/lib/gateways";
 import { getPublicAskHref, getPublicPracticeResultsHref, getPublicSubjectHref } from "@/lib/public-routes";
+import { scorePracticeOnServer } from "@/lib/study-loop";
 import { SubjectId, Topic } from "@/lib/types";
 
 interface PracticeWorkspaceProps {
@@ -25,6 +26,7 @@ export function PracticeWorkspace({
   const [topicId, setTopicId] = useState(defaultTopicId ?? "");
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [scoring, setScoring] = useState(false);
+  const [scoreError, setScoreError] = useState<string | null>(null);
 
   const subjects = catalogGateway.getSubjects();
   const topicOptions = useMemo(() => catalogGateway.getTopicsBySubject(subjectId), [subjectId]);
@@ -47,19 +49,58 @@ export function PracticeWorkspace({
   const focusLabel =
     focusTopics.length > 0 ? focusTopics.map((topic) => topic.title).join(" • ") : `${subjectName} adaptive mix`;
 
-  async function handleScore() {
-    const nextResult = practiceGateway.submit({
-      subjectId,
-      topicId: topicId || undefined,
-      answers: questions.map((question) => ({
-        questionId: question.id,
-        answer: answers[question.id] ?? "",
-      })),
-    });
+  function getFriendlyScoreError(error: unknown) {
+    if (!(error instanceof Error)) {
+      return "LearnX could not score this drill right now. Try again in a moment.";
+    }
 
+    const statusMatch = error.message.match(/Drill scoring failed with\s+(\d{3})/);
+    const statusCode = statusMatch ? Number(statusMatch[1]) : null;
+
+    if (statusCode === 401 || statusCode === 403) {
+      return "Your session expired. Sign in again, then retry this drill.";
+    }
+    if (statusCode === 400) {
+      return "This drill submission was invalid. Refresh and try again.";
+    }
+    if (statusCode !== null && statusCode >= 500) {
+      return "LearnX is having trouble scoring right now. Please try again shortly.";
+    }
+
+    return "LearnX could not score this drill right now. Try again in a moment.";
+  }
+
+  async function handleScore() {
     setScoring(true);
-    void syncPracticeResult(nextResult).catch(() => undefined);
-    router.push(getPublicPracticeResultsHref(subjectId, topicId || undefined));
+    setScoreError(null);
+
+    const submittedAnswers = questions.map((question) => ({
+      questionId: question.id,
+      answer: answers[question.id] ?? "",
+    }));
+
+    try {
+      await scorePracticeOnServer({
+        subjectId,
+        topicId: topicId || undefined,
+        answers: submittedAnswers,
+      });
+      router.push(getPublicPracticeResultsHref(subjectId, topicId || undefined));
+    } catch (serverError) {
+      if (process.env.NODE_ENV === "production") {
+        setScoring(false);
+        setScoreError(getFriendlyScoreError(serverError));
+        return;
+      }
+
+      const nextResult = practiceGateway.submit({
+        subjectId,
+        topicId: topicId || undefined,
+        answers: submittedAnswers,
+      });
+      void syncPracticeResult(nextResult).catch(() => undefined);
+      router.push(getPublicPracticeResultsHref(subjectId, topicId || undefined));
+    }
   }
 
   return (
@@ -124,6 +165,7 @@ export function PracticeWorkspace({
                 setTopicId("");
                 setAnswers({});
                 setScoring(false);
+                setScoreError(null);
               }}
               value={subjectId}
             >
@@ -143,6 +185,7 @@ export function PracticeWorkspace({
                 setTopicId(event.target.value);
                 setAnswers({});
                 setScoring(false);
+                setScoreError(null);
               }}
               value={topicId}
             >
@@ -254,8 +297,13 @@ export function PracticeWorkspace({
           <p className="text-center text-xs text-slate-500">
             {answeredCount < questions.length
               ? "Scoring unlocks after every question has an answer."
-              : "LearnX will open a results page with fixes, notes, and follow-up links."}
+              : "LearnX will score this on the server and open your recovery plan."}
           </p>
+          {scoreError ? (
+            <div aria-live="polite" className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
+              {scoreError}
+            </div>
+          ) : null}
         </div>
       ) : null}
 
